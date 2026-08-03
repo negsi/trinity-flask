@@ -1,0 +1,6 @@
+venv/
+instance/
+__pycache__/
+*.pyc
+.env
+/codebase_summary.txt

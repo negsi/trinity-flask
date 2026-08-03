@@ -1,0 +1,501 @@
+# Trinity Agent Designer
+
+This is the python flask backend for Trinity, an AI agent designer. All agents possess capabilities that can be executed as tools on your system. Trinity can create and process task sequences. You can use an API to control the system. However, we recommend using our Angular frontend, which is coming soon.
+
+---
+
+## 📋 Table of Contents
+
+- [🚀 Requirements](#-requirements)
+- [📦 Installation](#-installation)
+  - [1. Clone or download repository](#1-clone-or-download-repository)
+  - [2. Create a virtual environment (optional, but recommended)](#2-create-a-virtual-environment-optional-but-recommended)
+  - [3. Install dependencies](#3-install-dependencies)
+  - [4. Use MySQL-Server (Optional)](#4-use-mysql-server-optional)
+  - [5. Install AI LLM dependencies](#5-install-ai-llm-dependencies)
+  - [6. Create .env](#6-create-env)
+  - [7. Install Database schema](#7-install-database-schema)
+- [🥳 Usage](#-usage)
+- [🔌 Using the API](#using-the-api)
+  - [🤖 Agent Endpoints (`/api/v1/agents`)](#-agent-endpoints-apiv1agents)
+  - [💬 Chat & Execution Endpoints (`/api/v1/chat`)](#-chat--execution-endpoints-apiv1chat)
+
+---
+
+## 🚀 Requirements
+
+- Python 3.10 or newer  
+- pip (Python Package Installer)  
+- Optional: a virtual environment (recommended)
+
+---
+
+## 📦 Installation
+
+### 1. Clone or download repository
+
+```bash
+git clone https://github.com/negsi/trinity-flask.git
+cd trinity-flask
+```
+
+### 2. Create a virtual environment (optional, but recommended)
+
+```bash
+python3 -m venv venv
+source venv/bin/activate   # macOS / Linux
+venv\Scripts\activate      # Windows
+```
+
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Use MySQL-Server (Optional)
+
+We currently persist data primarily to an `sqlite` database, but we also offer the option to use a MySQL server and provide a corresponding `docker-compose` configuration file for this purpose. If you prefer to use MySQL, then don't forget to install `pymsql`.
+
+```bash
+pip install pymysql
+```
+
+### 5. Install AI LLM dependencies
+
+We currently work and test exclusively with Google Gemini, but we also implement OpenAI as LLM provider. The possibility of using other LLM providers and also support for locally working LLMs is planned. 
+
+Depending on the provider, you may need to install a corresponding Python dependency.
+
+```bash
+pip install google-genai # for Gemini
+pip install openai # for OpenAI
+```
+
+### 6. Create .env
+
+```bash
+cp .env.template .env
+```
+
+In `.env`, specify your AI provider, your preferred large language model, and the API token. If you want to use a MySQL-Server as storage backend, then add the necessary parameters there as well.
+
+---
+
+### 7. Install Database schema
+
+```bash
+flask db upgrade
+```
+
+## 🥳 Usage
+Start serving the app via 
+```bash
+python run_app.py
+```
+If you want to use our MySQL Docker Compose configuration, then run 
+Start serving the app via 
+```bash
+docker compose -f docker-compose.mysql.yml up -d
+```
+
+If you want to recreate the database you can delete `instances/app.db` or run 
+```bash
+docker exec -it trinity_mysql mysql -utrinity -ptrinity -e "DROP DATABASE trinity; CREATE DATABASE trinity;"
+```
+
+---
+
+### Using the API
+
+The backend exposes a RESTful JSON API under the base path `/api/v1`. Below is the detailed endpoint documentation for managing agents, datasources, and chat interactions.
+
+---
+
+### 🤖 Agent Endpoints (`/api/v1/agents`)
+
+<details>
+<summary><code>POST</code> <strong>/api/v1/agents</strong> — Create a new agent</summary>
+
+<br>
+
+**Description:**  
+Creates a new AI agent instance in the system.
+
+**Headers:**
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "name": "Research Assistant",
+  "description": "An agent specialized in Web Search and Data Extraction",
+  "system_prompt": "You are a helpful researcher. Extract useful facts from the given content."
+}
+```
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `name` | `string` | **Yes** | Agent name (1 - 100 characters) |
+| `description` | `string` | No | Short description (max 500 characters) |
+| `system_prompt` | `string` | No | Custom system instruction prompt for the LLM |
+
+**Responses:**
+
+- **`201 Created`**
+  ```json
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+    "name": "Research Assistant",
+    "description": "An agent specialized in Web Search and Data Extraction",
+    "system_prompt": "You are a helpful researcher. Extract useful facts from the given content.",
+    "datasources": []
+  }
+  ```
+
+- **`400 Bad Request`** (Validation error)
+  ```json
+  {
+    "validation_errors": [
+      {
+        "field": "name",
+        "message": "Field required"
+      }
+    ]
+  }
+  ```
+
+</details>
+
+---
+
+<details>
+<summary><code>GET</code> <strong>/api/v1/agents</strong> — List all agents</summary>
+
+<br>
+
+**Description:**  
+Retrieves a list of all registered agents, ordered by their latest chat message timestamp descending.
+
+**Responses:**
+
+- **`200 OK`**
+  ```json
+  [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "name": "Research Assistant",
+      "description": "An agent specialized in Web Search and Data Extraction",
+      "system_prompt": "You are a helpful researcher.",
+      "datasources": [
+        {
+          "id": "ds-12345",
+          "name": "Manual.pdf",
+          "filename": "uuid_Manual.pdf",
+          "mime_type": "application/pdf",
+          "file_size": 204800,
+          "agent_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab"
+        }
+      ]
+    }
+  ]
+  ```
+
+</details>
+
+---
+
+<details>
+<summary><code>PUT</code> <strong>/api/v1/agents/{agent_id}</strong> — Update an agent</summary>
+
+<br>
+
+**Description:**  
+Updates metadata and settings for an existing agent.
+
+**Path Parameters:**
+- `agent_id` (`string`): Unique ID of the agent to update.
+
+**Headers:**
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "name": "Updated Research Assistant",
+  "description": "Updated description",
+  "system_prompt": "You are an updated system prompt."
+}
+```
+
+**Responses:**
+
+- **`200 OK`**
+  ```json
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+    "name": "Updated Research Assistant",
+    "description": "Updated description",
+    "system_prompt": "You are an updated system prompt.",
+    "datasources": []
+  }
+  ```
+
+- **`404 Not Found`**
+  ```json
+  {
+    "error": "NOT_FOUND",
+    "message": "Agent mit der ID 'a1b2c3d4-e5f6-7890-abcd-1234567890ab' wurde nicht gefunden."
+  }
+  ```
+
+</details>
+
+---
+
+<details>
+<summary><code>DELETE</code> <strong>/api/v1/agents/{agent_id}</strong> — Delete an agent</summary>
+
+<br>
+
+**Description:**  
+Permanently deletes an agent and all linked data sources from the backend.
+
+**Path Parameters:**
+- `agent_id` (`string`): Unique ID of the agent to delete.
+
+**Responses:**
+
+- **`204 No Content`** *(Empty body)*
+
+- **`404 Not Found`**
+  ```json
+  {
+    "error": "NOT_FOUND",
+    "message": "Agent mit der ID 'a1b2c3d4-e5f6-7890-abcd-1234567890ab' wurde nicht gefunden."
+  }
+  ```
+
+</details>
+
+---
+
+<details>
+<summary><code>POST</code> <strong>/api/v1/agents/{agent_id}/datasources</strong> — Upload a datasource</summary>
+
+<br>
+
+**Description:**  
+Uploads a document (PDF, Text, JSON, etc.) via `multipart/form-data` and links it as knowledge base to the specified agent.
+
+**Path Parameters:**
+- `agent_id` (`string`): Target Agent ID.
+
+**Headers:**
+- `Content-Type: multipart/form-data`
+
+**Form Parameters:**
+- `file` (File Blob, **Required**): The file to upload.
+- `name` (string, Optional): Custom display name for the document in the UI.
+
+**Responses:**
+
+- **`201 Created`**
+  ```json
+  {
+    "id": "ds-7890-abcd",
+    "name": "Company Knowledge Base",
+    "filename": "f83a12cd-89ab-4c3d_handbook.pdf",
+    "mime_type": "application/pdf",
+    "file_size": 1048576,
+    "agent_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab"
+  }
+  ```
+
+- **`400 Bad Request`**
+  ```json
+  {
+    "error": "NO_FILE_PART"
+  }
+  ```
+
+- **`404 Not Found`** (Agent does not exist)
+
+</details>
+
+---
+
+<details>
+<summary><code>DELETE</code> <strong>/api/v1/agents/{agent_id}/datasources/{datasource_id}</strong> — Delete a datasource</summary>
+
+<br>
+
+**Description:**  
+Deletes a specific data source from an agent and removes the physical file from storage.
+
+**Path Parameters:**
+- `agent_id` (`string`): Agent ID.
+- `datasource_id` (`string`): Datasource ID to remove.
+
+**Responses:**
+
+- **`200 OK`**
+  ```json
+  {
+    "message": "Datasource successfully deleted",
+    "id": "ds-7890-abcd"
+  }
+  ```
+
+- **`404 Not Found`**
+
+</details>
+
+---
+
+### 💬 Chat & Execution Endpoints (`/api/v1/chat`)
+
+<details>
+<summary><code>POST</code> <strong>/api/v1/chat/messages</strong> — Send a chat message</summary>
+
+<br>
+
+**Description:**  
+Persists a message in a conversation. If `conversation_id` is omitted or `null`, a new conversation instance is created automatically.
+
+**Headers:**
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "conversation_id": "conv-1234-5678",
+  "sender_id": "usr-001",
+  "sender_type": "user",
+  "sender_name": "Alice",
+  "text": "Can you summarize the attached manual?",
+  "recipient_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab"
+}
+```
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `conversation_id` | `string` | No | ID of existing conversation (new one created if null) |
+| `sender_id` | `string` | **Yes** | ID of the message author |
+| `sender_type` | `string` | **Yes** | Enum: `"user"`, `"agent"`, or `"system"` |
+| `sender_name` | `string` | **Yes** | Display name of the sender |
+| `text` | `string` | **Yes** | Message payload text |
+| `recipient_id` | `string` | No | Target recipient ID (e.g., Agent ID) |
+
+**Responses:**
+
+- **`201 Created`**
+  ```json
+  {
+    "id": "msg-99887766",
+    "conversation_id": "conv-1234-5678",
+    "sender_id": "usr-001",
+    "sender_type": "user",
+    "sender_name": "Alice",
+    "text": "Can you summarize the attached manual?",
+    "recipient_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+    "timestamp": "2025-02-23T14:30:00.000000+00:00"
+  }
+  ```
+
+- **`400 Bad Request`**
+  ```json
+  {
+    "error": "INVALID_SENDER_TYPE"
+  }
+  ```
+
+</details>
+
+---
+
+<details>
+<summary><code>GET</code> <strong>/api/v1/chat/conversations/{conversation_id}/messages</strong> — Get conversation history</summary>
+
+<br>
+
+**Description:**  
+Retrieves chronological message history for a specific conversation ID.
+
+**Path Parameters:**
+- `conversation_id` (`string`): The conversation ID.
+
+**Responses:**
+
+- **`200 OK`**
+  ```json
+  [
+    {
+      "id": "msg-001",
+      "conversation_id": "conv-1234-5678",
+      "sender_id": "usr-001",
+      "sender_type": "user",
+      "sender_name": "Alice",
+      "text": "Hello Agent!",
+      "recipient_id": "agent-123",
+      "timestamp": "2025-02-23T14:28:00+00:00"
+    },
+    {
+      "id": "msg-002",
+      "conversation_id": "conv-1234-5678",
+      "sender_id": "agent-123",
+      "sender_type": "agent",
+      "sender_name": "Trinity Assistant",
+      "text": "Hello Alice! How can I help you today?",
+      "recipient_id": "usr-001",
+      "timestamp": "2025-02-23T14:28:02+00:00"
+    }
+  ]
+  ```
+
+</details>
+
+---
+
+<details>
+<summary><code>POST</code> <strong>/api/v1/chat/stream</strong> — Stream agent response (SSE)</summary>
+
+<br>
+
+**Description:**  
+Streams response tokens in real-time from the agent back to the caller using Server-Sent Events (SSE) / Event Streams. Handles multi-turn ReAct loops and task-chain tool executions automatically.
+
+**Headers:**
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "message": "Fetch the RSS feed from https://news.ycombinator.com/rss and summarize the top 3 stories.",
+  "conversation_id": "conv-1234-5678",
+  "agent_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+  "agent_name": "Research Assistant",
+  "user_id": "usr-001"
+}
+```
+
+| Field | Type | Required | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `message` | `string` | No | `"Hallo!"` | User prompt / message |
+| `conversation_id` | `string` | No | `null` | Associated conversation ID |
+| `agent_id` | `string` | No | `conversation_id` | ID of executing agent |
+| `agent_name` | `string` | No | `"Agent"` | Name of executing agent |
+| `user_id` | `string` | No | `"user-default"` | Author user ID |
+
+**Responses:**
+
+- **`200 OK`**
+  - **Content-Type:** `text/event-stream`
+  - **Body Stream Example:**
+    ```text
+    I am retrieving the RSS feed for you...
+    • Story 1: Launches New Features
+    • Story 2: AI Breakthrough announced
+    ```
+
+</details>
