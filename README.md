@@ -86,6 +86,8 @@ In `.env`, specify your AI provider, your preferred large language model, and th
 flask db upgrade
 ```
 
+---
+
 ## 🥳 Usage
 Start serving the app via 
 ```bash
