@@ -80,8 +80,6 @@ cp .env.template .env
 
 In `.env`, specify your AI provider, your preferred large language model, and the API token. If you want to use a MySQL-Server as storage backend, then add the necessary parameters there as well.
 
----
-
 ### 7. Install Database schema
 
 ```bash
@@ -101,7 +99,9 @@ docker compose -f docker-compose.mysql.yml up -d
 
 If you want to recreate the database you can delete `instances/app.db` or run 
 ```bash
-docker exec -it trinity_mysql mysql -utrinity -ptrinity -e "DROP DATABASE trinity; CREATE DATABASE trinity;"
+docker exec -it trinity_mysql \
+  mysql -utrinity -ptrinity \
+  -e "DROP DATABASE trinity; CREATE DATABASE trinity;"
 ```
 
 ---
