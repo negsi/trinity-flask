@@ -25,4 +25,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - llm service layer vor gemini
 
 [Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.1...develop
-[0.0.1]: https://github.com/negsi/trinity-flask/release/tag/v0.0.1
+[0.0.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.1
