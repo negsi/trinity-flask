@@ -1,0 +1,1 @@
+https://api.open-meteo.com/v1/forecast?latitude=52.5244&longitude=13.4105&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation,cloud_cover,precipitation,dew_point_2m,pressure_msl&models=icon_seamless&timezone=Europe/Berlin&forecast_days=1

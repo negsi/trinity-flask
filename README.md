@@ -1,6 +1,6 @@
 # Trinity Agent Designer
 
-This is the python flask backend for Trinity, an AI agent designer. All agents possess capabilities that can be executed as tools on your system. Trinity can create and process task sequences. You can use an API to control the system. However, we recommend using our Angular frontend, which is coming soon.
+This is the python flask backend for Trinity, an AI agent designer. The goal of this project is the simple and convenient creation of AI agents that are capable of solving complex tasks and understanding complicated situations. All agents possess capabilities that can be executed as tools on your system. Trinity can create and process task sequences. You can use an API to control the system. However, we recommend using our Angular frontend, which is coming soon.
 
 ---
 
@@ -499,5 +499,157 @@ Streams response tokens in real-time from the agent back to the caller using Ser
     • Story 1: Launches New Features
     • Story 2: AI Breakthrough announced
     ```
+
+</details>
+
+### Examples
+
+<details>
+<summary><code>POST</code> <strong>/api/v1/agents</strong> — Creating an AI Agent</summary>
+
+<br>
+
+**cURL:**  
+```bash
+curl -X POST http://localhost:5000/api/v1/agents \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Cypher",
+    "description": "Cypher, ein Agent zur Ingestion von Daten.",
+    "system_prompt": "Du bist Cypher, ein Agent zur Ingestion von Daten."
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "datasources": [],
+  "description": "Cypher, ein Agent zur Ingestion von Daten.",
+  "id": "92a5a280-9c4e-4103-afe4-c47e2ed9207e",
+  "name": "Cypher",
+  "system_prompt": "Du bist Cypher, ein Agent zur Ingestion von Daten."
+}
+
+```
+
+</details>
+
+<details>
+<summary><code>POST</code> <strong>/api/v1/agents/AGENT_ID/datasources</strong> — Adds a datasource to a agent</summary>
+
+<br>
+
+**cURL:**  
+```bash
+curl -X POST http://localhost:5000/api/v1/agents/AGENT_ID/datasources \
+  -F "file=@./docs/berlin.open-meteo.link.txt" \
+  -F "name=Open-Meteo Berlin Docs"
+```
+
+**Response:**
+
+```json
+{
+  "agent_id": "e9acc6d1-f8e5-4b4f-a47d-6a2bc9e988fd",
+  "file_size": 264,
+  "filename": "248f0946-3ac4-4eaa-a9d5-82c857a11914_berlin.open-meteo.link.txt",
+  "id": "969c5b97-a5ca-483c-a8a6-f34de567afdc",
+  "mime_type": "text/plain",
+  "name": "Open-Meteo Berlin Docs"
+}
+
+```
+
+</details>
+
+<details>
+<summary><code>POST</code> <strong>/api/v1/chat/messages</strong> — Send a chat message and stores it in conversations</summary>
+
+<br>
+
+**cURL:**  
+```bash
+curl -X POST http://localhost:5000/api/v1/chat/messages \
+  -H "Content-Type: application/json" \
+  -d '{
+    "recipient_id": "e9acc6d1-f8e5-4b4f-a47d-6a2bc9e988fd",
+    "text": "Hi, wer bist du und was kannst du?"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "conversation_id": "c4d11c66-fd56-4da0-8621-d0bb84871666",
+  "id": "c69dbe0c-f363-4913-85d4-06b12cb4bd75",
+  "recipient_id": "e9acc6d1-f8e5-4b4f-a47d-6a2bc9e988fd",
+  "sender_id": "[CURRENT_ACTOR.ID]",
+  "sender_name": "[CURRENT_ACTOR.NAME]",
+  "sender_type": "[CURRENT_ACTOR.ACTOR_TYPE]",
+  "text": "Hi, wer bist du und was kannst du?",
+  "timestamp": "2026-08-04T08:56:43.589930"
+}
+
+
+```
+
+</details>
+
+<details>
+<summary><code>POST</code> <strong>/api/v1/chat/messages</strong> — Sends a chat message to a LLM. Stores the response in conversations.</summary>
+
+<br>
+
+**cURL:**  
+```bash
+curl -N -X POST http://localhost:5000/api/v1/chat/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "conversation_id": "c4d11c66-fd56-4da0-8621-d0bb84871666",
+    "agent_id": "e9acc6d1-f8e5-4b4f-a47d-6a2bc9e988fd",
+    "message": "Hi, wer bist du und was kannst du?"
+  }'
+```
+
+**Response:**
+
+Hallo! Ich bin Cypher, dein spezialisierter Agent für die Datenaufnahme und -verarbeitung.
+
+Meine Hauptaufgabe besteht darin, Informationen effizient aus externen Webquellen zu beschaffen und diese für dich aufzubereiten. Hier ist ein Überblick darüber, was ich für dich tun kann:
+
+*   **Datenabruf:** Ich kann Inhalte von spezifischen Webseiten oder URLs abrufen (`fetch_url`), um sie für eine weitere Analyse zugänglich zu machen.
+*   **Datenanalyse & Transformation:** Mit Hilfe des `message_llm`-Werkzeugs kann ich die von mir abgerufenen Daten auswerten, zusammenfassen, strukturieren oder in andere Formate umwandeln.
+*   **Verknüpfung von Informationen:** Ich kann komplexe Arbeitsabläufe in sogenannten „Task Chains“ planen, um Aufgaben in logischen Schritten abzuarbeiten (z. B. zuerst eine Seite laden, dann den Inhalt analysieren).
+*   **Nutzung von Kontext:** Ich habe Zugriff auf Informationen, die du mir in Form von Dateien (Knowledge Base) zur Verfügung stellst, und kann diese direkt mit neuen Online-Daten kombinieren.
+
+**cURL:**  
+```bash
+curl -N -X POST http://localhost:5000/api/v1/chat/stream -H "Content-Type: application/json" -d '{
+    "conversation_id": "[CONVERSATION_ID]",
+    "agent_id": "[AGENT_ID]",
+    "message": "Wie werden die Strahlungswerte heute in Berlin?"
+  }'
+```
+
+**Response:**
+
+Die Wetterdaten für den 4. August 2026 in Berlin zeigen einen Tag mit wechselhafter Bewölkung und spezifischen Strahlungsverläufen. Hier ist die Zusammenfassung der kurzwelligen Strahlung (`shortwave_radiation`):
+
+**Zusammenfassung der Strahlungswerte:**
+*   **Tagesverlauf:** Die Strahlung beginnt mit dem Sonnenaufgang kurz nach 06:00 Uhr (4,3 W/m²). Die Werte steigen stetig an und erreichen ihren Höhepunkt am Nachmittag.
+*   **Maximum:** Der höchste Wert wird um **16:00 Uhr mit 575,5 W/m²** gemessen, gefolgt von einer weiteren starken Phase um 15:00 Uhr (464,8 W/m²) und 17:00 Uhr (459,5 W/m²).
+*   **Vormittagsphase:** Zwischen 08:00 und 13:00 Uhr schwanken die Werte aufgrund der starken Bewölkung (meist 100 %) zwischen etwa 69 W/m² und 226 W/m².
+*   **Tagesende:** Nach 20:00 Uhr (121,3 W/m²) fällt die Strahlung rasch ab, bis sie ab 22:00 Uhr bei 0,0 W/m² liegt.
+
+**Zusammenfassende Einschätzung:**
+Trotz der phasenweise vollständigen Bewölkung (insbesondere am Vormittag und frühen Mittag) erreicht die kurzwellige Einstrahlung am Nachmittag, bei gleichzeitig abnehmender Wolkendecke, signifikante Werte von über 500 W/m². Dies deutet auf einen recht warmen Sommertag mit einer Höchsttemperatur von 28,9 °C am Abend hin.Die Strahlungswerte in Berlin erreichen heute einen interessanten Verlauf, der stark von der Bewölkung beeinflusst wird.
+
+Hier ist die Zusammenfassung für den heutigen Tag:
+
+*   **Tagesverlauf:** Die Strahlung nimmt mit dem Sonnenaufgang kurz nach 06:00 Uhr ihren Anfang (4,3 W/m²). Während der Vormittagsstunden (08:00 bis 13:00 Uhr) bleibt die kurzwellige Strahlung aufgrund der dichten Bewölkung (meist 100 %) moderat und schwankt zwischen ca. 69 W/m² und 226 W/m².
+*   **Maximum:** Die intensivste Einstrahlung wird am Nachmittag erreicht. Den Höchstwert verzeichnen wir um **16:00 Uhr mit 575,5 W/m²**. Auch die Stunden davor (15:00 Uhr: 464,8 W/m²) und danach (17:00 Uhr: 459,5 W/m²) bieten eine deutliche Zunahme der Strahlungsintensität, was mit einer auflockernden Wolkendecke zusammenfällt.
+*   **Abendstunden:** Nach 20:00 Uhr (121,3 W/m²) sinken die Werte rapide ab, bis die Strahlung ab 22:00 Uhr vollständig auf 0,0 W/m² zurückgeht.
 
 </details>

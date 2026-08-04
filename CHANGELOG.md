@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Security Context Service for implementing user management later
+- More documentation
+
 ### Changed
+
+- You no longer need to send sender_id, sender_type and sender_name when posting to messages and to the llm stream
 
 ## [0.0.1] - 2026-08-??
 
