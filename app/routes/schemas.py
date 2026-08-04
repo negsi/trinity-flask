@@ -18,8 +18,5 @@ class CreateAgentRequest(BaseModel):
 class SendMessageRequest(BaseModel):
     """Request payload schema for sending a chat message."""
     conversation_id: Optional[str] = Field(None)
-    sender_id: str = Field(..., min_length=1)
-    sender_type: str = Field(..., pattern="^(user|agent|system)$")
-    sender_name: str = Field(..., min_length=1)
     text: str = Field(..., min_length=1)
     recipient_id: Optional[str] = None

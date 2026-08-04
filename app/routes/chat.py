@@ -11,6 +11,8 @@ from dependency_injector.wiring import inject, Provide
 from app.containers import Container
 from app.services.messaging_service import MessagingService
 from app.services.agent_orchestrator import AgentOrchestrator
+from app.services.security_context import SecurityContextService
+from app.services.agent_service import AgentService
 from app.routes.decorators import validate_json
 from app.routes.schemas import SendMessageRequest
 from app.domain.models.message import ActorType
@@ -24,7 +26,8 @@ chat_bp = Blueprint("chat", __name__, url_prefix="/api/v1/chat")
 @inject
 def send_message(
     dto: SendMessageRequest,
-    messaging_service: MessagingService = Provide[Container.messaging_service]
+    messaging_service: MessagingService = Provide[Container.messaging_service],
+    security_context: SecurityContextService = Provide[Container.security_context_service]
 ):
     """
     Persist a chat message in a conversation.
@@ -40,18 +43,14 @@ def send_message(
         tuple[Response, int]: JSON representation of the saved Message domain entity and HTTP 201 Created status,
                               or HTTP 400 Bad Request if the sender_type is invalid.
     """
-    # 1. Parse and validate sender actor enum type
-    try:
-        actor_type = ActorType(dto.sender_type)
-    except ValueError:
-        return jsonify({"error": "INVALID_SENDER_TYPE"}), 400
+    current_actor = security_context.get_current_actor()
 
     # 2. Persist message via MessagingService (creates conversation if conversation_id is None)
     saved_message = messaging_service.send_message(
         conversation_id=dto.conversation_id,
-        sender_id=dto.sender_id,
-        sender_type=actor_type,
-        sender_name=dto.sender_name,
+        sender_id=current_actor["id"],
+        sender_type=current_actor["type"],
+        sender_name=current_actor["name"],
         text=dto.text,
         recipient_id=dto.recipient_id
     )
@@ -90,6 +89,8 @@ def get_conversation_history(
 @inject
 def stream_chat(
     orchestrator: AgentOrchestrator = Provide[Container.agent_orchestrator],
+    agent_service: AgentService = Provide[Container.agent_service],
+    security_context: SecurityContextService = Provide[Container.security_context_service],
 ):
     """
     Stream an LLM agent's response live using Server-Sent Events (SSE).
@@ -116,8 +117,18 @@ def stream_chat(
     user_text = data.get("message", "Hallo!")
     conversation_id = data.get("conversation_id")
     agent_id = data.get("agent_id") or conversation_id
-    agent_name = data.get("agent_name", "Agent")
-    user_id = data.get("user_id", "user-default")
+
+    if not agent_id:
+        return jsonify({"error": "MISSING_AGENT_ID"}), 400
+
+    current_actor = security_context.get_current_actor()
+    user_id = current_actor["id"]
+
+    agent = agent_service.get_agent(agent_id)
+    if not agent:
+        return jsonify({"error": "AGENT_NOT_FOUND"}), 404
+
+    agent_name = agent.name
 
     # 2. Return SSE event-stream response using Flask's context streaming wrapper
     return Response(
