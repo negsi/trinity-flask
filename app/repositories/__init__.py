@@ -8,10 +8,12 @@ from app.repositories.sqlalchemy_agent_repository import SQLAlchemyAgentReposito
 from app.repositories.sqlalchemy_message_repository import SQLAlchemyMessageRepository
 from app.repositories.sqlalchemy_conversation_repository import SQLAlchemyConversationRepository
 from app.repositories.sqlalchemy_llm_execution_repository import SQLAlchemyLLMExecutionRepository
+from app.repositories.sqlalchemy_datasource_repository import SQLAlchemyDatasourceRepository
 
 __all__ = [
     "SQLAlchemyAgentRepository",
     "SQLAlchemyMessageRepository",
     "SQLAlchemyConversationRepository",
-    "SQLAlchemyLLMExecutionRepository"
+    "SQLAlchemyLLMExecutionRepository",
+    "SQLAlchemyDatasourceRepository"
 ]
