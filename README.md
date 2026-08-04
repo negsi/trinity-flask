@@ -19,6 +19,7 @@ This is the python flask backend for Trinity, an AI agent designer. The goal of 
 - [🔌 Using the API](#using-the-api)
   - [🤖 Agent Endpoints (`/api/v1/agents`)](#-agent-endpoints-apiv1agents)
   - [💬 Chat & Execution Endpoints (`/api/v1/chat`)](#-chat--execution-endpoints-apiv1chat)
+- [📖 Examples](#examples)
 
 ---
 
