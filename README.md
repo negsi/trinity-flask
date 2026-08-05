@@ -1,4 +1,12 @@
-# Trinity Agent Designer
+<p align="center">
+  <img src="./docs/readme.md_banner.svg" alt="Trinity Agent Designer Banner" width="100%">
+</p>
+
+<p align="right">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License">
+  </a>
+</p>
 
 This is the python flask backend for Trinity, an AI agent designer. The goal of this project is the simple and convenient creation of AI agents that are capable of solving complex tasks and understanding complicated situations. All agents possess capabilities that can be executed as tools on your system. Trinity can create and process task sequences. You can use an API to control the system. However, we recommend using our Angular frontend, which is coming soon.
 

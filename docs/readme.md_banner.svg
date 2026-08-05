@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 160" width="100%" height="160">
+  <defs>
+    <!-- Farbverlauf: Von Dunkelblau (links) zu hellem Cyan (rechts) -->
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#050914" />
+      <stop offset="50%" stop-color="#14233F" />
+      <stop offset="100%" stop-color="#00D2FF" />
+    </linearGradient>
+    
+    <!-- Leichter Schatten für den Text für bessere Lesbarkeit -->
+    <filter id="glow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Hintergrund mit abgerundeten Ecken -->
+  <rect width="1000" height="160" rx="16" fill="url(#bg-gradient)" />
+  
+  <!-- Dezente abstrakte Akzente im Hintergrund -->
+  <path d="M 100 160 L 250 0 L 300 0 L 150 160 Z" fill="#ffffff" opacity="0.03" />
+  <path d="M 800 160 L 950 0 L 1000 0 L 850 160 Z" fill="#ffffff" opacity="0.1" />
+
+  <!-- Haupttitel -->
+  <text x="50%" y="50%" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="64" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" filter="url(#glow)" letter-spacing="2">
+    TRINITY AGENT DESIGNER
+  </text>
+  
+  <!-- Untertitel -->
+  <text x="50%" y="78%" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#E2E8F0" text-anchor="middle" dominant-baseline="middle" letter-spacing="6" opacity="0.9">
+    AI ORCHESTRATION &amp; TOOLING
+  </text>
+</svg>
