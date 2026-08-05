@@ -607,8 +607,8 @@ curl -X POST http://localhost:5000/api/v1/chat/messages \
 curl -N -X POST http://localhost:5000/api/v1/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
-    "conversation_id": "c4d11c66-fd56-4da0-8621-d0bb84871666",
-    "agent_id": "e9acc6d1-f8e5-4b4f-a47d-6a2bc9e988fd",
+    "conversation_id": "[CONVERSATION_ID]",
+    "agent_id": "[AGENT_ID]",
     "message": "Hi, wer bist du und was kannst du?"
   }'
 ```
