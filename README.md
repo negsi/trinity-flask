@@ -11,7 +11,9 @@
   <img src="https://img.shields.io/badge/AI-Google%20Gemini-8E75B2?style=flat-square&logo=googlegemini&logoColor=white" alt="Gemini">
 </p>
 
-This is the python flask backend for Trinity, an AI agent designer. The goal of this project is the simple and convenient creation of AI agents that are capable of solving complex tasks and understanding complicated situations. All agents possess capabilities that can be executed as tools on your system. Trinity can create and process task sequences. You can use an API to control the system. However, we recommend using our Angular frontend, which is coming soon.
+This is the python flask backend for Trinity, an AI agent designer. The goal of this project is the simple and convenient creation of AI agents that are capable of solving complex tasks and understanding complicated situations. All agents possess capabilities that can be executed as tools on your system. Trinity can create and process task sequences. You can use an API to control the system. 
+
+However, we recommend using our Angular frontend, which is coming soon.
 
 ---
 
