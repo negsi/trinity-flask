@@ -4,7 +4,7 @@ This is the python flask backend for Trinity, an AI agent designer. The goal of 
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Requirements](#-requirements)
 - [Installation](#-installation)
@@ -115,7 +115,7 @@ The backend exposes a RESTful JSON API under the base path `/api/v1`. Below is t
 
 ---
 
-### 🤖 Agent Endpoints (`/api/v1/agents`)
+### Agent Endpoints (`/api/v1/agents`)
 
 <details>
 <summary><code>POST</code> <strong>/api/v1/agents</strong> — Create a new agent</summary>
@@ -356,7 +356,7 @@ Deletes a specific data source from an agent and removes the physical file from 
 
 ---
 
-### 💬 Chat & Execution Endpoints (`/api/v1/chat`)
+### Chat & Execution Endpoints (`/api/v1/chat`)
 
 <details>
 <summary><code>POST</code> <strong>/api/v1/chat/messages</strong> — Send a chat message</summary>
