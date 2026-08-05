@@ -113,8 +113,6 @@ docker exec -it trinity_mysql \
 
 The backend exposes a RESTful JSON API under the base path `/api/v1`. Below is the detailed endpoint documentation for managing agents, datasources, and chat interactions.
 
----
-
 ### Agent Endpoints (`/api/v1/agents`)
 
 <details>
@@ -170,8 +168,6 @@ Creates a new AI agent instance in the system.
 
 </details>
 
----
-
 <details>
 <summary><code>GET</code> <strong>/api/v1/agents</strong> — List all agents</summary>
 
@@ -206,7 +202,6 @@ Retrieves a list of all registered agents, ordered by their latest chat message 
 
 </details>
 
----
 
 <details>
 <summary><code>PUT</code> <strong>/api/v1/agents/{agent_id}</strong> — Update an agent</summary>
@@ -253,8 +248,6 @@ Updates metadata and settings for an existing agent.
   ```
 
 </details>
-
----
 
 <details>
 <summary><code>DELETE</code> <strong>/api/v1/agents/{agent_id}</strong> — Delete an agent</summary>
@@ -326,8 +319,6 @@ Uploads a document (PDF, Text, JSON, etc.) via `multipart/form-data` and links i
 
 </details>
 
----
-
 <details>
 <summary><code>DELETE</code> <strong>/api/v1/agents/{agent_id}/datasources/{datasource_id}</strong> — Delete a datasource</summary>
 
@@ -353,8 +344,6 @@ Deletes a specific data source from an agent and removes the physical file from 
 - **`404 Not Found`**
 
 </details>
-
----
 
 ### Chat & Execution Endpoints (`/api/v1/chat`)
 
@@ -415,8 +404,6 @@ Persists a message in a conversation. If `conversation_id` is omitted or `null`,
 
 </details>
 
----
-
 <details>
 <summary><code>GET</code> <strong>/api/v1/chat/conversations/{conversation_id}/messages</strong> — Get conversation history</summary>
 
@@ -457,8 +444,6 @@ Retrieves chronological message history for a specific conversation ID.
   ```
 
 </details>
-
----
 
 <details>
 <summary><code>POST</code> <strong>/api/v1/chat/stream</strong> — Stream agent response (SSE)</summary>
