@@ -6,8 +6,8 @@ This is the python flask backend for Trinity, an AI agent designer. The goal of 
 
 ## 📋 Table of Contents
 
-- [🚀 Requirements](#-requirements)
-- [📦 Installation](#-installation)
+- [Requirements](#-requirements)
+- [Installation](#-installation)
   - [1. Clone or download repository](#1-clone-or-download-repository)
   - [2. Create a virtual environment (optional, but recommended)](#2-create-a-virtual-environment-optional-but-recommended)
   - [3. Install dependencies](#3-install-dependencies)
@@ -15,15 +15,15 @@ This is the python flask backend for Trinity, an AI agent designer. The goal of 
   - [5. Install AI LLM dependencies](#5-install-ai-llm-dependencies)
   - [6. Create .env](#6-create-env)
   - [7. Install Database schema](#7-install-database-schema)
-- [🥳 Usage](#-usage)
-- [🔌 Using the API](#using-the-api)
-  - [🤖 Agent Endpoints (`/api/v1/agents`)](#-agent-endpoints-apiv1agents)
-  - [💬 Chat & Execution Endpoints (`/api/v1/chat`)](#-chat--execution-endpoints-apiv1chat)
-- [📖 Examples](#examples)
+- [Usage](#-usage)
+- [Using the API](#using-the-api)
+  - [Agent Endpoints (`/api/v1/agents`)](#-agent-endpoints-apiv1agents)
+  - [Chat & Execution Endpoints (`/api/v1/chat`)](#-chat--execution-endpoints-apiv1chat)
+- [Examples](#examples)
 
 ---
 
-## 🚀 Requirements
+## Requirements
 
 - Python 3.10 or newer  
 - pip (Python Package Installer)  
@@ -31,7 +31,7 @@ This is the python flask backend for Trinity, an AI agent designer. The goal of 
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### 1. Clone or download repository
 
@@ -89,7 +89,7 @@ flask db upgrade
 
 ---
 
-## 🥳 Usage
+## Usage
 Start serving the app via 
 ```bash
 python run_app.py
@@ -506,7 +506,7 @@ Streams response tokens in real-time from the agent back to the caller using Ser
 ### Examples
 
 <details>
-<summary><code>POST</code> <strong>/api/v1/agents</strong> — Creating an AI Agent</summary>
+<summary>Creating a standard AI Agent</summary>
 
 <br>
 
@@ -537,7 +537,7 @@ curl -X POST http://localhost:5000/api/v1/agents \
 </details>
 
 <details>
-<summary><code>POST</code> <strong>/api/v1/agents/AGENT_ID/datasources</strong> — Adds a datasource to a agent</summary>
+<summary>Assign a data source to an agent</summary>
 
 <br>
 
@@ -565,7 +565,7 @@ curl -X POST http://localhost:5000/api/v1/agents/AGENT_ID/datasources \
 </details>
 
 <details>
-<summary><code>POST</code> <strong>/api/v1/chat/messages</strong> — Send a chat message and stores it in conversations</summary>
+<summary>Write a chat message and save it in the conversations table</summary>
 
 <br>
 
@@ -595,11 +595,10 @@ curl -X POST http://localhost:5000/api/v1/chat/messages \
 
 
 ```
-
 </details>
 
 <details>
-<summary><code>POST</code> <strong>/api/v1/chat/messages</strong> — Sends a chat message to a LLM. Stores the response in conversations.</summary>
+<summary>Sends a chat message to a LLM. Stores the response in the conversations table</summary>
 
 <br>
 
@@ -624,6 +623,8 @@ Meine Hauptaufgabe besteht darin, Informationen effizient aus externen Webquelle
 *   **Datenanalyse & Transformation:** Mit Hilfe des `message_llm`-Werkzeugs kann ich die von mir abgerufenen Daten auswerten, zusammenfassen, strukturieren oder in andere Formate umwandeln.
 *   **Verknüpfung von Informationen:** Ich kann komplexe Arbeitsabläufe in sogenannten „Task Chains“ planen, um Aufgaben in logischen Schritten abzuarbeiten (z. B. zuerst eine Seite laden, dann den Inhalt analysieren).
 *   **Nutzung von Kontext:** Ich habe Zugriff auf Informationen, die du mir in Form von Dateien (Knowledge Base) zur Verfügung stellst, und kann diese direkt mit neuen Online-Daten kombinieren.
+
+<br>
 
 **cURL:**  
 ```bash
