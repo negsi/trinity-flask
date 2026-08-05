@@ -6,8 +6,8 @@ This is the python flask backend for Trinity, an AI agent designer. The goal of 
 
 ## Table of Contents
 
-- [Requirements](#-requirements)
-- [Installation](#-installation)
+- [Requirements](#requirements)
+- [Installation](#installation)
   - [1. Clone or download repository](#1-clone-or-download-repository)
   - [2. Create a virtual environment (optional, but recommended)](#2-create-a-virtual-environment-optional-but-recommended)
   - [3. Install dependencies](#3-install-dependencies)
@@ -15,10 +15,11 @@ This is the python flask backend for Trinity, an AI agent designer. The goal of 
   - [5. Install AI LLM dependencies](#5-install-ai-llm-dependencies)
   - [6. Create .env](#6-create-env)
   - [7. Install Database schema](#7-install-database-schema)
-- [Usage](#-usage)
+- [Running the Application](#running-the-application)
 - [Using the API](#using-the-api)
-  - [Agent Endpoints (`/api/v1/agents`)](#-agent-endpoints-apiv1agents)
-  - [Chat & Execution Endpoints (`/api/v1/chat`)](#-chat--execution-endpoints-apiv1chat)
+  - [Agent Endpoints](#agent)
+  - [Agent Datasources](#agent-datasources)
+  - [Chat & Execution Endpoints](#chat--execution-endpoints-apiv1chat)
 - [Examples](#examples)
 
 ---
@@ -89,7 +90,7 @@ flask db upgrade
 
 ---
 
-## Usage
+## Running the Application
 Start serving the app via 
 ```bash
 python run_app.py
@@ -113,7 +114,7 @@ docker exec -it trinity_mysql \
 
 The backend exposes a RESTful JSON API under the base path `/api/v1`. Below is the detailed endpoint documentation for managing agents, datasources, and chat interactions.
 
-### Agent Endpoints (`/api/v1/agents`)
+### Agent
 
 <details>
 <summary><code>POST</code> <strong>/api/v1/agents</strong> — Create a new agent</summary>
@@ -274,7 +275,7 @@ Permanently deletes an agent and all linked data sources from the backend.
 
 </details>
 
----
+### Agent Datasources
 
 <details>
 <summary><code>POST</code> <strong>/api/v1/agents/{agent_id}/datasources</strong> — Upload a datasource</summary>
