@@ -29,6 +29,7 @@ However, we recommend using our Angular frontend, which is coming soon.
   - [6. Create .env](#6-create-env)
   - [7. Install Database schema](#7-install-database-schema)
 - [Running the Application](#running-the-application)
+- [Agent Tools & Task Chains](#agent-tools--task-chains)
 - [Using the API](#using-the-api)
   - [Agent Endpoints](#agent)
   - [Agent Datasources](#agent-datasources)
@@ -122,6 +123,31 @@ docker exec -it trinity_mysql \
 ```
 
 ---
+
+## Agent Tools & Task Chains
+
+Trinity agents execute complex web gathering, data processing, and analysis tasks by orchestrating specialized tools into multi-step execution plans (**Task Chains**).
+
+### Built-in Agent Tools
+
+1. **`fetch_url`**
+   - **Purpose:** Fetches the raw text content of a specified web page or online document.
+   - **Rules & Behavior:**
+     - Processes exactly **one URL per execution step**.
+     - Requires separate sequential steps when dealing with multiple URLs.
+     - Does not invent placeholder URLs. To discover links on a page, the agent must first visit the target URL in step 1 to extract valid links.
+
+2. **`message_llm`**
+   - **Purpose:** Processes, summarizes, evaluates, translates, or structurally transforms retrieved data.
+   - **Rules & Syntax:**
+     - Uses step references to chain inputs from prior steps (e.g., using `[STEP_1]` as input for processing results obtained during step 1).
+     - Strict placeholder syntax enforcement ensures reliable data flow between task steps.
+
+### Task Execution Workflow
+
+- **Internal Knowledge / Datasources:** For queries answerable directly via model knowledge or uploaded files (Knowledge Base), the agent responds immediately without triggering external tools.
+- **External Web Processing:** For complex requests requiring web data (e.g., *"Read this web article and summarize the key findings"*), Trinity builds a structured JSON Task Chain executing a `fetch` $\rightarrow$ `process` pipeline.
+- **Tool Fallback Handling:** If a user request demands capabilities beyond the available toolset, the agent explicitly informs the user about unexecutable requirements.
 
 ### Using the API
 
