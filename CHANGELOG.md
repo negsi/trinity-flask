@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- implement proper SSE streaming and event formatting
+
 ## [0.0.2] - 2026-08-06
 
 ### Added

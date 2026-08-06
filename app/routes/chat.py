@@ -85,6 +85,28 @@ def get_conversation_history(
     return jsonify([msg.to_dict() for msg in history]), 200
 
 
+def sse_formatter(generator):
+    """
+    Format raw text chunks into W3C compliant Server-Sent Events (SSE).
+
+    Splits incoming text chunks containing newlines into distinct 'data:' lines
+    to ensure inner newline characters do not corrupt the SSE event delimiter (\n\n).
+
+    Args:
+        generator (Generator[str, None, None]): Yielded raw text tokens or strings.
+
+    Yields:
+        Generator[str, None, None]: SSE-formatted stream frames ready for HTTP response.
+    """
+    for chunk in generator:
+        if not chunk:
+            continue
+        lines = chunk.split('\n')
+        for line in lines:
+            yield f"data: {line}\n"
+        yield "\n"  # Finalize the SSE event frame with trailing newline
+
+
 @chat_bp.route('/stream', methods=['POST'])
 @inject
 def stream_chat(
@@ -130,16 +152,21 @@ def stream_chat(
 
     agent_name = agent.name
 
+    raw_stream = orchestrator.stream_agent_response(
+        user_text=user_text,
+        conversation_id=conversation_id,
+        agent_id=agent_id,
+        agent_name=agent_name,
+        user_id=user_id,
+    )
+
     # 2. Return SSE event-stream response using Flask's context streaming wrapper
     return Response(
-        stream_with_context(
-            orchestrator.stream_agent_response(
-                user_text=user_text,
-                conversation_id=conversation_id,
-                agent_id=agent_id,
-                agent_name=agent_name,
-                user_id=user_id,
-            )
-        ),
+        stream_with_context(sse_formatter(raw_stream)),
         mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',  
+            'Connection': 'keep-alive',
+        }
     )
