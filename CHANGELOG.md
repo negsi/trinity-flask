@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-08-06
+
 ### Added
 
 - Security Context Service for implementing user management later
@@ -15,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - You no longer need to send sender_id, sender_type and sender_name when posting to messages and to the llm stream
 
-## [0.0.1] - 2026-08-??
+## [0.0.1] - 2026-08-03
 
 ### Added
 
@@ -29,5 +31,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.1...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.2...develop
+[0.0.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.2
 [0.0.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.1
