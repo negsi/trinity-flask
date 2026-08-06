@@ -112,8 +112,7 @@ Start serving the app via
 ```bash
 python run_app.py
 ```
-If you want to use our MySQL Docker Compose configuration, then run 
-Start serving the app via 
+If you want to use our MySQL Docker Compose configuration, then run the following command for starting the container.
 ```bash
 docker compose -f docker-compose.mysql.yml up -d
 ```
