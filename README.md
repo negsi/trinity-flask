@@ -155,7 +155,7 @@ Trinity agents execute complex web gathering, data processing, and analysis task
 
 The backend exposes a RESTful JSON API under the base path `/api/v1`. Below is the detailed endpoint documentation for managing agents, datasources, and chat interactions.
 
-### Agent
+### Agents
 
 <details>
 <summary><code>POST</code> <strong>/api/v1/agents</strong> — Create a new agent</summary>
