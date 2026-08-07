@@ -124,15 +124,17 @@ def stream_chat(
         - message (str, optional): User prompt text. Defaults to "Hallo!".
         - conversation_id (str, optional): Conversation thread context ID.
         - agent_id (str, optional): Target Agent ID (defaults to conversation_id).
-        - agent_name (str, optional): Display name of agent (defaults to "Agent").
-        - user_id (str, optional): ID of triggering user (defaults to "user-default").
 
     Args:
         orchestrator (AgentOrchestrator): Injected orchestrator handling ReAct loops and streaming.
+        agent_service (AgentService): Injected domain service to fetch agent metadata.
+        security_context (SecurityContextService): Injected service providing current actor context.
 
     Returns:
         Response: Flask HTTP Response object configured with mimetype 'text/event-stream'
                   and wrapped in stream_with_context to keep the application context active.
+
+    TODO: Implement schema validation
     """
     # 1. Safely extract JSON payload data from incoming request
     data = request.get_json(silent=True) or {}
