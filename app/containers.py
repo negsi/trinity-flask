@@ -22,18 +22,23 @@ from app.services.datasource_service import DatasourceService
 from app.services.llm_service import LLMService
 from app.services.messaging_service import MessagingService
 from app.services.security_context import SecurityContextService
+from app.services.message_attachment_service import MessageAttachmentService
 
 
 class Container(containers.DeclarativeContainer):
     """
     Declarative dependency injection container managing application lifetime 
     and service dependency resolution.
+
+    TODO: Refactor path configurations to a dedicated configuration provider or environment variable loader.
+    TODO: Refactor service instantiation and arguments. 
     """
 
     # Path configuration for internal file storage
     _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
     _PROJECT_ROOT = os.path.dirname(_CURRENT_DIR)
     _UPLOAD_PATH = os.path.join(_PROJECT_ROOT, "instance", "uploads")
+    _MESSAGE_UPLOAD_PATH = os.path.join(_PROJECT_ROOT, "instance", "uploads", "messages")
 
     # Application Configuration Provider
     config = providers.Configuration()
@@ -78,10 +83,16 @@ class Container(containers.DeclarativeContainer):
         upload_folder=_UPLOAD_PATH,
     )
 
+    message_attachment_service = providers.Factory(
+        MessageAttachmentService,
+        upload_folder=_MESSAGE_UPLOAD_PATH,
+    )
+
     messaging_service = providers.Factory(
         MessagingService,
         message_repo=message_repository,
         conversation_repo=conversation_repository,
+        attachment_service=message_attachment_service
     )
 
     llm_service = providers.Factory(

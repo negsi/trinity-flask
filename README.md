@@ -404,9 +404,6 @@ Persists a message in a conversation. If `conversation_id` is omitted or `null`,
 ```json
 {
   "conversation_id": "conv-1234-5678",
-  "sender_id": "usr-001",
-  "sender_type": "user",
-  "sender_name": "Alice",
   "text": "Can you summarize the attached manual?",
   "recipient_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab"
 }
@@ -415,11 +412,9 @@ Persists a message in a conversation. If `conversation_id` is omitted or `null`,
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
 | `conversation_id` | `string` | No | ID of existing conversation (new one created if null) |
-| `sender_id` | `string` | **Yes** | ID of the message author |
-| `sender_type` | `string` | **Yes** | Enum: `"user"`, `"agent"`, or `"system"` |
-| `sender_name` | `string` | **Yes** | Display name of the sender |
 | `text` | `string` | **Yes** | Message payload text |
 | `recipient_id` | `string` | No | Target recipient ID (e.g., Agent ID) |
+| `files` | `file` (array) | No | Optional file attachments |
 
 **Responses:**
 
@@ -433,6 +428,17 @@ Persists a message in a conversation. If `conversation_id` is omitted or `null`,
     "sender_name": "Alice",
     "text": "Can you summarize the attached manual?",
     "recipient_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+    "attachments": [
+      {
+        "id": "att-10293847",
+        "name": "manual.pdf",
+        "filename": "f83a12cd-89ab-4c3d_manual.pdf",
+        "file_path": "uploads/f83a12cd-89ab-4c3d_manual.pdf",
+        "mime_type": "application/pdf",
+        "file_size": 1048576,
+        "message_id": "msg-99887766"
+      }
+    ],
     "timestamp": "2025-02-23T14:30:00.000000+00:00"
   }
   ```
@@ -452,7 +458,7 @@ Persists a message in a conversation. If `conversation_id` is omitted or `null`,
 <br>
 
 **Description:**  
-Retrieves chronological message history for a specific conversation ID.
+Retrieves chronological message history for a specific conversation ID, including associated file attachments.
 
 **Path Parameters:**
 - `conversation_id` (`string`): The conversation ID.
@@ -468,9 +474,20 @@ Retrieves chronological message history for a specific conversation ID.
       "sender_id": "usr-001",
       "sender_type": "user",
       "sender_name": "Alice",
-      "text": "Hello Agent!",
+      "text": "Hello Agent, here is the document.",
       "recipient_id": "agent-123",
-      "timestamp": "2025-02-23T14:28:00+00:00"
+      "attachments": [
+        {
+          "id": "att-10293847",
+          "name": "document.pdf",
+          "filename": "uuid_document.pdf",
+          "file_path": "uploads/uuid_document.pdf",
+          "mime_type": "application/pdf",
+          "file_size": 512000,
+          "message_id": "msg-001"
+        }
+      ],
+      "timestamp": "2026-08-07T14:28:00+00:00"
     },
     {
       "id": "msg-002",
@@ -478,9 +495,10 @@ Retrieves chronological message history for a specific conversation ID.
       "sender_id": "agent-123",
       "sender_type": "agent",
       "sender_name": "Trinity Assistant",
-      "text": "Hello Alice! How can I help you today?",
+      "text": "Hello Alice! I have analyzed your document. How can I help you with it?",
       "recipient_id": "usr-001",
-      "timestamp": "2025-02-23T14:28:02+00:00"
+      "attachments": [],
+      "timestamp": "2026-08-07T14:28:02+00:00"
     }
   ]
   ```

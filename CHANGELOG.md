@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - implemented proper SSE streaming and event formatting
+- user messages now can hold file attachments (flask db upgrade)
 
 ## [0.0.2] - 2026-08-06
 

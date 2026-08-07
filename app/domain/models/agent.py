@@ -6,8 +6,9 @@ Represents an AI agent entity, its core instructions, and attached knowledge dat
 
 from dataclasses import dataclass, field
 from typing import List, Optional
+
 from app.domain.errors import ValidationError
-from .datasource import Datasource
+from app.domain.models.datasource import Datasource
 
 
 @dataclass

@@ -2,7 +2,7 @@
 Agent Context Builder Service.
 
 Responsible for assembling complete LLM prompts by combining system instructions,
-agent parameters, and uploaded knowledge base datasources.
+agent parameters, uploaded knowledge base datasources, and message attachments.
 """
 
 import logging
@@ -26,13 +26,19 @@ class AgentContextBuilder:
     def __init__(self, agent_service: AgentService):
         self.agent_service = agent_service
 
-    def build_llm_messages(self, user_text: str, agent_id: Optional[str]) -> List[LLMMessage]:
+    def build_llm_messages(
+        self,
+        user_text: str,
+        agent_id: Optional[str],
+        attachments: Optional[List[object]] = None,
+    ) -> List[LLMMessage]:
         """
         Builds system and user messages for an LLM prompt turn.
 
         Args:
             user_text (str): Primary user input string.
             agent_id (Optional[str]): Target agent ID for prompt customization.
+            attachments (Optional[List[object]]): Optional list of MessageAttachment objects attached to the user message.
 
         Returns:
             List[LLMMessage]: Constructed list of messages.
@@ -56,13 +62,25 @@ class AgentContextBuilder:
                         if ds_context:
                             system_prompts.append(ds_context)
             except Exception as e:
-                logger.error(f"Error loading agent prompt context for '{agent_id}': {e}", exc_info=True)
+                logger.error(
+                    f"Error loading agent prompt context for '{agent_id}': {e}",
+                    exc_info=True,
+                )
 
         combined_system_prompt = "\n\n---\n\n".join(system_prompts)
 
+        # 1. User-Text aufbauen
+        final_user_content = user_text or ""
+
+        # 2. Falls Nachrichten-Anhänge dabei sind, deren Inhalt auslesen und an den User-Text anhängen
+        if attachments:
+            att_context = self._format_attachments_context(attachments)
+            if att_context:
+                final_user_content += f"\n\n{att_context}"
+
         return [
             LLMMessage(role="system", content=combined_system_prompt),
-            LLMMessage(role="user", content=user_text),
+            LLMMessage(role="user", content=final_user_content),
         ]
 
     def _load_base_prompt(self) -> str:
@@ -71,7 +89,9 @@ class AgentContextBuilder:
             if BASE_PROMPT_PATH.exists():
                 content = BASE_PROMPT_PATH.read_text(encoding="utf-8")
                 response_format = self._load_response_format()
-                return content.replace("{base_agent.response_format.md}", response_format).strip()
+                return content.replace(
+                    "{base_agent.response_format.md}", response_format
+                ).strip()
         except Exception as e:
             logger.error(f"Error loading base prompt ({BASE_PROMPT_PATH}): {e}")
         return ""
@@ -103,6 +123,32 @@ class AgentContextBuilder:
             if content:
                 context_blocks.append(
                     f"--- START FILE: {filename} ---\n{content}\n--- END FILE: {filename} ---"
+                )
+
+        return "\n\n".join(context_blocks)
+
+    def _format_attachments_context(self, attachments: list) -> str:
+        """Formats message attachments into text context blocks for the current turn."""
+        if not attachments:
+            return ""
+
+        context_blocks = ["### ATTACHED_FILES_IN_THIS_MESSAGE:"]
+        for att in attachments:
+            filename = (
+                getattr(att, "name", None)
+                or getattr(att, "filename", None)
+                or getattr(att, "original_filename", "Untitled")
+            )
+            file_path = getattr(att, "file_path", None)
+            mime_type = getattr(att, "mime_type", "")
+
+            if not file_path:
+                continue
+
+            content = self._extract_file_content(file_path, mime_type)
+            if content:
+                context_blocks.append(
+                    f"--- START ATTACHMENT: {filename} ---\n{content}\n--- END ATTACHMENT: {filename} ---"
                 )
 
         return "\n\n".join(context_blocks)

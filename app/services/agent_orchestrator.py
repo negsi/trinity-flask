@@ -21,7 +21,6 @@ from app.domain.models.llm_execution import LLMExecution
 from app.services.task_executer import TaskExecutor
 from app.services.tools import SYSTEM_TOOLS
 
-# Initialize logger for tracking orchestrator operations
 logger = logging.getLogger(__name__)
 
 
@@ -29,15 +28,6 @@ logger = logging.getLogger(__name__)
 class ReActTurnState:
     """
     Mutable state container managing multi-turn ReAct loop execution.
-
-    Attributes:
-        user_prompt (str): Active prompt input for the current turn iteration.
-        accumulated_all_text (list[str]): Complete text history accumulated across all turns.
-        last_chain_chunks (list[str]): Text chunks emitted specifically during the last tool execution.
-        saved_message (Optional[Message]): Reference to the persisted agent database Message entity.
-        is_complete (bool): Flag indicating if the ReAct goal has been fully satisfied.
-        turn_count (int): Counter tracking the current ReAct iteration step.
-        max_turns (int): Safety threshold defining maximum permitted ReAct turns (prevents infinite loops).
     """
     user_prompt: str
     accumulated_all_text: list[str] = field(default_factory=list)
@@ -60,15 +50,6 @@ class AgentOrchestrator:
         messaging_service: MessagingService,
         llm_execution_repo: SQLAlchemyLLMExecutionRepository,
     ):
-        """
-        Initializes the AgentOrchestrator with required domain services and repositories.
-
-        Args:
-            llm_service (LLMService): Service routing prompts to LLM provider backends.
-            context_builder (AgentContextBuilder): Service constructing system instructions & knowledge context.
-            messaging_service (MessagingService): Service handling chat message creation and updates.
-            llm_execution_repo (SQLAlchemyLLMExecutionRepository): Repository persisting task chain state.
-        """
         self.llm_service = llm_service
         self.context_builder = context_builder
         self.messaging_service = messaging_service
@@ -84,43 +65,49 @@ class AgentOrchestrator:
     ) -> Generator[str, None, None]:
         """
         Streams parsed text response chunks live to the client while executing multi-turn ReAct task chains.
-
-        Workflow:
-          1. Constructs the system prompt and context for the target agent.
-          2. Streams LLM tokens while stripping embedded JSON response markers.
-          3. Creates an initial agent Message record in the database.
-          4. If a task chain JSON block is detected, executes tool steps via TaskExecutor.
-          5. If the task chain is incomplete, loops back for follow-up LLM reasoning turns.
-          6. Updates the database message with final accumulated text output once completed.
-
-        Args:
-            user_text (str): Initial input prompt submitted by the user.
-            conversation_id (str): Identifier of the active conversation context.
-            agent_id (str): Identifier of the responding AI agent.
-            agent_name (str): Display name of the responding agent.
-            user_id (str): Identifier of the user initiating the request.
-
-        Yields:
-            Generator[str, None, None]: Live text token strings formatted for response streaming.
         """
+        # 1. Bereits gespeicherte Nachricht-Anhänge aus dem MessageRepository holen
+        fetched_attachments = []
+        if conversation_id and hasattr(self.messaging_service, "message_repo"):
+            try:
+                messages = self.messaging_service.message_repo.get_by_conversation(conversation_id)
+                if messages:
+                    user_messages = [
+                        m for m in messages if m.sender_type == ActorType.USER
+                    ]
+                    if user_messages:
+                        latest_msg = user_messages[-1]
+                        fetched_attachments = getattr(latest_msg, "attachments", []) or []
+            except Exception as e:
+                logger.error(
+                    f"Error fetching attachments for conversation '{conversation_id}': {e}",
+                    exc_info=True,
+                )
+
         # Initialize mutable state tracking across ReAct turns
         state = ReActTurnState(user_prompt=user_text)
 
         # Helper adapter allowing TaskExecutor to stream nested LLM calls if requested by tools
         def llm_stream_adapter(prompt_text: str) -> Generator[str, None, None]:
             messages = self.context_builder.build_llm_messages(
-                user_text=prompt_text, agent_id=agent_id
+                user_text=prompt_text,
+                agent_id=agent_id,
+                attachments=fetched_attachments,
             )
             yield from self.llm_service.stream(messages)
 
         # === ReAct Multi-Turn Loop ===
         while not state.is_complete and state.turn_count < state.max_turns:
             state.turn_count += 1
-            logger.info(f"[AgentOrchestrator] Starting ReAct Turn {state.turn_count}/{state.max_turns}...")
+            logger.info(
+                f"[AgentOrchestrator] Starting ReAct Turn {state.turn_count}/{state.max_turns}..."
+            )
 
-            # Build full system instructions and prompt context
+            # Build full system instructions and prompt context (inkl. Attachments)
             llm_messages = self.context_builder.build_llm_messages(
-                user_text=state.user_prompt, agent_id=agent_id
+                user_text=state.user_prompt,
+                agent_id=agent_id,
+                attachments=fetched_attachments,
             )
 
             parser = StreamResponseParser()
@@ -131,7 +118,6 @@ class AgentOrchestrator:
             for chunk in self.llm_service.stream(llm_messages):
                 if not chunk:
                     continue
-                # Process chunk through stream parser to separate plain text from JSON payloads
                 display_text, json_data = parser.process_chunk(chunk)
                 if display_text:
                     accumulated_turn_text.append(display_text)
@@ -159,7 +145,6 @@ class AgentOrchestrator:
 
             # --- Step 3: Check if task chain JSON was received ---
             if not extracted_json_payload:
-                # Standard conversational text response without tools -> complete ReAct loop
                 state.is_complete = True
                 break
 
@@ -174,7 +159,6 @@ class AgentOrchestrator:
                 state.is_complete = True
                 break
 
-            # Persist initial execution plan step models to SQL storage
             self._save_execution_safe(execution)
 
             executor = TaskExecutor(
@@ -183,7 +167,6 @@ class AgentOrchestrator:
             chain_parser = StreamResponseParser()
             chain_text_chunks = []
 
-            # Execute tool steps and stream output back live
             chain_gen = executor.execute_chain_stream(execution)
 
             try:
@@ -196,7 +179,6 @@ class AgentOrchestrator:
                             state.accumulated_all_text.append(display_text)
                             yield display_text
             except StopIteration as e:
-                # Capture return value from generator (ChainExecutionResult)
                 exec_result = e.value
                 state.is_complete = exec_result.is_complete if exec_result else True
                 last_result = exec_result.last_result if exec_result else ""
@@ -211,7 +193,6 @@ class AgentOrchestrator:
             if chain_text_chunks:
                 state.last_chain_chunks = chain_text_chunks
 
-            # Exit loop if plan execution reports completion
             if state.is_complete:
                 break
 
@@ -234,10 +215,6 @@ class AgentOrchestrator:
         recipient_id: str,
         text: str,
     ) -> Optional[Message]:
-        """
-        Ensures an agent Message record exists in the database.
-        Creates a new Message entity on the first turn if one does not exist yet.
-        """
         if existing_message or not conversation_id:
             return existing_message
         try:
@@ -254,14 +231,12 @@ class AgentOrchestrator:
             return None
 
     def _save_execution_safe(self, execution: LLMExecution) -> None:
-        """Safely persists LLMExecution records while intercepting database exceptions."""
         try:
             self.llm_execution_repo.save(execution)
         except Exception as e:
             logger.error(f"Error persisting LLMExecution state: {e}", exc_info=True)
 
     def _finalize_message_update(self, state: ReActTurnState) -> None:
-        """Updates the stored database message entry with the final accumulated text output."""
         final_text = (
             "".join(state.last_chain_chunks).strip()
             if state.last_chain_chunks
@@ -277,9 +252,5 @@ class AgentOrchestrator:
                 logger.error(f"Error performing final message update: {e}", exc_info=True)
 
     def handle_incoming_message(self, message: Message) -> None:
-        """
-        Observer event listener for incoming messaging events.
-        Filters out self-emitted agent messages or messages without valid recipients.
-        """
         if message.sender_type == ActorType.AGENT or not message.recipient_id:
             return
