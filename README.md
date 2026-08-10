@@ -153,6 +153,15 @@ Trinity agents execute complex web gathering, data processing, and analysis task
      - **`mode`** (string, optional): File write mode. Use `"w"` to overwrite or create a new file (default), or `"a"` to append to an existing file.
      - Files are automatically isolated and saved inside the active conversation directory.
 
+4. **`send_email`**
+   - **Purpose:** Sends an email message via local mail transfer agents (e.g., Postfix/Sendmail) or remote SMTP servers.
+   - **Rules & Syntax:**
+     - **`to_email`** (string, required): Target recipient email address.
+     - **`subject`** (string, required): Subject line of the email.
+     - **`body`** (string, required): The text or HTML body content. Supports step reference placeholders (e.g., `[STEP_3]`).
+     - **`is_html`** (boolean, optional): Set to `true` if the body contains HTML markup. Defaults to `false`.
+     - Automatically routes through local unauthenticated delivery or configured SMTP credentials via the application's `EmailService`.
+
 ### Task Execution Workflow
 
 - **Internal Knowledge / Datasources:** For queries answerable directly via model knowledge or uploaded files (Knowledge Base), the agent responds immediately without triggering external tools.

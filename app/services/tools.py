@@ -8,6 +8,8 @@ and central tool registration.
 import io, os, pathlib, json, requests, feedparser
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
+from flask import current_app
+from typing import Any, Optional
 
 
 def fetch_url(url: str, **kwargs) -> str:
@@ -182,9 +184,39 @@ def write_file(
         print(f"[ToolExecutor] Error writing to file {file_path}: {e}")
         return f"Error writing to file '{file_path}': {e}"
 
+def send_email(
+    to_email: str, 
+    subject: str, 
+    body: str, 
+    is_html: bool = False, 
+    email_service: Optional[Any] = None, 
+    **kwargs
+) -> str:
+    """
+    Sends an email using the injected EmailService or resolves it via Flask DI container.
+    """
+    try:
+        service = email_service
+        if service is None and current_app:
+            service = current_app.container.email_service()
+
+        if service is None:
+            return "Error: EmailService dependency is not available."
+
+        return service.send_email(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            is_html=is_html
+        )
+    except Exception as e:
+        print(f"[ToolExecutor] Error executing send_email: {e}")
+        return f"Error executing send_email tool: {e}"
+
 # Central Tool Registry dictionary mapping tool names to python callables
 SYSTEM_TOOLS = {
     "fetch_url": fetch_url,
     "message_llm": message_llm,
-    "write_file": write_file
+    "write_file": write_file,
+    "send_email": send_email
 }

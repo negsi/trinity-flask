@@ -5,8 +5,8 @@ Executes individual steps of a structured LLM task chain and resolves context pa
 """
 
 import logging
-from typing import Dict, Any, Generator, Callable, Optional
 from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, Generator, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +25,12 @@ class TaskExecutor:
     def __init__(
         self,
         tools: Dict[str, Callable],
-        llm_stream_func: Optional[Callable[[str], Generator[str, None, None]]] = None
+        llm_stream_func: Optional[Callable[[str], Generator[str, None, None]]] = None,
+        email_service: Optional[Any] = None
     ):
         self.tools = tools
         self.llm_stream_func = llm_stream_func
+        self.email_service = email_service
 
     def execute_chain_stream(
         self, execution: Any,
@@ -83,6 +85,10 @@ class TaskExecutor:
             yield output
             return
 
+        # Ensures double linebreaks between sequential LLM streaming outputs in UI
+        if context.get("has_previous_llm_output", False):
+            yield "\n\n"
+
         accumulated_response = []
         try:
             for chunk in self.llm_stream_func(prompt):
@@ -98,6 +104,7 @@ class TaskExecutor:
         full_output = "".join(accumulated_response)
         context[f"step_{step_num}"] = full_output
         context["last_result"] = full_output
+        context["has_previous_llm_output"] = True
 
     def _execute_standard_tool(
         self, step_num: int, tool_name: str, params: Dict[str, Any], context: Dict[str, Any]
@@ -112,10 +119,13 @@ class TaskExecutor:
         try:
             tool_func = self.tools[tool_name]
             
+            # Pass contextual variables if expected
             if "conversation_id" in context and "conversation_id" not in params:
                 params["conversation_id"] = context["conversation_id"]
             if "base_dir" in context and "base_dir" not in params:
                 params["base_dir"] = context["base_dir"]
+            if self.email_service and "email_service" not in params:
+                params["email_service"] = self.email_service
 
             output = str(tool_func(**params))
             context[f"step_{step_num}"] = output

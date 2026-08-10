@@ -23,6 +23,7 @@ from app.services.llm_service import LLMService
 from app.services.messaging_service import MessagingService
 from app.services.security_context import SecurityContextService
 from app.services.message_attachment_service import MessageAttachmentService
+from app.services.email_service import EmailService
 
 
 class Container(containers.DeclarativeContainer):
@@ -100,6 +101,15 @@ class Container(containers.DeclarativeContainer):
         LLMService,
         default_provider=config.LLM_PROVIDER,
         model_name=config.LLM_MODEL,
+    )
+
+    email_service = providers.Singleton(
+        EmailService,
+        server=config.SMTP_SERVER,
+        port=config.SMTP_PORT,
+        user=config.SMTP_USER,
+        password=config.SMTP_PASSWORD,
+        sender=config.SMTP_FROM,
     )
 
     # -------------------------------------------------------------------------
