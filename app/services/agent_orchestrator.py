@@ -13,7 +13,9 @@ from app.domain.enums import ActorType
 from app.domain.models.message import Message
 from app.domain.models.message_attachment import MessageAttachment
 from app.domain.models.llm_execution import LLMExecution
-from app.repositories.sqlalchemy_llm_execution_repository import SQLAlchemyLLMExecutionRepository
+from app.repositories.sqlalchemy_llm_execution_repository import (
+    SQLAlchemyLLMExecutionRepository,
+)
 from app.services.llm_service import LLMService
 from app.services.messaging_service import MessagingService
 from app.services.agent_context_builder import AgentContextBuilder
@@ -61,13 +63,17 @@ class AgentOrchestrator:
         user_id: str,
     ) -> Generator[str, None, None]:
         """Streams text chunks live while running multi-turn ReAct task chains."""
-        fetched_attachments = self._get_conversation_attachments(conversation_id)
+        fetched_attachments = self.messaging_service.get_latest_user_attachments(
+            conversation_id
+        )
         state = ReActTurnState(user_prompt=user_text)
 
         while not state.is_complete and state.turn_count < state.max_turns:
             state.turn_count += 1
             logger.info(
-                f"[AgentOrchestrator] Starting ReAct Turn {state.turn_count}/{state.max_turns}..."
+                "[AgentOrchestrator] Starting ReAct Turn %s/%s...",
+                state.turn_count,
+                state.max_turns,
             )
 
             # Step 1: Run standard stream turn
@@ -124,23 +130,6 @@ class AgentOrchestrator:
 
         self._finalize_message_update(state)
 
-    def _get_conversation_attachments(self, conversation_id: str) -> list[MessageAttachment]:
-        """Retrieves attachments from the most recent user message in a conversation."""
-        if not conversation_id or not hasattr(self.messaging_service, "message_repo"):
-            return []
-
-        try:
-            messages = self.messaging_service.message_repo.get_by_conversation(conversation_id)
-            user_messages = [m for m in messages if m.sender_type == ActorType.USER]
-            if user_messages:
-                return user_messages[-1].attachments or []
-        except Exception as e:
-            logger.error(
-                f"Error fetching attachments for conversation '{conversation_id}': {e}",
-                exc_info=True,
-            )
-        return []
-
     def _run_stream_turn(
         self,
         state: ReActTurnState,
@@ -183,6 +172,7 @@ class AgentOrchestrator:
         state: ReActTurnState,
     ) -> Generator[str, None, str]:
         """Executes a structured task chain and streams sub-step responses."""
+
         def llm_stream_adapter(prompt_text: str) -> Generator[str, None, None]:
             system_instruction = (
                 "System Notice: You are executing a sub-step execution task. "
@@ -203,7 +193,9 @@ class AgentOrchestrator:
         chain_text_chunks = []
         last_result = ""
 
-        chain_gen = executor.execute_chain_stream(execution, initial_context=initial_context)
+        chain_gen = executor.execute_chain_stream(
+            execution, initial_context=initial_context
+        )
 
         try:
             while True:
@@ -253,7 +245,7 @@ class AgentOrchestrator:
                 recipient_id=recipient_id,
             )
         except Exception as e:
-            logger.error(f"Error creating agent message record: {e}", exc_info=True)
+            logger.error("Error creating agent message record: %s", e, exc_info=True)
             return None
 
     def _save_execution_safe(self, execution: LLMExecution) -> None:
@@ -261,7 +253,7 @@ class AgentOrchestrator:
         try:
             self.llm_execution_repo.save(execution)
         except Exception as e:
-            logger.error(f"Error persisting LLMExecution state: {e}", exc_info=True)
+            logger.error("Error persisting LLMExecution state: %s", e, exc_info=True)
 
     def _finalize_message_update(self, state: ReActTurnState) -> None:
         """Performs final update on agent message content in database."""
@@ -277,7 +269,7 @@ class AgentOrchestrator:
                     message_id=state.saved_message.id, text=final_text
                 )
             except Exception as e:
-                logger.error(f"Error updating final message text: {e}", exc_info=True)
+                logger.error("Error updating final message text: %s", e, exc_info=True)
 
     def handle_incoming_message(self, message: Message) -> None:
         """Subscribed event callback for incoming messages."""

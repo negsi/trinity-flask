@@ -22,7 +22,7 @@ class SQLAlchemyLLMExecutionRepository:
                 tool_name=s.get("tool"),
                 parameters=s.get("parameters", {}),
                 status=s.get("status", "pending"),
-                result=s.get("result")
+                result=s.get("result"),
             )
             for s in (model.steps or [])
         ]
@@ -35,14 +35,14 @@ class SQLAlchemyLLMExecutionRepository:
             summary_or_content=model.summary_or_content,
             is_complete=getattr(model, "is_complete", True),
             steps=steps,
-            created_at=model.created_at
+            created_at=model.created_at,
         )
 
     def save(self, execution: LLMExecution) -> LLMExecution:
         """Saves an execution log or updates existing step states in the database."""
         model = None
         if execution.id:
-            model = LLMExecutionModel.query.get(execution.id)
+            model = db.session.get(LLMExecutionModel, execution.id)
 
         steps_json = [
             {
@@ -51,7 +51,7 @@ class SQLAlchemyLLMExecutionRepository:
                 "tool": s.tool_name,
                 "parameters": s.parameters,
                 "status": s.status,
-                "result": s.result
+                "result": s.result,
             }
             for s in execution.steps
         ]
@@ -63,7 +63,7 @@ class SQLAlchemyLLMExecutionRepository:
                 response_type=execution.response_type.value,
                 summary_or_content=execution.summary_or_content,
                 is_complete=execution.is_complete,
-                steps=steps_json
+                steps=steps_json,
             )
             if execution.id:
                 model.id = execution.id
@@ -79,14 +79,13 @@ class SQLAlchemyLLMExecutionRepository:
 
     def get_by_id(self, execution_id: str) -> Optional[LLMExecution]:
         """Fetches an execution by ID."""
-        model = LLMExecutionModel.query.get(execution_id)
+        model = db.session.get(LLMExecutionModel, execution_id)
         return self._to_domain(model) if model else None
 
     def get_by_conversation(self, conversation_id: str) -> List[LLMExecution]:
         """Fetches all executions for a conversation ordered descending by timestamp."""
         models = (
-            LLMExecutionModel.query
-            .filter_by(conversation_id=conversation_id)
+            LLMExecutionModel.query.filter_by(conversation_id=conversation_id)
             .order_by(LLMExecutionModel.created_at.desc())
             .all()
         )

@@ -1,5 +1,14 @@
+"""
+Email Delivery Service Module.
+
+Handles outbound email dispatch via local or external SMTP servers.
+"""
+
 from email.message import EmailMessage
+import logging
 import smtplib
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
@@ -41,63 +50,48 @@ class EmailService:
             Defaults to False.
 
         Returns:
-            str: Status message indicating successful delivery or error
-            details.
+            str: Status message indicating successful delivery or error details.
         """
-        print(
-            f"[DEBUG] Attempting mail to {to_email} via {self.server}:{self.port} (Auth Pass: {bool(self.password)})"
+        logger.debug(
+            "Attempting mail to %s via %s:%s (Auth Pass: %s)",
+            to_email,
+            self.server,
+            self.port,
+            bool(self.password),
         )
 
         try:
-            # Create a standard email message object
             msg = EmailMessage()
             msg["Subject"] = subject
             msg["From"] = self.sender
             msg["To"] = to_email
 
-            # Configure message payload based on content type
             if is_html:
-                # Provide a fallback plain-text message for non-HTML mail clients
                 msg.set_content("Please enable HTML to view this email.")
-                # Attach the HTML content version
                 msg.add_alternative(body, subtype="html")
             else:
                 msg.set_content(body)
 
-            # Route 1: Local server or unauthenticated connection (e.g., localhost, Mailpit, local Postfix)
+            # Route 1: Local server or unauthenticated connection
             if self.server in ["localhost", "127.0.0.1"] or not self.password:
-                print(
-                    f"[DEBUG] Connecting to SMTP server {self.server}:{self.port}..."
-                )
-                with smtplib.SMTP(
-                    self.server, self.port, timeout=10
-                ) as server:
-                    print("[DEBUG] Connected! Sending message...")
+                logger.debug("Connecting to SMTP server %s:%s...", self.server, self.port)
+                with smtplib.SMTP(self.server, self.port, timeout=10) as server:
+                    logger.debug("Connected! Sending message...")
                     server.send_message(msg)
-                    print("[DEBUG] SENT via local mail server!")
-                return (
-                    f"Successfully sent email to '{to_email}' via local mail"
-                    " server."
-                )
+                    logger.debug("SENT via local mail server!")
+                return f"Successfully sent email to '{to_email}' via local mail server."
 
             # Route 2: External SMTP server with TLS authentication
-            print(
-                f"[DEBUG] Connecting to external SMTP {self.server}:{self.port}..."
-            )
+            logger.debug("Connecting to external SMTP %s:%s...", self.server, self.port)
             with smtplib.SMTP(self.server, self.port, timeout=10) as server:
-                # Upgrade connection to secure TLS if using standard submission port 587
                 if self.port == 587:
                     server.starttls()
-                # Authenticate if credentials are provided
                 if self.user and self.password:
                     server.login(self.user, self.password)
                 server.send_message(msg)
-                print("[DEBUG] SENT via external SMTP!")
+                logger.debug("SENT via external SMTP!")
             return f"Successfully sent email to '{to_email}' via SMTP."
 
         except Exception as e:
-            # Catch all transport and configuration errors gracefully
-            print(
-                f"[DEBUG ERROR] Failed to send email: {type(e).__name__}: {e}"
-            )
+            logger.error("Failed to send email: %s: %s", type(e).__name__, e, exc_info=True)
             return f"Error sending email: {e}"

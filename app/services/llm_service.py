@@ -4,9 +4,12 @@ LLM Service Proxy Module.
 Routes prompt messages to configured provider backends (e.g. Gemini, OpenAI) via the Provider Registry.
 """
 
+import logging
 from typing import Generator, List
 from app.domain.llm import LLMMessage
 from app.services.llm.registry import ProviderRegistry
+
+logger = logging.getLogger(__name__)
 
 
 class LLMService:
@@ -36,5 +39,5 @@ class LLMService:
         name = provider_name or self.default_provider
         provider = self.registry.get(name)
 
-        print(f"[DEBUG LLMService] Routing request to provider: '{name}'")
+        logger.debug("Routing request to provider: '%s'", name)
         yield from provider.stream(messages)

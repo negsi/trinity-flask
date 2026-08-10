@@ -8,7 +8,6 @@ and real-time streaming LLM agent responses via Server-Sent Events (SSE).
 from typing import Generator
 from flask import Blueprint, jsonify, Response, request, stream_with_context
 from dependency_injector.wiring import inject, Provide
-from pydantic import ValidationError as PydanticValidationError
 
 from app.containers import Container
 from app.services.messaging_service import MessagingService
@@ -16,7 +15,7 @@ from app.services.agent_orchestrator import AgentOrchestrator
 from app.services.security_context import SecurityContextService
 from app.services.agent_service import AgentService
 from app.routes.schemas import SendMessageRequest
-from app.domain.errors import ValidationError, NotFoundError
+from app.domain.errors import ValidationError
 
 chat_bp = Blueprint("chat", __name__, url_prefix="/api/v1/chat")
 
@@ -25,7 +24,9 @@ chat_bp = Blueprint("chat", __name__, url_prefix="/api/v1/chat")
 @inject
 def send_message(
     messaging_service: MessagingService = Provide[Container.messaging_service],
-    security_context: SecurityContextService = Provide[Container.security_context_service],
+    security_context: SecurityContextService = Provide[
+        Container.security_context_service
+    ],
 ):
     """
     Persist a chat message in a conversation with optional file attachments.
@@ -67,11 +68,13 @@ def get_conversation_history(
     messaging_service: MessagingService = Provide[Container.messaging_service],
 ):
     """Retrieve historical messages for a specific conversation."""
-    history = messaging_service.message_repo.get_by_conversation(conversation_id)
+    history = messaging_service.get_conversation_history(conversation_id)
     return jsonify([msg.to_dict() for msg in history]), 200
 
 
-def sse_formatter(generator: Generator[str, None, None]) -> Generator[str, None, None]:
+def sse_formatter(
+    generator: Generator[str, None, None],
+) -> Generator[str, None, None]:
     """
     Format text chunks into W3C compliant Server-Sent Events (SSE).
 
@@ -92,7 +95,9 @@ def sse_formatter(generator: Generator[str, None, None]) -> Generator[str, None,
 def stream_chat(
     orchestrator: AgentOrchestrator = Provide[Container.agent_orchestrator],
     agent_service: AgentService = Provide[Container.agent_service],
-    security_context: SecurityContextService = Provide[Container.security_context_service],
+    security_context: SecurityContextService = Provide[
+        Container.security_context_service
+    ],
 ):
     """Stream an LLM agent's response live using Server-Sent Events (SSE)."""
     data = request.get_json(silent=True) or {}

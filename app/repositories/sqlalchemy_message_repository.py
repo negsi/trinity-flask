@@ -51,7 +51,7 @@ class SQLAlchemyMessageRepository(MessageRepository):
 
     def save(self, message: Message) -> Message:
         """Persists or updates a message record along with attached files."""
-        db_msg = MessageModel.query.get(message.id) if message.id else None
+        db_msg = db.session.get(MessageModel, message.id) if message.id else None
 
         sender_type_val = (
             message.sender_type.value
@@ -82,7 +82,7 @@ class SQLAlchemyMessageRepository(MessageRepository):
 
         # Synchronize message attachments with ORM models
         db_msg.attachments = [
-            MessageAttachmentModel.query.get(att.id)
+            db.session.get(MessageAttachmentModel, att.id)
             or MessageAttachmentModel(
                 id=att.id,
                 name=att.name,
@@ -100,7 +100,7 @@ class SQLAlchemyMessageRepository(MessageRepository):
 
     def get_by_id(self, message_id: str) -> Message | None:
         """Fetches a message by ID."""
-        db_msg = MessageModel.query.get(message_id)
+        db_msg = db.session.get(MessageModel, message_id)
         return self._to_domain(db_msg) if db_msg else None
 
     def get_by_conversation(
