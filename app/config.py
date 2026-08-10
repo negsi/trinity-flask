@@ -17,28 +17,35 @@ class BaseConfig:
 
     # Database Configuration
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL_APP")
-    SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", "False") == "True"
+    SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", "False").lower() == "true"
     SQLALCHEMY_TRACK_MODIFICATIONS = (
-        os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", "False") == "True"
+        os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", "False").lower() == "true"
     )
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_pre_ping": os.getenv("SQLALCHEMY_ENGINE_POOL_PRE_PING", "True") == "True",
+        "pool_pre_ping": os.getenv("SQLALCHEMY_ENGINE_POOL_PRE_PING", "True").lower() == "true",
         "pool_recycle": int(os.getenv("SQLALCHEMY_ENGINE_POOL_RECYCLE", 280)),
         "pool_size": int(os.getenv("SQLALCHEMY_ENGINE_POOL_SIZE", 5)),
         "max_overflow": int(os.getenv("SQLALCHEMY_ENGINE_MAX_OVERFLOW", 10)),
     }
 
     # LLM Settings
-    LLM_PROVIDER = os.getenv("LLM_PROVIDER")
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
     LLM_API_KEY = os.getenv("LLM_API_KEY")
-    LLM_MODEL = os.getenv("LLM_MODEL")
+    LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash")
 
     # File Storage Settings
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     UPLOAD_FOLDER = os.getenv(
         "UPLOAD_FOLDER", os.path.join(BASE_DIR, "instance", "uploads")
     )
+    MESSAGE_UPLOAD_FOLDER = os.getenv(
+        "MESSAGE_UPLOAD_FOLDER", os.path.join(BASE_DIR, "instance", "uploads", "messages")
+    )
+    CONVERSATIONS_FOLDER = os.getenv(
+        "CONVERSATIONS_FOLDER", os.path.join(BASE_DIR, "instance", "conversations")
+    )
 
+    # SMTP Mail Settings
     SMTP_SERVER = os.getenv("SMTP_SERVER", "localhost")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "25"))
     SMTP_USER = os.getenv("SMTP_USER")
