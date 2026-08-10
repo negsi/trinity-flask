@@ -89,8 +89,22 @@ class AgentOrchestrator:
 
         # Helper adapter allowing TaskExecutor to stream nested LLM calls if requested by tools
         def llm_stream_adapter(prompt_text: str) -> Generator[str, None, None]:
+            """
+            Streams responses for nested LLM sub-tasks executed within tools (e.g., message_llm).
+
+            Prepends a strict system instruction header to ensure sub-step model calls return raw content
+            (e.g., HTML, code, summaries) rather than generating a new task chain JSON plan response wrapper.
+            """
+            system_instruction = (
+                "System Notice: You are executing a sub-step execution task. "
+                "Do NOT wrap your response in JSON (###START_JSON_RESPONSE###). "
+                "Do NOT output a task chain plan. "
+                "Provide strictly and directly the raw requested text/code response.\n\n"
+            )
+            full_prompt = system_instruction + prompt_text
+
             messages = self.context_builder.build_llm_messages(
-                user_text=prompt_text,
+                user_text=full_prompt,
                 agent_id=agent_id,
                 attachments=fetched_attachments,
             )
@@ -164,10 +178,15 @@ class AgentOrchestrator:
             executor = TaskExecutor(
                 tools=SYSTEM_TOOLS, llm_stream_func=llm_stream_adapter
             )
+
+            initial_context = {
+                "conversation_id": conversation_id
+            }
+
             chain_parser = StreamResponseParser()
             chain_text_chunks = []
 
-            chain_gen = executor.execute_chain_stream(execution)
+            chain_gen = executor.execute_chain_stream(execution, initial_context=initial_context)
 
             try:
                 while True:

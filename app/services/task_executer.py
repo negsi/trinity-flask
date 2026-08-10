@@ -31,7 +31,8 @@ class TaskExecutor:
         self.llm_stream_func = llm_stream_func
 
     def execute_chain_stream(
-        self, execution: Any
+        self, execution: Any,
+        initial_context: Optional[Dict[str, Any]] = None
     ) -> Generator[str, None, ChainExecutionResult]:
         """
         Executes sequence steps and streams live output chunks.
@@ -42,7 +43,7 @@ class TaskExecutor:
         Yields:
             Generator[str, None, ChainExecutionResult]: Live execution output strings.
         """
-        context: Dict[str, Any] = {}
+        context: Dict[str, Any] = initial_context.copy() if initial_context else {}
 
         for step in execution.steps:
             step_num = step.step_number
@@ -110,6 +111,12 @@ class TaskExecutor:
 
         try:
             tool_func = self.tools[tool_name]
+            
+            if "conversation_id" in context and "conversation_id" not in params:
+                params["conversation_id"] = context["conversation_id"]
+            if "base_dir" in context and "base_dir" not in params:
+                params["base_dir"] = context["base_dir"]
+
             output = str(tool_func(**params))
             context[f"step_{step_num}"] = output
             context["last_result"] = output

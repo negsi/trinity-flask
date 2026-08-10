@@ -5,10 +5,7 @@ Provides standard Python tool implementations for web fetching, RSS parsing, PDF
 and central tool registration.
 """
 
-import io
-import json
-import requests
-import feedparser
+import io, os, pathlib, json, requests, feedparser
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
 
@@ -128,9 +125,66 @@ def message_llm(message: str) -> str:
     """Placeholder tool for nested LLM message calls."""
     return "foo"
 
+def write_file(
+    file_path: str, 
+    content: str, 
+    mode: str = "w", 
+    conversation_id: str = None, 
+    base_dir: str = None
+) -> str:
+    """
+    Writes or appends text content to a specified file path.
+    Automatically resolves relative paths into the active conversation workspace.
+
+    Args:
+        file_path (str): Relative or absolute target path for the file.
+        content (str): The string content payload to write.
+        mode (str, optional): File write mode. 'w' for overwrite/create, 'a' for append. Defaults to "w".
+        conversation_id (str, optional): Active conversation UUID for directory isolation. Defaults to None.
+        base_dir (str, optional): Root directory for conversation workspaces. Defaults to None.
+
+    Returns:
+        str: Status message indicating success or detailing an error.
+    """
+    try:
+        path = pathlib.Path(file_path)
+
+        # Resolve relative paths into the designated conversation directory
+        if not path.is_absolute():
+            if not base_dir:
+                # Fallback to default 'instance/conversations' root folder
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                project_root = os.path.dirname(os.path.dirname(current_dir))
+                base_dir = os.path.join(project_root, "instance", "conversations")
+
+            if conversation_id:
+                target_dir = pathlib.Path(base_dir) / conversation_id
+            else:
+                target_dir = pathlib.Path(base_dir) / "default"
+
+            path = target_dir / path
+
+        # Ensure target directory structure exists
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        if mode not in ["w", "a"]:
+            return f"Error: Invalid mode '{mode}'. Use 'w' (overwrite) or 'a' (append)."
+
+        with open(path, mode, encoding="utf-8") as f:
+            f.write(content)
+
+        action = "Appended to" if mode == "a" else "Successfully wrote to"
+        size = len(content)
+        print(f"[ToolExecutor] {action} {path} ({size} characters)")
+        return f"{action} file '{path.name}' at '{path}' ({size} characters written)."
+
+    except Exception as e:
+        print(f"[ToolExecutor] Error writing to file {file_path}: {e}")
+        return f"Error writing to file '{file_path}': {e}"
 
 # Central Tool Registry dictionary mapping tool names to python callables
 SYSTEM_TOOLS = {
     "fetch_url": fetch_url,
-    "message_llm": message_llm
+    "message_llm": message_llm,
+    "write_file": write_file
 }

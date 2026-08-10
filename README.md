@@ -145,6 +145,14 @@ Trinity agents execute complex web gathering, data processing, and analysis task
      - Uses step references to chain inputs from prior steps (e.g., using `[STEP_1]` as input for processing results obtained during step 1).
      - Strict placeholder syntax enforcement ensures reliable data flow between task steps.
 
+3. **`write_file`**
+   - **Purpose:** Writes or appends text content to a specified file within the active conversation workspace.
+   - **Rules & Syntax:**
+     - **`file_path`** (string, required): Relative path or filename (e.g., `summary.md` or `exports/data.json`).
+     - **`content`** (string, required): The text payload to write. Supports step reference placeholders (e.g., `[STEP_2]`).
+     - **`mode`** (string, optional): File write mode. Use `"w"` to overwrite or create a new file (default), or `"a"` to append to an existing file.
+     - Files are automatically isolated and saved inside the active conversation directory.
+
 ### Task Execution Workflow
 
 - **Internal Knowledge / Datasources:** For queries answerable directly via model knowledge or uploaded files (Knowledge Base), the agent responds immediately without triggering external tools.

@@ -39,6 +39,7 @@ class Container(containers.DeclarativeContainer):
     _PROJECT_ROOT = os.path.dirname(_CURRENT_DIR)
     _UPLOAD_PATH = os.path.join(_PROJECT_ROOT, "instance", "uploads")
     _MESSAGE_UPLOAD_PATH = os.path.join(_PROJECT_ROOT, "instance", "uploads", "messages")
+    _CONVERSATIONS_PATH = os.path.join(_PROJECT_ROOT, "instance", "conversations")
 
     # Application Configuration Provider
     config = providers.Configuration()
