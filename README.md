@@ -99,6 +99,12 @@ cp .env.template .env
 
 In `.env`, specify your AI provider, your preferred large language model, and the API token. If you want to use a MySQL-Server as storage backend, then add the necessary parameters there as well.
 
+Additionally, configure your mail setup depending on your environment:
+
+`Local Development (e.g., Mailpit):` Set `SMTP_SERVER=localhost` and `SMTP_PORT=1025`. Leave `SMTP_USER` and `SMTP_PASSWORD` empty.
+
+`External Mail Provider:` Enter your SMTP credentials (`SMTP_SERVER`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`) to send emails via an authenticated server using TLS.
+
 ### 7. Install Database schema
 
 ```bash
