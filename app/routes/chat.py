@@ -7,6 +7,7 @@ historical message records, and streaming real-time LLM agent responses via Serv
 
 from flask import Blueprint, jsonify, Response, request, current_app, stream_with_context
 from dependency_injector.wiring import inject, Provide
+from pydantic import ValidationError as PydanticValidationError
 
 from app.containers import Container
 from app.services.messaging_service import MessagingService
@@ -16,46 +17,61 @@ from app.services.agent_service import AgentService
 from app.routes.decorators import validate_json
 from app.routes.schemas import SendMessageRequest
 from app.domain.models.message import ActorType
+from app.domain.errors import ValidationError
 
 # Create a Flask Blueprint for chat endpoints under the prefix '/api/v1/chat'
 chat_bp = Blueprint("chat", __name__, url_prefix="/api/v1/chat")
 
 
 @chat_bp.route("/messages", methods=["POST"])
-@validate_json(SendMessageRequest)
 @inject
 def send_message(
-    dto: SendMessageRequest,
     messaging_service: MessagingService = Provide[Container.messaging_service],
     security_context: SecurityContextService = Provide[Container.security_context_service]
 ):
     """
-    Persist a chat message in a conversation.
+    Persist a chat message in a conversation with optional file attachments.
 
-    Validates the input JSON payload against the SendMessageRequest schema, converts the sender type
-    to an ActorType domain enum, saves the message, and notifies subscribed listeners (e.g., triggering agents).
+    Extracts request parameters from either 'application/json' or 'multipart/form-data' payloads,
+    validates the input against the SendMessageRequest schema, saves the message alongside any 
+    uploaded file attachments, and notifies subscribed listeners (e.g., triggering agents).
 
     Args:
-        dto (SendMessageRequest): Validated Data Transfer Object containing request parameters.
         messaging_service (MessagingService): Injected messaging domain service.
+        security_context (SecurityContextService): Injected service providing current actor context.
 
     Returns:
-        tuple[Response, int]: JSON representation of the saved Message domain entity and HTTP 201 Created status,
-                              or HTTP 400 Bad Request if the sender_type is invalid.
+        tuple[Response, int]: JSON representation of the saved Message domain entity (including attachments)
+                              and HTTP 201 Created status, or HTTP 400 Bad Request on validation failure.
     """
     current_actor = security_context.get_current_actor()
 
-    # 2. Persist message via MessagingService (creates conversation if conversation_id is None)
+    # 1. Parse payload and extracted files based on Request Content-Type
+    if request.is_json:
+        payload = request.get_json() or {}
+        files = []
+    else:
+        payload = request.form.to_dict()
+        files = request.files.getlist("files") or request.files.getlist("files[]") or request.files.getlist("file")
+
+    # 2. Validate payload against DTO schema
+    try:
+        dto = SendMessageRequest(**payload)
+    except PydanticValidationError as e:
+            raise ValidationError(f"INVALID_PAYLOAD: {e.errors()}")
+
+    # 3. Persist message and process attachments via MessagingService (creates conversation if conversation_id is None)
     saved_message = messaging_service.send_message(
         conversation_id=dto.conversation_id,
         sender_id=current_actor["id"],
         sender_type=current_actor["type"],
         sender_name=current_actor["name"],
         text=dto.text,
-        recipient_id=dto.recipient_id
+        recipient_id=dto.recipient_id,
+        files=files
     )
 
-    # 3. Return serialized message with HTTP 201 Created status
+    # 4. Return serialized message entity with HTTP 201 Created status
     return jsonify(saved_message.to_dict()), 201
 
 
@@ -85,6 +101,28 @@ def get_conversation_history(
     return jsonify([msg.to_dict() for msg in history]), 200
 
 
+def sse_formatter(generator):
+    """
+    Format raw text chunks into W3C compliant Server-Sent Events (SSE).
+
+    Splits incoming text chunks containing newlines into distinct 'data:' lines
+    to ensure inner newline characters do not corrupt the SSE event delimiter (\n\n).
+
+    Args:
+        generator (Generator[str, None, None]): Yielded raw text tokens or strings.
+
+    Yields:
+        Generator[str, None, None]: SSE-formatted stream frames ready for HTTP response.
+    """
+    for chunk in generator:
+        if not chunk:
+            continue
+        lines = chunk.split('\n')
+        for line in lines:
+            yield f"data: {line}\n"
+        yield "\n"  # Finalize the SSE event frame with trailing newline
+
+
 @chat_bp.route('/stream', methods=['POST'])
 @inject
 def stream_chat(
@@ -102,15 +140,17 @@ def stream_chat(
         - message (str, optional): User prompt text. Defaults to "Hallo!".
         - conversation_id (str, optional): Conversation thread context ID.
         - agent_id (str, optional): Target Agent ID (defaults to conversation_id).
-        - agent_name (str, optional): Display name of agent (defaults to "Agent").
-        - user_id (str, optional): ID of triggering user (defaults to "user-default").
 
     Args:
         orchestrator (AgentOrchestrator): Injected orchestrator handling ReAct loops and streaming.
+        agent_service (AgentService): Injected domain service to fetch agent metadata.
+        security_context (SecurityContextService): Injected service providing current actor context.
 
     Returns:
         Response: Flask HTTP Response object configured with mimetype 'text/event-stream'
                   and wrapped in stream_with_context to keep the application context active.
+
+    TODO: Implement schema validation
     """
     # 1. Safely extract JSON payload data from incoming request
     data = request.get_json(silent=True) or {}
@@ -130,16 +170,21 @@ def stream_chat(
 
     agent_name = agent.name
 
+    raw_stream = orchestrator.stream_agent_response(
+        user_text=user_text,
+        conversation_id=conversation_id,
+        agent_id=agent_id,
+        agent_name=agent_name,
+        user_id=user_id,
+    )
+
     # 2. Return SSE event-stream response using Flask's context streaming wrapper
     return Response(
-        stream_with_context(
-            orchestrator.stream_agent_response(
-                user_text=user_text,
-                conversation_id=conversation_id,
-                agent_id=agent_id,
-                agent_name=agent_name,
-                user_id=user_id,
-            )
-        ),
+        stream_with_context(sse_formatter(raw_stream)),
         mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',  
+            'Connection': 'keep-alive',
+        }
     )

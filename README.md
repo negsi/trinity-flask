@@ -99,6 +99,12 @@ cp .env.template .env
 
 In `.env`, specify your AI provider, your preferred large language model, and the API token. If you want to use a MySQL-Server as storage backend, then add the necessary parameters there as well.
 
+Additionally, configure your mail setup depending on your environment:
+
+`Local Development (e.g., Mailpit):` Set `SMTP_SERVER=localhost` and `SMTP_PORT=1025`. Leave `SMTP_USER` and `SMTP_PASSWORD` empty.
+
+`External Mail Provider:` Enter your SMTP credentials (`SMTP_SERVER`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`) to send emails via an authenticated server using TLS.
+
 ### 7. Install Database schema
 
 ```bash
@@ -144,6 +150,23 @@ Trinity agents execute complex web gathering, data processing, and analysis task
    - **Rules & Syntax:**
      - Uses step references to chain inputs from prior steps (e.g., using `[STEP_1]` as input for processing results obtained during step 1).
      - Strict placeholder syntax enforcement ensures reliable data flow between task steps.
+
+3. **`write_file`**
+   - **Purpose:** Writes or appends text content to a specified file within the active conversation workspace.
+   - **Rules & Syntax:**
+     - **`file_path`** (string, required): Relative path or filename (e.g., `summary.md` or `exports/data.json`).
+     - **`content`** (string, required): The text payload to write. Supports step reference placeholders (e.g., `[STEP_2]`).
+     - **`mode`** (string, optional): File write mode. Use `"w"` to overwrite or create a new file (default), or `"a"` to append to an existing file.
+     - Files are automatically isolated and saved inside the active conversation directory.
+
+4. **`send_email`**
+   - **Purpose:** Sends an email message via local mail transfer agents (e.g., Postfix/Sendmail) or remote SMTP servers.
+   - **Rules & Syntax:**
+     - **`to_email`** (string, required): Target recipient email address.
+     - **`subject`** (string, required): Subject line of the email.
+     - **`body`** (string, required): The text or HTML body content. Supports step reference placeholders (e.g., `[STEP_3]`).
+     - **`is_html`** (boolean, optional): Set to `true` if the body contains HTML markup. Defaults to `false`.
+     - Automatically routes through local unauthenticated delivery or configured SMTP credentials via the application's `EmailService`.
 
 ### Task Execution Workflow
 
@@ -404,9 +427,6 @@ Persists a message in a conversation. If `conversation_id` is omitted or `null`,
 ```json
 {
   "conversation_id": "conv-1234-5678",
-  "sender_id": "usr-001",
-  "sender_type": "user",
-  "sender_name": "Alice",
   "text": "Can you summarize the attached manual?",
   "recipient_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab"
 }
@@ -415,11 +435,9 @@ Persists a message in a conversation. If `conversation_id` is omitted or `null`,
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
 | `conversation_id` | `string` | No | ID of existing conversation (new one created if null) |
-| `sender_id` | `string` | **Yes** | ID of the message author |
-| `sender_type` | `string` | **Yes** | Enum: `"user"`, `"agent"`, or `"system"` |
-| `sender_name` | `string` | **Yes** | Display name of the sender |
 | `text` | `string` | **Yes** | Message payload text |
 | `recipient_id` | `string` | No | Target recipient ID (e.g., Agent ID) |
+| `files` | `file` (array) | No | Optional file attachments |
 
 **Responses:**
 
@@ -433,6 +451,17 @@ Persists a message in a conversation. If `conversation_id` is omitted or `null`,
     "sender_name": "Alice",
     "text": "Can you summarize the attached manual?",
     "recipient_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+    "attachments": [
+      {
+        "id": "att-10293847",
+        "name": "manual.pdf",
+        "filename": "f83a12cd-89ab-4c3d_manual.pdf",
+        "file_path": "uploads/f83a12cd-89ab-4c3d_manual.pdf",
+        "mime_type": "application/pdf",
+        "file_size": 1048576,
+        "message_id": "msg-99887766"
+      }
+    ],
     "timestamp": "2025-02-23T14:30:00.000000+00:00"
   }
   ```
@@ -452,7 +481,7 @@ Persists a message in a conversation. If `conversation_id` is omitted or `null`,
 <br>
 
 **Description:**  
-Retrieves chronological message history for a specific conversation ID.
+Retrieves chronological message history for a specific conversation ID, including associated file attachments.
 
 **Path Parameters:**
 - `conversation_id` (`string`): The conversation ID.
@@ -468,9 +497,20 @@ Retrieves chronological message history for a specific conversation ID.
       "sender_id": "usr-001",
       "sender_type": "user",
       "sender_name": "Alice",
-      "text": "Hello Agent!",
+      "text": "Hello Agent, here is the document.",
       "recipient_id": "agent-123",
-      "timestamp": "2025-02-23T14:28:00+00:00"
+      "attachments": [
+        {
+          "id": "att-10293847",
+          "name": "document.pdf",
+          "filename": "uuid_document.pdf",
+          "file_path": "uploads/uuid_document.pdf",
+          "mime_type": "application/pdf",
+          "file_size": 512000,
+          "message_id": "msg-001"
+        }
+      ],
+      "timestamp": "2026-08-07T14:28:00+00:00"
     },
     {
       "id": "msg-002",
@@ -478,9 +518,10 @@ Retrieves chronological message history for a specific conversation ID.
       "sender_id": "agent-123",
       "sender_type": "agent",
       "sender_name": "Trinity Assistant",
-      "text": "Hello Alice! How can I help you today?",
+      "text": "Hello Alice! I have analyzed your document. How can I help you with it?",
       "recipient_id": "usr-001",
-      "timestamp": "2025-02-23T14:28:02+00:00"
+      "attachments": [],
+      "timestamp": "2026-08-07T14:28:02+00:00"
     }
   ]
   ```

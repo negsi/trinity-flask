@@ -39,6 +39,12 @@ class BaseConfig:
         "UPLOAD_FOLDER", os.path.join(BASE_DIR, "instance", "uploads")
     )
 
+    SMTP_SERVER = os.getenv("SMTP_SERVER", "localhost")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "25"))
+    SMTP_USER = os.getenv("SMTP_USER")
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+    SMTP_FROM = os.getenv("SMTP_FROM", "trinity@localhost")
+
     @staticmethod
     def init_app(app):
         """Hook for initializing application-specific configuration logic."""

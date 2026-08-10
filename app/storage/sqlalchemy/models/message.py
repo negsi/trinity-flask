@@ -23,3 +23,4 @@ class MessageModel(db.Model):
     text = db.Column(db.Text, nullable=False)
     recipient_id = Column(String(36), nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    attachments = db.relationship("MessageAttachmentModel", backref="message", cascade="all, delete-orphan", lazy=True)
