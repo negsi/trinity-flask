@@ -69,6 +69,9 @@ class AgentContextBuilder:
 
         combined_system_prompt = "\n\n---\n\n".join(system_prompts)
 
+        if agent:
+            combined_system_prompt = combined_system_prompt.replace("{agent.name}", agent.name)
+
         # 1. User-Text aufbauen
         final_user_content = user_text or ""
 
