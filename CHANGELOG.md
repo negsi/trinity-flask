@@ -8,10 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+### Changed
+
+## [0.0.4] - 2026-08-11 
+
+### Added
+
 - Code refactoring
 - Agent configuration to base system prompt (name, date and time for now)
-
-### Changed
 
 ## [0.0.3] - 2026-08-10
 
@@ -47,7 +51,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.3...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.4...develop
+[0.0.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.4
 [0.0.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.3
 [0.0.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.2
 [0.0.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.1
