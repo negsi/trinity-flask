@@ -37,7 +37,7 @@ class SQLAlchemyAgentRepository(AgentRepository):
                 file_path=ds_model.file_path,
                 mime_type=ds_model.mime_type,
                 file_size=ds_model.file_size,
-                agent_id=ds_model.agent_id
+                agent_id=ds_model.agent_id,
             )
             for ds_model in model.datasources
         ]
@@ -47,21 +47,21 @@ class SQLAlchemyAgentRepository(AgentRepository):
             name=model.name,
             description=model.description,
             system_prompt=model.system_prompt,
-            datasources=datasources
+            datasources=datasources,
         )
 
     def save(self, agent: Agent) -> Agent:
         """Saves or updates an agent domain entity in the database."""
         model = None
         if agent.id:
-            model = AgentModel.query.get(agent.id)
+            model = db.session.get(AgentModel, agent.id)
 
         # 1. Update metadata
         if not model:
             model = AgentModel(
                 name=agent.name,
                 description=agent.description,
-                system_prompt=agent.system_prompt
+                system_prompt=agent.system_prompt,
             )
             if agent.id:
                 model.id = agent.id
@@ -73,14 +73,15 @@ class SQLAlchemyAgentRepository(AgentRepository):
 
         # 2. Synchronize attached datasources
         model.datasources = [
-            DatasourceModel.query.get(ds.id) or DatasourceModel(
+            db.session.get(DatasourceModel, ds.id)
+            or DatasourceModel(
                 id=ds.id,
                 name=ds.name,
                 filename=ds.filename,
                 file_path=ds.file_path,
                 mime_type=ds.mime_type,
                 file_size=ds.file_size,
-                agent_id=model.id
+                agent_id=model.id,
             )
             for ds in agent.datasources
         ]
@@ -90,7 +91,7 @@ class SQLAlchemyAgentRepository(AgentRepository):
 
     def get_by_id(self, agent_id: str) -> Optional[Agent]:
         """Fetches an agent entity by its primary key ID."""
-        model = AgentModel.query.get(agent_id)
+        model = db.session.get(AgentModel, agent_id)
         if not model:
             return None
         return self._to_domain(model)
@@ -101,10 +102,10 @@ class SQLAlchemyAgentRepository(AgentRepository):
         Agents without messages remain in the output, sorted toward the end.
         """
         models = (
-            AgentModel.query
-            .outerjoin(
-                MessageModel, 
-                (AgentModel.id == MessageModel.sender_id) | (AgentModel.id == MessageModel.recipient_id)
+            AgentModel.query.outerjoin(
+                MessageModel,
+                (AgentModel.id == MessageModel.sender_id)
+                | (AgentModel.id == MessageModel.recipient_id),
             )
             .group_by(AgentModel.id)
             .order_by(func.max(MessageModel.timestamp).desc())
@@ -114,7 +115,7 @@ class SQLAlchemyAgentRepository(AgentRepository):
 
     def delete(self, agent_id: str) -> None:
         """Removes an agent from the database by ID."""
-        model = AgentModel.query.get(agent_id)
+        model = db.session.get(AgentModel, agent_id)
         if model:
             db.session.delete(model)
             db.session.commit()

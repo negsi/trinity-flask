@@ -5,15 +5,17 @@ Exports all ORM entities to ensure metadata registration during application star
 """
 
 from app.storage.sqlalchemy.models.agent import AgentModel
-from app.storage.sqlalchemy.models.datasource import DatasourceModel
-from app.storage.sqlalchemy.models.message import MessageModel
 from app.storage.sqlalchemy.models.conversation import ConversationModel
+from app.storage.sqlalchemy.models.datasource import DatasourceModel
+from app.storage.sqlalchemy.models.llm_execution import LLMExecutionModel
+from app.storage.sqlalchemy.models.message import MessageModel
 from app.storage.sqlalchemy.models.message_attachment import MessageAttachmentModel
 
 __all__ = [
     "AgentModel",
-    "DatasourceModel",
-    "MessageModel",
     "ConversationModel",
-    "MessageAttachmentModel"
+    "DatasourceModel",
+    "LLMExecutionModel",
+    "MessageModel",
+    "MessageAttachmentModel",
 ]

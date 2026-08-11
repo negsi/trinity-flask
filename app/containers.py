@@ -5,7 +5,6 @@ Configures application repositories, core domain services, context builders,
 and system orchestrators using the dependency_injector framework.
 """
 
-import os
 from dependency_injector import containers, providers
 
 from app.repositories import (
@@ -30,17 +29,7 @@ class Container(containers.DeclarativeContainer):
     """
     Declarative dependency injection container managing application lifetime 
     and service dependency resolution.
-
-    TODO: Refactor path configurations to a dedicated configuration provider or environment variable loader.
-    TODO: Refactor service instantiation and arguments. 
     """
-
-    # Path configuration for internal file storage
-    _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-    _PROJECT_ROOT = os.path.dirname(_CURRENT_DIR)
-    _UPLOAD_PATH = os.path.join(_PROJECT_ROOT, "instance", "uploads")
-    _MESSAGE_UPLOAD_PATH = os.path.join(_PROJECT_ROOT, "instance", "uploads", "messages")
-    _CONVERSATIONS_PATH = os.path.join(_PROJECT_ROOT, "instance", "conversations")
 
     # Application Configuration Provider
     config = providers.Configuration()
@@ -82,19 +71,19 @@ class Container(containers.DeclarativeContainer):
     datasource_service = providers.Factory(
         DatasourceService,
         datasource_repo=datasource_repository,
-        upload_folder=_UPLOAD_PATH,
+        upload_folder=config.UPLOAD_FOLDER,
     )
 
     message_attachment_service = providers.Factory(
         MessageAttachmentService,
-        upload_folder=_MESSAGE_UPLOAD_PATH,
+        upload_folder=config.MESSAGE_UPLOAD_FOLDER,
     )
 
     messaging_service = providers.Factory(
         MessagingService,
         message_repo=message_repository,
         conversation_repo=conversation_repository,
-        attachment_service=message_attachment_service
+        attachment_service=message_attachment_service,
     )
 
     llm_service = providers.Factory(
