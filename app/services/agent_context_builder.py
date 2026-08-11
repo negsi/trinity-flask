@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 import pypdf
+from datetime import datetime, timezone
 
 from app.domain.llm import LLMMessage
 from app.services.agent_service import AgentService
@@ -68,6 +69,9 @@ class AgentContextBuilder:
                 )
 
         combined_system_prompt = "\n\n---\n\n".join(system_prompts)
+
+        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        combined_system_prompt = combined_system_prompt.replace("{date.time}", now_str)
 
         if agent:
             combined_system_prompt = combined_system_prompt.replace("{agent.name}", agent.name)
