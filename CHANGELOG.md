@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Code refactoring
+- Agent configuration to base system prompt (name, date and time for now)
 
 ### Changed
 
