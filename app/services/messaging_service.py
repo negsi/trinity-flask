@@ -61,8 +61,17 @@ class MessagingService:
         Returns:
             Message: The saved message model.
         """
-        if not conversation_id:
-            new_conv = Conversation(title=f"Chat started by {sender_name}")
+        if conversation_id:
+            existing_conv = self.conversation_repo.get_by_id(conversation_id)
+        else:
+            existing_conv = None
+
+        if not existing_conv:
+            new_conv = Conversation(
+                id=conversation_id,
+                agent_id=recipient_id,
+                title=f"Chat gestartet von {sender_name}"
+            )
             self.conversation_repo.save(new_conv)
             conversation_id = new_conv.id
 
@@ -133,3 +142,19 @@ class MessagingService:
                 listener(message)
             except Exception as e:
                 logger.error("ERROR notifying message listener: %s", e, exc_info=True)
+
+    def create_conversation(
+        self, agent_id: str, title: Optional[str] = None
+    ) -> Conversation:
+        """Creates and persists a new conversation for a specific agent."""
+        conv_title = title or "Neue Konversation"
+        new_conv = Conversation(agent_id=agent_id, title=conv_title)
+        return self.conversation_repo.save(new_conv)
+
+    def get_conversations_by_agent(self, agent_id: str) -> List[Conversation]:
+        """Retrieves all conversations linked to an agent."""
+        return self.conversation_repo.get_by_agent_id(agent_id)
+
+    def get_conversation_by_id(self, conversation_id: str) -> Optional[Conversation]:
+        """Retrieves a single conversation by ID."""
+        return self.conversation_repo.get_by_id(conversation_id)

@@ -10,6 +10,7 @@ from dependency_injector.wiring import inject, Provide
 from app.containers import Container
 from app.services.agent_service import AgentService
 from app.services.datasource_service import DatasourceService
+from app.services.messaging_service import MessagingService
 from app.routes.decorators import validate_json
 from app.routes.schemas import CreateAgentRequest
 
@@ -116,3 +117,36 @@ def delete_datasource(
     datasource_service.delete_datasource(datasource_id=datasource_id, agent_id=agent_id)
 
     return jsonify({"message": "Datasource successfully deleted", "id": datasource_id}), 200
+
+
+@agents_bp.route("/<agent_id>/conversations", methods=["GET"])
+@inject
+def get_agent_conversations(
+    agent_id: str,
+    agent_service: AgentService = Provide[Container.agent_service],
+    messaging_service: MessagingService = Provide[Container.messaging_service],
+):
+    """Retrieves all conversations associated with a specific agent."""
+    # Ensure agent exists (raises 404 if missing)
+    agent_service.get_agent(agent_id)
+
+    conversations = messaging_service.get_conversations_by_agent(agent_id)
+    return jsonify([conv.to_dict() for conv in conversations]), 200
+
+
+@agents_bp.route("/<agent_id>/conversations/<conversation_id>/history", methods=["GET"])
+@inject
+def get_conversation_history(
+    agent_id: str,
+    conversation_id: str,
+    limit: int = 50,
+    agent_service: AgentService = Provide[Container.agent_service],
+    messaging_service: MessagingService = Provide[Container.messaging_service],
+):
+    """Retrieves message history for a specific agent conversation."""
+    agent_service.get_agent(agent_id)
+
+    messages = messaging_service.get_conversation_history(
+        conversation_id=conversation_id, limit=limit
+    )
+    return jsonify([msg.to_dict() for msg in messages]), 200
