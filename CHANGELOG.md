@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- REST API endpoints to fetch agent conversations and message history.
+- Automatic creation and assignment of conversations to agents in `MessagingService`.
+- `agent_id` field to `conversations` database schema. (flask db upgrade)
+
 ### Changed
 
 ## [0.0.4] - 2026-08-11 

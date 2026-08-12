@@ -15,5 +15,6 @@ class ConversationModel(db.Model):
     __tablename__ = "conversations"
 
     id = Column(String(36), primary_key=True)
+    agent_id = db.Column(db.String(36), db.ForeignKey("agents.id"), nullable=True)
     title = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
