@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+### Changed
+
+## [0.0.6] - 2026-08-13
+
+### Added
+
 - REST API endpoint for deleting agent conversations
 
 ### Changed
@@ -63,7 +69,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.5...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.6...develop
+[0.0.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.6
 [0.0.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.5
 [0.0.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.4
 [0.0.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.3
