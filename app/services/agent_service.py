@@ -21,15 +21,22 @@ class AgentService:
         self, 
         name: str, 
         system_prompt: Optional[str] = None, 
-        description: Optional[str] = None
+        description: Optional[str] = None,
+        memory_enabled: bool = False,
+        memory_mode: str = "user_only",
+        memory_limit_type: str = "all",
+        memory_message_count: Optional[int] = None
     ) -> Agent:
         """Creates and persists a new Agent entity."""
         new_agent = Agent(
             name=name,
             system_prompt=system_prompt,
-            description=description
+            description=description,
+            memory_enabled=memory_enabled,
+            memory_mode=memory_mode,
+            memory_limit_type=memory_limit_type,
+            memory_message_count=memory_message_count
         )
-
         return self.agent_repo.save(new_agent)
 
     def update_agent(
@@ -37,9 +44,13 @@ class AgentService:
         agent_id: str, 
         name: str, 
         system_prompt: str, 
-        description: Optional[str] = None
+        description: Optional[str] = None,
+        memory_enabled: bool = False,
+        memory_mode: str = "user_only",
+        memory_limit_type: str = "all",
+        memory_message_count: Optional[int] = None
     ) -> Agent:
-        """Updates existing agent parameters."""
+        """Updates existing agent parameters including memory configuration."""
         agent = self.agent_repo.get_by_id(agent_id)
         if not agent:
             raise NotFoundError(f"AGENT_NOT_FOUND: '{agent_id}'")
@@ -47,6 +58,10 @@ class AgentService:
         agent.name = name
         agent.system_prompt = system_prompt
         agent.description = description
+        agent.memory_enabled = memory_enabled
+        agent.memory_mode = memory_mode
+        agent.memory_limit_type = memory_limit_type
+        agent.memory_message_count = memory_message_count
 
         return self.agent_repo.save(agent)
 

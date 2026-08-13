@@ -174,6 +174,43 @@ Trinity agents execute complex web gathering, data processing, and analysis task
 - **External Web Processing:** For complex requests requiring web data (e.g., *"Read this web article and summarize the key findings"*), Trinity builds a structured JSON Task Chain executing a `fetch` $\rightarrow$ `process` pipeline.
 - **Tool Fallback Handling:** If a user request demands capabilities beyond the available toolset, the agent explicitly informs the user about unexecutable requirements.
 
+## Agent Memory
+
+Trinity agents support configurable conversation memory, allowing you to tailor how past context is supplied to the LLM during chat sessions. Memory handling can be controlled globally via a master toggle or fine-tuned using filtering and truncation modes.
+
+### Configuration Options
+
+- **`memory_enabled`** (`boolean`, default: `true`)  
+  Master switch for agent context retention. When set to `false`, the agent receives no past conversation history and treats every prompt as stateless.
+
+- **`memory_mode`** (`string`, default: `"user_only"`)  
+  Controls which messages are included in the historical context:
+  - `"user_only"`: Filters out assistant responses, forwarding only past user prompts to optimize token usage while maintaining topic context.
+  - `"all"`: Includes the full dialogue (both user prompts and assistant responses).
+
+- **`memory_limit_type`** (`string`, default: `"all"`)  
+  Determines how the chat history is truncated:
+  - `"all"`: Keeps the complete conversation history without message-count capping.
+  - `"message_count"`: Caps context retention to the most recent $N$ messages.
+
+- **`memory_message_count`** (`integer`, default: `null`)  
+  Defines the maximum number of recent messages retained when `memory_limit_type` is set to `"message_count"`.
+
+---
+
+### Example Memory Strategy
+
+For lightweight execution or strict token budgets, set `memory_mode` to `"user_only"` combined with a restricted `memory_message_count`:
+
+```json
+{
+  "memory_enabled": true,
+  "memory_mode": "user_only",
+  "memory_limit_type": "message_count",
+  "memory_message_count": 10
+}
+``` 
+
 ### Using the API
 
 The backend exposes a RESTful JSON API under the base path `/api/v1`. Below is the detailed endpoint documentation for managing agents, datasources, and chat interactions.
@@ -196,7 +233,11 @@ Creates a new AI agent instance in the system.
 {
   "name": "Research Assistant",
   "description": "An agent specialized in Web Search and Data Extraction",
-  "system_prompt": "You are a helpful researcher. Extract useful facts from the given content."
+  "system_prompt": "You are a helpful researcher. Extract useful facts from the given content.",
+  "memory_enabled": true,
+  "memory_mode": "user_only",
+  "memory_limit_type": "message_count",
+  "memory_message_count": 10
 }
 ```
 
@@ -205,6 +246,10 @@ Creates a new AI agent instance in the system.
 | `name` | `string` | **Yes** | Agent name (1 - 100 characters) |
 | `description` | `string` | No | Short description (max 500 characters) |
 | `system_prompt` | `string` | No | Custom system instruction prompt for the LLM |
+| `memory_enabled` | `boolean` | No | Master toggle to enable or disable agent conversation memory (Default: true) |
+| `memory_mode` | `string` | No | Chat history filter: "user_only" or "all" (Default: "user_only") |
+| `memory_limit_type` | `string` | No | History limiting mode: "all" or "message_count" (Default: "all") |
+| `memory_message_count` | `string` | No | Maximum number of recent messages to retain (Required if memory_limit_type is "message_count") |
 
 **Responses:**
 
@@ -215,6 +260,10 @@ Creates a new AI agent instance in the system.
     "name": "Research Assistant",
     "description": "An agent specialized in Web Search and Data Extraction",
     "system_prompt": "You are a helpful researcher. Extract useful facts from the given content.",
+    "memory_enabled": true,
+    "memory_mode": "user_only",
+    "memory_limit_type": "message_count",
+    "memory_message_count": 10,
     "datasources": []
   }
   ```

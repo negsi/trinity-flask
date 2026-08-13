@@ -28,7 +28,11 @@ def create_agent(
     new_agent = agent_service.create_agent(
         name=dto.name,
         system_prompt=dto.system_prompt,
-        description=dto.description
+        description=dto.description,
+        memory_enabled=dto.memory_enabled,
+        memory_mode=dto.memory_mode,
+        memory_limit_type=dto.memory_limit_type,
+        memory_message_count=dto.memory_message_count
     )
 
     return jsonify(new_agent.to_dict()), 201
@@ -43,12 +47,16 @@ def update_agent(
     agent_id: str,
     agent_service: AgentService = Provide[Container.agent_service]
 ):
-    """Updates metadata for an existing agent."""
+    """Updates metadata and memory configurations for an existing agent."""
     updated_agent = agent_service.update_agent(
         agent_id=agent_id,
         name=dto.name,
         system_prompt=dto.system_prompt,
-        description=dto.description
+        description=dto.description,
+        memory_enabled=dto.memory_enabled,
+        memory_mode=dto.memory_mode,
+        memory_limit_type=dto.memory_limit_type,
+        memory_message_count=dto.memory_message_count
     )
 
     return jsonify(updated_agent.to_dict()), 200

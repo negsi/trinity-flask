@@ -47,6 +47,10 @@ class SQLAlchemyAgentRepository(AgentRepository):
             name=model.name,
             description=model.description,
             system_prompt=model.system_prompt,
+            memory_enabled=model.memory_enabled,
+            memory_mode=model.memory_mode,
+            memory_limit_type=model.memory_limit_type,
+            memory_message_count=model.memory_message_count,
             datasources=datasources,
         )
 
@@ -62,6 +66,10 @@ class SQLAlchemyAgentRepository(AgentRepository):
                 name=agent.name,
                 description=agent.description,
                 system_prompt=agent.system_prompt,
+                memory_enabled=agent.memory_enabled,
+                memory_mode=agent.memory_mode,
+                memory_limit_type=agent.memory_limit_type,
+                memory_message_count=agent.memory_message_count,
             )
             if agent.id:
                 model.id = agent.id
@@ -70,6 +78,10 @@ class SQLAlchemyAgentRepository(AgentRepository):
             model.name = agent.name
             model.description = agent.description
             model.system_prompt = agent.system_prompt
+            model.memory_enabled = agent.memory_enabled
+            model.memory_mode = agent.memory_mode
+            model.memory_limit_type = agent.memory_limit_type
+            model.memory_message_count = agent.memory_message_count
 
         # 2. Synchronize attached datasources
         model.datasources = [

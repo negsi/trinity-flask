@@ -18,6 +18,12 @@ class AgentModel(db.Model):
     description = db.Column(db.Text, nullable=True)
     system_prompt = db.Column(db.Text, nullable=False)
 
+    # Memory Settings
+    memory_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    memory_mode = db.Column(db.String(50), default="user_only", nullable=False)
+    memory_limit_type = db.Column(db.String(50), default="all", nullable=False)
+    memory_message_count = db.Column(db.Integer, nullable=True)
+
     # One-to-Many relationship with DatasourceModel (cascaded delete)
     datasources = db.relationship(
         "DatasourceModel",
