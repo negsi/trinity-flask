@@ -67,11 +67,14 @@ class MessagingService:
             existing_conv = None
 
         if not existing_conv:
-            new_conv = Conversation(
-                id=conversation_id,
-                agent_id=recipient_id,
-                title=f"Chat gestartet von {sender_name}"
-            )
+            conv_kwargs = {
+                "agent_id": recipient_id,
+                "title": f"Chat gestartet von {sender_name}"
+            }
+            if conversation_id:
+                conv_kwargs["id"] = conversation_id
+
+            new_conv = Conversation(**conv_kwargs)
             self.conversation_repo.save(new_conv)
             conversation_id = new_conv.id
 
@@ -158,3 +161,19 @@ class MessagingService:
     def get_conversation_by_id(self, conversation_id: str) -> Optional[Conversation]:
         """Retrieves a single conversation by ID."""
         return self.conversation_repo.get_by_id(conversation_id)
+
+    # app/services/messaging_service.py
+
+    def delete_conversation(self, conversation_id: str) -> bool:
+        """
+        Deletes a conversation entity by its ID.
+        Dependant messages/attachments will be cascade-deleted by database relationship rules.
+        """
+        conv = self.conversation_repo.get_by_id(conversation_id)
+        if not conv:
+            logger.warning("Attempted to delete non-existent conversation: %s", conversation_id)
+            return False
+
+        self.conversation_repo.delete(conversation_id)
+        logger.info("Successfully deleted conversation: %s", conversation_id)
+        return True

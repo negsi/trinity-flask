@@ -4,6 +4,8 @@ SQLAlchemy Message Repository Implementation.
 Handles persistence and query operations for chat messages and their attachments.
 """
 
+import logging
+
 from app.domain.enums import ActorType
 from app.domain.models.message import Message
 from app.domain.models.message_attachment import MessageAttachment
@@ -11,6 +13,8 @@ from app.domain.repositories.message_repository import MessageRepository
 from app.storage.sqlalchemy.db import db
 from app.storage.sqlalchemy.models.message import MessageModel
 from app.storage.sqlalchemy.models.message_attachment import MessageAttachmentModel
+
+logger = logging.getLogger(__name__)
 
 
 class SQLAlchemyMessageRepository(MessageRepository):
@@ -127,3 +131,17 @@ class SQLAlchemyMessageRepository(MessageRepository):
         return MessageModel.query.filter(
             MessageModel.conversation_id == conversation_id
         ).count()
+
+    def delete_conversation(self, conversation_id: str) -> bool:
+        """
+        Deletes a conversation entity by its ID.
+        Dependant messages/attachments will be cascade-deleted by database relationship rules.
+        """
+        conv = self.conversation_repo.get_by_id(conversation_id)
+        if not conv:
+            logger.warning("Attempted to delete non-existent conversation: %s", conversation_id)
+            return False
+
+        self.conversation_repo.delete(conversation_id)
+        logger.info("Successfully deleted conversation: %s", conversation_id)
+        return True

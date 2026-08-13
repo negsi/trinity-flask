@@ -651,3 +651,28 @@ Retrieves the message history for a specific conversation session of an agent.
   }
   ```
 </details>
+
+<details>
+<summary><code>DELETE</code> <strong>/api/v1/agents/{agent_id}/conversations/{conversation_id}</strong> — Delete a conversation</summary>
+
+<br>
+
+**Description:**  
+Permanently deletes a specific conversation session and its associated messages and attachments for an agent.
+
+**URL Parameters:**
+- `agent_id` (string, required): The ID of the agent.
+- `conversation_id` (string, required): The ID of the conversation to delete.
+
+**Responses:**
+
+- **`204 No Content`**
+  *(Empty response body)*
+
+- **`404 Not Found`**
+  ```json
+  {
+    "error": "Agent or conversation not found"
+  }
+  ``` 
+</details>

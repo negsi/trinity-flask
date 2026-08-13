@@ -61,17 +61,6 @@ def send_message(
     return jsonify(saved_message.to_dict()), 201
 
 
-@chat_bp.route("/conversations/<conversation_id>/messages", methods=["GET"])
-@inject
-def get_conversation_history(
-    conversation_id: str,
-    messaging_service: MessagingService = Provide[Container.messaging_service],
-):
-    """Retrieve historical messages for a specific conversation."""
-    history = messaging_service.get_conversation_history(conversation_id)
-    return jsonify([msg.to_dict() for msg in history]), 200
-
-
 def sse_formatter(
     generator: Generator[str, None, None],
 ) -> Generator[str, None, None]:
