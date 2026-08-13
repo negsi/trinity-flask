@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+## [0.0.7] - 2026-08-13
+
+### Added
 - Dynamic Conversation Memory: Native support for flexible memory modes (`user_only`, `message_count`) within `agent_context_builder.py`. (flask db upgrade)
 - System Prompt Enhancements: Expanded base instructions covering chat history, memory retention, and structured tool execution.
 - Agent Templates: Optimized system prompts for specialized agent roles (including CBT therapy with cognitive restructuring frameworks and interactive ASCII chess).
@@ -74,7 +80,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.6...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.7...develop
+[0.0.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.7
 [0.0.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.6
 [0.0.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.5
 [0.0.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.4
