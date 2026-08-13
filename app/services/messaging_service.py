@@ -67,11 +67,14 @@ class MessagingService:
             existing_conv = None
 
         if not existing_conv:
-            new_conv = Conversation(
-                id=conversation_id,
-                agent_id=recipient_id,
-                title=f"Chat gestartet von {sender_name}"
-            )
+            conv_kwargs = {
+                "agent_id": recipient_id,
+                "title": f"Chat gestartet von {sender_name}"
+            }
+            if conversation_id:
+                conv_kwargs["id"] = conversation_id
+
+            new_conv = Conversation(**conv_kwargs)
             self.conversation_repo.save(new_conv)
             conversation_id = new_conv.id
 

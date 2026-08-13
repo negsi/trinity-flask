@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- fixed new conversation generation
+
 ## [0.0.5] - 2026-08-12
 
 ### Added
