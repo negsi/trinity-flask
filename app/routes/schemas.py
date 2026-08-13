@@ -13,6 +13,11 @@ class CreateAgentRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     system_prompt: Optional[str] = None
     description: Optional[str] = Field(None, max_length=500)
+    
+    memory_enabled: bool = False
+    memory_mode: str = "user_only"
+    memory_limit_type: str = "all"
+    memory_message_count: Optional[int] = None
 
 
 class SendMessageRequest(BaseModel):

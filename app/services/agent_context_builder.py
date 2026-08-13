@@ -2,7 +2,7 @@
 Agent Context Builder Service.
 
 Responsible for assembling complete LLM prompts by combining system instructions,
-agent parameters, uploaded knowledge base datasources, and message attachments.
+agent parameters, memory configuration, uploaded knowledge base datasources, and message attachments.
 """
 
 import logging
@@ -24,27 +24,37 @@ RESPONSE_FORMAT_PATH = LLM_DIR / "base_agent.response_format.md"
 class AgentContextBuilder:
     """Service that compiles prompt components into LLM context structures."""
 
-    def __init__(self, agent_service: AgentService):
+    def __init__(
+        self, 
+        agent_service: AgentService, 
+        message_repository: Optional[object] = None
+    ):
         self.agent_service = agent_service
+        self.message_repository = message_repository
 
     def build_llm_messages(
         self,
         user_text: str,
         agent_id: Optional[str],
+        conversation_id: Optional[str] = None,
         attachments: Optional[List[object]] = None,
+        conversation_history: Optional[List[object]] = None,
     ) -> List[LLMMessage]:
         """
-        Builds system and user messages for an LLM prompt turn.
+        Builds system, historical context, and user messages for an LLM prompt turn.
 
         Args:
             user_text (str): Primary user input string.
             agent_id (Optional[str]): Target agent ID for prompt customization.
-            attachments (Optional[List[object]]): Optional list of MessageAttachment objects attached to the user message.
+            conversation_id (Optional[str]): Conversation ID to fetch history from DB if not explicitly passed.
+            attachments (Optional[List[object]]): Optional list of MessageAttachment objects attached to current user message.
+            conversation_history (Optional[List[object]]): Optional explicit list of past Message objects.
 
         Returns:
-            List[LLMMessage]: Constructed list of messages.
+            List[LLMMessage]: Constructed list of messages including system instructions and filtered memory history.
         """
         system_prompts: List[str] = []
+        agent = None
 
         base_prompt = self._load_base_prompt()
         if base_prompt:
@@ -76,19 +86,66 @@ class AgentContextBuilder:
         if agent:
             combined_system_prompt = combined_system_prompt.replace("{agent.name}", agent.name)
 
-        # 1. User-Text aufbauen
+        messages: List[LLMMessage] = [
+            LLMMessage(role="system", content=combined_system_prompt)
+        ]
+
+        # 1. Gedächtnis / Conversation History einbinden (falls beim Agenten aktiviert)
+        if agent and getattr(agent, "memory_enabled", False):
+            # Falls keine History übergeben wurde, versuchen wir sie über die DB zu holen
+            if conversation_history is None and conversation_id and self.message_repository:
+                try:
+                    conversation_history = self.message_repository.get_by_conversation_id(conversation_id)
+                except Exception as e:
+                    logger.error(
+                        f"Error fetching conversation history for conversation_id '{conversation_id}': {e}",
+                        exc_info=True,
+                    )
+
+            if conversation_history:
+                history_messages = self._build_agent_context_history(agent, conversation_history)
+                messages.extend(history_messages)
+
+        # 2. Aktuellen User-Text aufbauen
         final_user_content = user_text or ""
 
-        # 2. Falls Nachrichten-Anhänge dabei sind, deren Inhalt auslesen und an den User-Text anhängen
+        # 3. Falls Nachrichten-Anhänge dabei sind, deren Inhalt auslesen und an den User-Text anhängen
         if attachments:
             att_context = self._format_attachments_context(attachments)
             if att_context:
                 final_user_content += f"\n\n{att_context}"
 
-        return [
-            LLMMessage(role="system", content=combined_system_prompt),
-            LLMMessage(role="user", content=final_user_content),
-        ]
+        messages.append(LLMMessage(role="user", content=final_user_content))
+
+        return messages
+
+    def _build_agent_context_history(self, agent, conversation_messages: list) -> List[LLMMessage]:
+        """Filtert den bisherigen Chat-Verlauf basierend auf den Memory-Einstellungen des Agenten."""
+        history = conversation_messages.copy()
+
+        if getattr(agent, "memory_mode", "user_only") == "user_only":
+            history = [
+                msg for msg in history 
+                if getattr(msg, "sender_type", None) == "user" 
+                or getattr(getattr(msg, "sender_type", None), "value", None) == "user"
+            ]
+
+        if getattr(agent, "memory_limit_type", "all") == "message_count" and getattr(agent, "memory_message_count", None):
+            limit = agent.memory_message_count
+            history = history[-limit:]
+
+        llm_history: List[LLMMessage] = []
+        for msg in history:
+            s_type = getattr(msg, "sender_type", "user")
+            s_type_val = getattr(s_type, "value", str(s_type))
+            
+            role = "user" if s_type_val == "user" else "assistant"
+            content = getattr(msg, "text", "") or ""
+            
+            if content.strip():
+                llm_history.append(LLMMessage(role=role, content=content))
+
+        return llm_history
 
     def _load_base_prompt(self) -> str:
         """Loads and formats the base agent instruction prompt."""

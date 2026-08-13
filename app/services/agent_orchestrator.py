@@ -7,7 +7,7 @@ streaming responses, and persistent state management.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Generator
+from typing import Generator, List
 
 from app.domain.enums import ActorType
 from app.domain.models.message import Message
@@ -66,6 +66,11 @@ class AgentOrchestrator:
         fetched_attachments = self.messaging_service.get_latest_user_attachments(
             conversation_id
         )
+
+        conversation_history = self.messaging_service.get_conversation_history(
+            conversation_id=conversation_id, limit=100
+        )
+
         state = ReActTurnState(user_prompt=user_text)
 
         while not state.is_complete and state.turn_count < state.max_turns:
@@ -81,6 +86,7 @@ class AgentOrchestrator:
                 state=state,
                 agent_id=agent_id,
                 attachments=fetched_attachments,
+                conversation_history=conversation_history,
             )
 
             # Ensure agent message record exists in database
@@ -115,6 +121,7 @@ class AgentOrchestrator:
                 conversation_id=conversation_id,
                 agent_id=agent_id,
                 attachments=fetched_attachments,
+                conversation_history=conversation_history,
                 state=state,
             )
 
@@ -135,12 +142,14 @@ class AgentOrchestrator:
         state: ReActTurnState,
         agent_id: str,
         attachments: list[MessageAttachment],
+        conversation_history: list,
     ) -> Generator[str, None, dict | None]:
         """Streams a single turn from the LLM and extracts embedded JSON task payloads."""
         llm_messages = self.context_builder.build_llm_messages(
             user_text=state.user_prompt,
             agent_id=agent_id,
             attachments=attachments,
+            conversation_history=conversation_history,
         )
 
         parser = StreamResponseParser()
@@ -169,6 +178,7 @@ class AgentOrchestrator:
         conversation_id: str,
         agent_id: str,
         attachments: list[MessageAttachment],
+        conversation_history: list,
         state: ReActTurnState,
     ) -> Generator[str, None, str]:
         """Executes a structured task chain and streams sub-step responses."""
@@ -184,6 +194,7 @@ class AgentOrchestrator:
                 user_text=system_instruction + prompt_text,
                 agent_id=agent_id,
                 attachments=attachments,
+                conversation_history=conversation_history,
             )
             yield from self.llm_service.stream(messages)
 
