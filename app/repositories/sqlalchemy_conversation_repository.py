@@ -64,3 +64,13 @@ class SQLAlchemyConversationRepository(ConversationRepository):
             ConversationModel.query.order_by(ConversationModel.created_at.desc()).all()
         )
         return [self._to_domain(c) for c in db_convs]
+
+    def delete(self, conversation_id: str) -> bool:
+        """Deletes a conversation by its ID from the database."""
+        db_conv = db.session.get(ConversationModel, conversation_id)
+        if not db_conv:
+            return False
+
+        db.session.delete(db_conv)
+        db.session.commit()
+        return True

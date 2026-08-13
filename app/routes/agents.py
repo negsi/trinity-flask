@@ -150,3 +150,19 @@ def get_conversation_history(
         conversation_id=conversation_id, limit=limit
     )
     return jsonify([msg.to_dict() for msg in messages]), 200
+
+
+@agents_bp.route("/<agent_id>/conversations/<conversation_id>", methods=["DELETE"])
+@inject
+def delete_conversation(
+    agent_id: str,
+    conversation_id: str,
+    agent_service: AgentService = Provide[Container.agent_service],
+    messaging_service: MessagingService = Provide[Container.messaging_service],
+):
+    """Deletes a specific conversation for an agent."""
+    # Sicherstellen, dass der Agent existiert (wirft 404 falls nicht vorhanden)
+    agent_service.get_agent(agent_id)
+
+    messaging_service.delete_conversation(conversation_id)
+    return "", 204

@@ -158,3 +158,19 @@ class MessagingService:
     def get_conversation_by_id(self, conversation_id: str) -> Optional[Conversation]:
         """Retrieves a single conversation by ID."""
         return self.conversation_repo.get_by_id(conversation_id)
+
+    # app/services/messaging_service.py
+
+    def delete_conversation(self, conversation_id: str) -> bool:
+        """
+        Deletes a conversation entity by its ID.
+        Dependant messages/attachments will be cascade-deleted by database relationship rules.
+        """
+        conv = self.conversation_repo.get_by_id(conversation_id)
+        if not conv:
+            logger.warning("Attempted to delete non-existent conversation: %s", conversation_id)
+            return False
+
+        self.conversation_repo.delete(conversation_id)
+        logger.info("Successfully deleted conversation: %s", conversation_id)
+        return True
