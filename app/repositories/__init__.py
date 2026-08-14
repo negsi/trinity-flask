@@ -1,7 +1,6 @@
-"""
-Repositories Package Initialization.
+"""Repositories Package Initialization Module.
 
-Exports concrete SQLAlchemy repository implementations.
+Exports concrete SQLAlchemy repository implementations adhering to domain contracts.
 """
 
 from app.repositories.sqlalchemy_agent_repository import SQLAlchemyAgentRepository
