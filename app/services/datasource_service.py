@@ -1,31 +1,34 @@
 """
-Datasource File Service.
+Datasource Application Service Module.
 
-Handles local storage uploads, file path generation, and entity persistence for agent knowledge sources.
+Handles knowledge base document uploads, file storage management, and entity persistence.
 """
 
 import logging
-import os
-import uuid
 from typing import Optional
-from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
+from app.domain.errors import DatasourceNotFoundError, InvalidFileError
 from app.domain.models.datasource import Datasource
 from app.domain.repositories.datasource_repository import DatasourceRepository
+from app.services.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
 
 
 class DatasourceService:
-    """Service managing uploaded document storage and database records."""
+    """Service managing uploaded agent knowledge base documents."""
 
-    def __init__(self, datasource_repo: DatasourceRepository, upload_folder: str):
+    def __init__(
+        self,
+        datasource_repo: DatasourceRepository,
+        file_storage_service: FileStorageService,
+        upload_folder: str,
+    ) -> None:
         self.datasource_repo = datasource_repo
+        self.file_storage_service = file_storage_service
         self.upload_folder = upload_folder
-
-        if not os.path.exists(self.upload_folder):
-            os.makedirs(self.upload_folder)
+        self.file_storage_service.ensure_directory(self.upload_folder)
 
     def process_and_save_file(
         self,
@@ -34,50 +37,67 @@ class DatasourceService:
         agent_id: Optional[str] = None,
     ) -> Datasource:
         """
-        Saves an uploaded file to disk and persists its metadata in the database repository.
+        Saves an uploaded document to disk and persists its metadata in the repository.
 
         Args:
-            file (FileStorage): Werkzeug uploaded file wrapper.
-            display_name (Optional[str]): UI display name.
-            agent_id (Optional[str]): Parent agent ID link.
+            file (FileStorage): Werkzeug uploaded file object.
+            display_name (Optional[str]): User-friendly display name.
+            agent_id (Optional[str]): Associated Agent ID.
 
         Returns:
-            Datasource: Created datasource entity.
+            Datasource: The persisted datasource domain entity.
+
+        Raises:
+            InvalidFileError: If the uploaded file is invalid.
+            StorageError: If disk storage fails.
         """
         if not file or not file.filename:
-            raise ValueError("NO_VALID_FILE_PROVIDED")
+            raise InvalidFileError("No valid file payload provided for datasource creation.")
 
-        orig_filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4()}_{orig_filename}"
-        full_path = os.path.join(self.upload_folder, unique_filename)
-        file.save(full_path)
-        file_size = os.path.getsize(full_path)
+        unique_filename, full_path, file_size, mime_type = self.file_storage_service.save_file(
+            file=file,
+            target_folder=self.upload_folder,
+        )
 
         datasource = Datasource(
-            name=display_name or orig_filename,
+            name=display_name or file.filename,
             filename=unique_filename,
             file_path=full_path,
-            mime_type=file.content_type or "application/octet-stream",
+            mime_type=mime_type,
             file_size=file_size,
             agent_id=agent_id,
         )
 
-        return self.datasource_repo.save(datasource)
+        saved_datasource = self.datasource_repo.save(datasource)
+        logger.info("Persisted Datasource '%s' for agent '%s'", saved_datasource.id, agent_id)
+        return saved_datasource
 
     def delete_datasource(
-        self, datasource_id: str, agent_id: Optional[str] = None
+        self,
+        datasource_id: str,
+        agent_id: Optional[str] = None,
     ) -> None:
-        """Deletes a datasource record and removes its physical file from disk."""
+        """
+        Deletes a datasource record and removes its physical file from storage.
+
+        Args:
+            datasource_id (str): Unique datasource identifier.
+            agent_id (Optional[str]): Optional parent agent ID for scope validation.
+
+        Raises:
+            DatasourceNotFoundError: If the datasource record is missing.
+        """
         datasource = self.datasource_repo.get_by_id(datasource_id)
         if not datasource:
-            raise ValueError(f"DATASOURCE_NOT_FOUND: '{datasource_id}'")
+            raise DatasourceNotFoundError(f"Datasource with ID '{datasource_id}' was not found.")
 
-        if datasource.file_path and os.path.exists(datasource.file_path):
-            try:
-                os.remove(datasource.file_path)
-            except OSError as e:
-                logger.error(
-                    "Error removing file %s: %s", datasource.file_path, e, exc_info=True
-                )
+        if agent_id and datasource.agent_id != agent_id:
+            raise DatasourceNotFoundError(
+                f"Datasource '{datasource_id}' is not associated with agent '{agent_id}'."
+            )
+
+        if datasource.file_path:
+            self.file_storage_service.delete_file(datasource.file_path)
 
         self.datasource_repo.delete(datasource_id)
+        logger.info("Deleted Datasource entity '%s'", datasource_id)

@@ -10,6 +10,35 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+## [0.0.8] - 2026-08-14
+
+### Added
+
+- Introduced trinity `examples` directory
+- Added `LLMExecutionRepository` domain protocol for decoupled LLM execution persistence.
+- Added `get_conversations_by_agent` method to `MessagingService` to support multi-conversation history.
+- **Domain Enums & Type Safety**:
+  - Introduced strongly typed string enums (`ActorType`, `ResponseType`, `MemoryMode`, `MemoryLimitType`, `ExecutionStepStatus`) in `domain/enums.py`.
+- **Domain Exceptions**:
+  - Added `LLMExecutionNotFoundError` and `ToolNotFoundError` in `domain/errors.py`.
+
+### Changed
+
+- **Clean Architecture & DDD Refactoring**:
+  - **Domain Models**: Refactored all domain dataclasses to use `slots=True`, explicit Python 3.10+ type hints, automatic ID/timestamp default factories (UTC), and invariant validations in `__post_init__` (e.g., entity validation, enum mapping).
+  - **Domain Interfaces**: Updated repository protocols with explicit typing, boolean return flags for deletions, and extended queries (e.g., `DatasourceRepository.get_by_agent_id`).
+  - Extracted ReAct agent loop logic into `ReActLoopRunner`.
+  - Refactored `FileStorageService` to centralize I/O, path validation, and text extraction.
+  - Replaced `flask.current_app` dependencies in `tools.py` with `ToolRegistry` injection.
+  - Standardized domain-specific exception handling across services.
+- **Persistence & SQLAlchemy Layer**: (flask db upgrade)
+  - Updated SQLAlchemy repositories with explicit `try...except SQLAlchemyError` handling, automatic session rollbacks, and domain `StorageError` wraps.
+  - Upgraded database base to SQLAlchemy 2.0 `DeclarativeBase` and optimized ORM relationships (cascade deletes, `selectin` loading to prevent N+1 queries).
+  - Improved relation mapping synchronization for domain aggregates (e.g., `Agent` datasources, `Message` attachments).
+- **Messaging & Persistence**:
+  - Updated `MessagingService` to manage conversation lifecycles and attachment links directly.
+  - Enhanced `SQLAlchemyConversationRepository` with fallback UUID generation to guarantee primary key constraints.
+
 ## [0.0.7] - 2026-08-13
 
 ### Added
@@ -80,7 +109,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.7...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.8...develop
+[0.0.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.8
 [0.0.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.7
 [0.0.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.6
 [0.0.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.5

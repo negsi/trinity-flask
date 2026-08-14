@@ -1,65 +1,72 @@
 """
-Message Attachment File Service.
+Message Attachment Service Module.
 
-Handles local storage uploads, file path generation, and entity persistence for message attachments.
+Handles storage and entity lifecycle for attachments associated with chat messages.
 """
 
 import logging
-import os
-import uuid
 from typing import Optional
-from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
-from app.domain.models.message_attachment import MessageAttachment
+from app.domain.errors import InvalidFileError
+from app.domain.models.message import MessageAttachment
+from app.services.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
 
 
 class MessageAttachmentService:
-    """Service managing uploaded chat attachment storage."""
+    """Service managing uploaded chat message attachments."""
 
-    def __init__(self, upload_folder: str):
+    def __init__(
+        self,
+        file_storage_service: FileStorageService,
+        upload_folder: str,
+    ) -> None:
+        self.file_storage_service = file_storage_service
         self.upload_folder = upload_folder
-
-        if not os.path.exists(self.upload_folder):
-            os.makedirs(self.upload_folder)
+        self.file_storage_service.ensure_directory(self.upload_folder)
 
     def save_attachment_file(
-        self, file: FileStorage, message_id: Optional[str] = None
+        self,
+        file: FileStorage,
+        message_id: Optional[str] = None,
     ) -> MessageAttachment:
         """
-        Saves an uploaded file to disk and constructs a MessageAttachment domain entity.
+        Persists an attachment file to disk and constructs a domain model.
 
         Args:
-            file (FileStorage): Werkzeug uploaded file wrapper.
-            message_id (Optional[str]): Parent message ID link.
+            file (FileStorage): Uploaded file wrapper.
+            message_id (Optional[str]): Optional parent message ID.
 
         Returns:
-            MessageAttachment: Constructed attachment entity.
+            MessageAttachment: The constructed attachment domain entity.
+
+        Raises:
+            InvalidFileError: If the uploaded file is empty or missing.
         """
         if not file or not file.filename:
-            raise ValueError("NO_VALID_FILE_PROVIDED")
+            raise InvalidFileError("No valid file provided for message attachment.")
 
-        orig_filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4()}_{orig_filename}"
-        full_path = os.path.join(self.upload_folder, unique_filename)
-        file.save(full_path)
-        file_size = os.path.getsize(full_path)
+        unique_filename, full_path, file_size, mime_type = self.file_storage_service.save_file(
+            file=file,
+            target_folder=self.upload_folder,
+        )
 
         return MessageAttachment(
             name=file.filename,
             filename=unique_filename,
             file_path=full_path,
-            mime_type=file.content_type or "application/octet-stream",
+            mime_type=mime_type,
             file_size=file_size,
             message_id=message_id,
         )
 
     def delete_attachment_file(self, file_path: str) -> None:
-        """Removes physical file from disk."""
-        if file_path and os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except OSError as e:
-                logger.error("Error removing file %s: %s", file_path, e, exc_info=True)
+        """
+        Removes an attachment file from physical storage.
+
+        Args:
+            file_path (str): Absolute or relative path to the attachment file.
+        """
+        self.file_storage_service.delete_file(file_path)

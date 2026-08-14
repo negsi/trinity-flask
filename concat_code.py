@@ -11,17 +11,25 @@ import os
 # Target destination text file where the concatenated codebase summary will be saved
 OUTPUT_FILE = "codebase_summary.txt"
 
-# Set of directory names to ignore during filesystem traversal
+# Set of directory paths or names to ignore during filesystem traversal (normalisiert)
 IGNORE_DIRS = {
-    "venv",
-    ".venv",
-    "instance",
-    "migrations",
-    "__pycache__",
-    ".git",
-    ".pytest_cache",
-    ".idea",
-    ".vscode",
+    os.path.normpath(p)
+    for p in {
+        "venv",
+        ".venv",
+        "instance",
+        "migrations",
+        "docs",
+        "app/domains",
+        "app/repositories",
+        "app/routes",
+        "app/storage",
+        "__pycache__",
+        ".git",
+        ".pytest_cache",
+        ".idea",
+        ".vscode",
+    }
 }
 
 # Set of specific file names to ignore during aggregation
@@ -45,8 +53,16 @@ def collect_code(root_dir: str = ".") -> None:
     # Open the summary destination file in write mode with UTF-8 encoding
     with open(OUTPUT_FILE, "w", encoding="utf-8") as out:
         for current_root, dirs, files in os.walk(root_dir):
-            # Prune directory search list in-place to skip ignored folders
-            dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
+            # Prune directory search list in-place using relative paths & directory names
+            dirs[:] = [
+                d
+                for d in dirs
+                if d not in IGNORE_DIRS
+                and os.path.normpath(
+                    os.path.relpath(os.path.join(current_root, d), root_dir)
+                )
+                not in IGNORE_DIRS
+            ]
 
             # Process files in alphabetical order for deterministic output
             for file in sorted(files):

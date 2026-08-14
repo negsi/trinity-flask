@@ -1,18 +1,18 @@
 """
-Agent Context Builder Service.
+Agent Context Builder Service Module.
 
-Responsible for assembling complete LLM prompts by combining system instructions,
-agent parameters, memory configuration, uploaded knowledge base datasources, and message attachments.
+Assembles prompt components into structured LLM message sequences, incorporating system
+instructions, dynamic timestamps, knowledge base files, message attachments, and memory history.
 """
 
+from datetime import datetime, timezone
 import logging
 from pathlib import Path
-from typing import List, Optional
-import pypdf
-from datetime import datetime, timezone
+from typing import Any, List, Optional
 
 from app.domain.llm import LLMMessage
 from app.services.agent_service import AgentService
+from app.services.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +22,16 @@ RESPONSE_FORMAT_PATH = LLM_DIR / "base_agent.response_format.md"
 
 
 class AgentContextBuilder:
-    """Service that compiles prompt components into LLM context structures."""
+    """Service compiling system instructions, memories, and documents into LLM prompts."""
 
     def __init__(
-        self, 
-        agent_service: AgentService, 
-        message_repository: Optional[object] = None
-    ):
+        self,
+        agent_service: AgentService,
+        file_storage_service: FileStorageService,
+        message_repository: Optional[Any] = None,
+    ) -> None:
         self.agent_service = agent_service
+        self.file_storage_service = file_storage_service
         self.message_repository = message_repository
 
     def build_llm_messages(
@@ -37,21 +39,21 @@ class AgentContextBuilder:
         user_text: str,
         agent_id: Optional[str],
         conversation_id: Optional[str] = None,
-        attachments: Optional[List[object]] = None,
-        conversation_history: Optional[List[object]] = None,
+        attachments: Optional[List[Any]] = None,
+        conversation_history: Optional[List[Any]] = None,
     ) -> List[LLMMessage]:
         """
-        Builds system, historical context, and user messages for an LLM prompt turn.
+        Constructs the complete sequence of LLM prompt messages.
 
         Args:
-            user_text (str): Primary user input string.
-            agent_id (Optional[str]): Target agent ID for prompt customization.
-            conversation_id (Optional[str]): Conversation ID to fetch history from DB if not explicitly passed.
-            attachments (Optional[List[object]]): Optional list of MessageAttachment objects attached to current user message.
-            conversation_history (Optional[List[object]]): Optional explicit list of past Message objects.
+            user_text (str): Incoming user query.
+            agent_id (Optional[str]): Target agent identifier.
+            conversation_id (Optional[str]): Active conversation ID.
+            attachments (Optional[List[Any]]): Message attachments for the current turn.
+            conversation_history (Optional[List[Any]]): Historical conversation messages.
 
         Returns:
-            List[LLMMessage]: Constructed list of messages including system instructions and filtered memory history.
+            List[LLMMessage]: Formatted list of system, history, and user messages.
         """
         system_prompts: List[str] = []
         agent = None
@@ -73,13 +75,9 @@ class AgentContextBuilder:
                         if ds_context:
                             system_prompts.append(ds_context)
             except Exception as e:
-                logger.error(
-                    f"Error loading agent prompt context for '{agent_id}': {e}",
-                    exc_info=True,
-                )
+                logger.error("Error loading agent context for agent '%s': %s", agent_id, e, exc_info=True)
 
         combined_system_prompt = "\n\n---\n\n".join(system_prompts)
-
         now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         combined_system_prompt = combined_system_prompt.replace("{date.time}", now_str)
 
@@ -90,87 +88,77 @@ class AgentContextBuilder:
             LLMMessage(role="system", content=combined_system_prompt)
         ]
 
-        # 1. Gedächtnis / Conversation History einbinden (falls beim Agenten aktiviert)
+        # 1. Integrate conversation memory based on agent settings
         if agent and getattr(agent, "memory_enabled", False):
-            # Falls keine History übergeben wurde, versuchen wir sie über die DB zu holen
             if conversation_history is None and conversation_id and self.message_repository:
                 try:
-                    conversation_history = self.message_repository.get_by_conversation_id(conversation_id)
+                    conversation_history = self.message_repository.get_by_conversation(conversation_id)
                 except Exception as e:
-                    logger.error(
-                        f"Error fetching conversation history for conversation_id '{conversation_id}': {e}",
-                        exc_info=True,
-                    )
+                    logger.error("Error fetching history for conversation '%s': %s", conversation_id, e, exc_info=True)
 
             if conversation_history:
-                history_messages = self._build_agent_context_history(agent, conversation_history)
-                messages.extend(history_messages)
+                messages.extend(self._build_agent_context_history(agent, conversation_history))
 
-        # 2. Aktuellen User-Text aufbauen
+        # 2. Build current user turn message
         final_user_content = user_text or ""
-
-        # 3. Falls Nachrichten-Anhänge dabei sind, deren Inhalt auslesen und an den User-Text anhängen
         if attachments:
             att_context = self._format_attachments_context(attachments)
             if att_context:
-                final_user_content += f"\n\n{att_context}"
+                final_user_content = f"{final_user_content}\n\n{att_context}".strip()
 
         messages.append(LLMMessage(role="user", content=final_user_content))
-
         return messages
 
-    def _build_agent_context_history(self, agent, conversation_messages: list) -> List[LLMMessage]:
-        """Filtert den bisherigen Chat-Verlauf basierend auf den Memory-Einstellungen des Agenten."""
-        history = conversation_messages.copy()
+    def _build_agent_context_history(self, agent: Any, conversation_messages: List[Any]) -> List[LLMMessage]:
+        """Filters historical conversation messages according to agent memory rules."""
+        history = list(conversation_messages)
 
         if getattr(agent, "memory_mode", "user_only") == "user_only":
             history = [
-                msg for msg in history 
-                if getattr(msg, "sender_type", None) == "user" 
+                msg for msg in history
+                if getattr(msg, "sender_type", None) == "user"
                 or getattr(getattr(msg, "sender_type", None), "value", None) == "user"
             ]
 
-        if getattr(agent, "memory_limit_type", "all") == "message_count" and getattr(agent, "memory_message_count", None):
-            limit = agent.memory_message_count
-            history = history[-limit:]
+        if getattr(agent, "memory_limit_type", "all") == "message_count":
+            limit = getattr(agent, "memory_message_count", None)
+            if limit and limit > 0:
+                history = history[-limit:]
 
         llm_history: List[LLMMessage] = []
         for msg in history:
             s_type = getattr(msg, "sender_type", "user")
             s_type_val = getattr(s_type, "value", str(s_type))
-            
             role = "user" if s_type_val == "user" else "assistant"
             content = getattr(msg, "text", "") or ""
-            
+
             if content.strip():
                 llm_history.append(LLMMessage(role=role, content=content))
 
         return llm_history
 
     def _load_base_prompt(self) -> str:
-        """Loads and formats the base agent instruction prompt."""
+        """Loads and formats the base agent prompt template."""
         try:
             if BASE_PROMPT_PATH.exists():
                 content = BASE_PROMPT_PATH.read_text(encoding="utf-8")
                 response_format = self._load_response_format()
-                return content.replace(
-                    "{base_agent.response_format.md}", response_format
-                ).strip()
+                return content.replace("{base_agent.response_format.md}", response_format).strip()
         except Exception as e:
-            logger.error(f"Error loading base prompt ({BASE_PROMPT_PATH}): {e}")
+            logger.error("Error reading base prompt file: %s", e)
         return ""
 
     def _load_response_format(self) -> str:
-        """Loads response format template instructions."""
+        """Loads the structured response format template."""
         try:
             if RESPONSE_FORMAT_PATH.exists():
                 return RESPONSE_FORMAT_PATH.read_text(encoding="utf-8").strip()
         except Exception as e:
-            logger.error(f"Error loading response format ({RESPONSE_FORMAT_PATH}): {e}")
+            logger.error("Error reading response format template: %s", e)
         return ""
 
-    def _format_datasources_context(self, datasources: list) -> str:
-        """Formats attached knowledge datasources into text context blocks."""
+    def _format_datasources_context(self, datasources: List[Any]) -> str:
+        """Extracts and formats knowledge base datasource text."""
         if not datasources:
             return ""
 
@@ -183,7 +171,7 @@ class AgentContextBuilder:
             if not file_path:
                 continue
 
-            content = self._extract_file_content(file_path, mime_type)
+            content = self.file_storage_service.extract_text_content(file_path, mime_type)
             if content:
                 context_blocks.append(
                     f"--- START FILE: {filename} ---\n{content}\n--- END FILE: {filename} ---"
@@ -191,8 +179,8 @@ class AgentContextBuilder:
 
         return "\n\n".join(context_blocks)
 
-    def _format_attachments_context(self, attachments: list) -> str:
-        """Formats message attachments into text context blocks for the current turn."""
+    def _format_attachments_context(self, attachments: List[Any]) -> str:
+        """Extracts and formats message attachment text for the prompt."""
         if not attachments:
             return ""
 
@@ -201,7 +189,7 @@ class AgentContextBuilder:
             filename = (
                 getattr(att, "name", None)
                 or getattr(att, "filename", None)
-                or getattr(att, "original_filename", "Untitled")
+                or "Untitled"
             )
             file_path = getattr(att, "file_path", None)
             mime_type = getattr(att, "mime_type", "")
@@ -209,36 +197,10 @@ class AgentContextBuilder:
             if not file_path:
                 continue
 
-            content = self._extract_file_content(file_path, mime_type)
+            content = self.file_storage_service.extract_text_content(file_path, mime_type)
             if content:
                 context_blocks.append(
                     f"--- START ATTACHMENT: {filename} ---\n{content}\n--- END ATTACHMENT: {filename} ---"
                 )
 
         return "\n\n".join(context_blocks)
-
-    def _extract_file_content(self, file_path_str: str, mime_type: str) -> Optional[str]:
-        """Extracts text content from local PDF or plain text documents."""
-        path = Path(file_path_str)
-        if not path.exists():
-            logger.warning(f"File does not exist: {file_path_str}")
-            return None
-
-        if mime_type == "application/pdf" or path.suffix.lower() == ".pdf":
-            try:
-                reader = pypdf.PdfReader(path)
-                extracted_text = [
-                    f"--- Page {idx + 1} ---\n{page.extract_text()}"
-                    for idx, page in enumerate(reader.pages)
-                    if page.extract_text()
-                ]
-                return "\n\n".join(extracted_text).strip()
-            except Exception as e:
-                logger.error(f"Error reading PDF file '{file_path_str}': {e}")
-                return None
-
-        try:
-            return path.read_text(encoding="utf-8", errors="ignore").strip()
-        except Exception as e:
-            logger.error(f"Error reading text file '{file_path_str}': {e}")
-            return None

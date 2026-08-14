@@ -1,7 +1,7 @@
 """
-SQLAlchemy Models Package Initialization.
+SQLAlchemy ORM Database Models Package.
 
-Exports all ORM entities to ensure metadata registration during application startup.
+Exposes all persistence entities from dedicated single-file model modules.
 """
 
 from app.storage.sqlalchemy.models.agent import AgentModel

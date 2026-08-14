@@ -1,40 +1,25 @@
-from enum import Enum
+"""
+Security Context Service Module.
+
+Resolves caller identity and actor metadata from request execution contexts.
+"""
+
+from typing import Any, Dict
 from app.domain.enums import ActorType
 
 
 class SecurityContextService:
-    """
-    Service responsible for determining the current actor (user, agent, or system)
-    executing a request within the application context.
+    """Service resolving active caller identity metadata across request executions."""
 
-    This service abstracts identity retrieval from incoming requests (e.g., Flask `g`, 
-    JWT headers, or API tokens), providing a unified interface to fetch caller metadata 
-    across domain services and API endpoints.
-    """
-
-    def get_current_actor(self) -> dict:
+    def get_current_actor(self) -> Dict[str, Any]:
         """
-        Retrieves the details of the active actor making the request.
-
-        Currently defaults to a mock human user payload. In production, this method 
-        should inspect session state, request headers, or auth tokens to dynamically 
-        identify the caller.
+        Retrieves identity details for the active actor executing the current request.
 
         Returns:
-            dict: A dictionary containing the actor's unique identifier (`id`), 
-                  domain actor classification (`type`), and display name (`name`).
+            Dict[str, Any]: Actor identifier, classification type, and display name.
         """
-        # Example lookup logic for future implementation:
-        # 1. If an agent API token or service header is present:
-        # return {
-        #     "id": "agent-cypher-uuid",
-        #     "type": ActorType.AGENT,
-        #     "name": "Cypher"
-        # }
-
-        # 2. Standard fallback for the currently authenticated human user:
         return {
             "id": "user-christian",
             "type": ActorType.USER,
-            "name": "Christian"
+            "name": "Christian",
         }
