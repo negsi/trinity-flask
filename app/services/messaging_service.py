@@ -15,7 +15,7 @@ from app.domain.enums import ActorType
 from app.domain.errors import ConversationNotFoundError, MessageNotFoundError
 from app.domain.models.conversation import Conversation
 from app.domain.models.message import Message
-from app.domain.models.message_attachment import MessageAttachment
+from app.domain.models.message import MessageAttachment
 from app.domain.repositories.conversation_repository import ConversationRepository
 from app.domain.repositories.message_repository import MessageRepository
 from app.services.message_attachment_service import MessageAttachmentService

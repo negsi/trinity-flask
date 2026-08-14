@@ -10,7 +10,7 @@ import logging
 from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
 from app.domain.models.llm_execution import LLMExecution
-from app.domain.models.message_attachment import MessageAttachment
+from app.domain.models.message import MessageAttachment
 from app.services.agent_context_builder import AgentContextBuilder
 from app.services.llm.stream_parser import StreamResponseParser
 from app.services.llm_service import LLMService

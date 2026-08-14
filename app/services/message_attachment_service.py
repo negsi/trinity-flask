@@ -9,7 +9,7 @@ from typing import Optional
 from werkzeug.datastructures import FileStorage
 
 from app.domain.errors import InvalidFileError
-from app.domain.models.message_attachment import MessageAttachment
+from app.domain.models.message import MessageAttachment
 from app.services.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
