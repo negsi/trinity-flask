@@ -33,11 +33,15 @@ However, we recommend using our [Angular frontend](https://github.com/negsi/trin
   - [7. Install Database schema](#7-install-database-schema)
 - [Running the Application](#running-the-application)
 - [Agent Tools & Task Chains](#agent-tools--task-chains)
+  - [Built-in Agent Tools](#built-in-agent-tools)
+  - [Task Execution Workflow](#task-execution-workflow)
+- [Agent Memory](#agent-memory)
+  - [Configuration Options](#configuration-options)
 - [Using the API](#using-the-api)
   - [Agent Endpoints](#agent)
   - [Agent Datasources](#agent-datasources)
   - [Chat & Execution Endpoints](#chat--execution-endpoints-apiv1chat)
-- [Examples](#examples)
+- [Agent Examples](#agent-examples)
 
 ---
 
@@ -725,3 +729,10 @@ Permanently deletes a specific conversation session and its associated messages 
   }
   ``` 
 </details>
+
+## Agent Examples
+
+Looking for inspiration or a starting point to build your own agents? Check out the [`docs/examples`](docs/examples) directory! 
+
+There you'll find ready-to-use configurations, prompt setups, and example chats for various Trinity agents.
+
