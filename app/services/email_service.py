@@ -1,36 +1,28 @@
 """
 Email Delivery Service Module.
 
-Handles outbound email dispatch via local or external SMTP servers.
+Handles outbound email dispatch via local or authenticated external SMTP servers.
 """
 
 from email.message import EmailMessage
 import logging
 import smtplib
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 class EmailService:
-    """Service class to handle outbound email delivery via local or authenticated external SMTP servers."""
+    """Service handling outbound email delivery over SMTP."""
 
     def __init__(
         self,
         server: str,
         port: int,
-        user: str | None,
-        password: str | None,
+        user: Optional[str],
+        password: Optional[str],
         sender: str,
-    ):
-        """Initialize the EmailService configuration.
-
-        Args:
-            server (str): Hostname or IP address of the SMTP server.
-            port (int): Network port for the SMTP server (e.g., 25, 1025, 587).
-            user (str | None): Username for authentication (optional).
-            password (str | None): Password for authentication (optional).
-            sender (str): Default sender email address ('From' header).
-        """
+    ) -> None:
         self.server = server
         self.port = port
         self.user = user
@@ -38,22 +30,26 @@ class EmailService:
         self.sender = sender
 
     def send_email(
-        self, to_email: str, subject: str, body: str, is_html: bool = False
+        self,
+        to_email: str,
+        subject: str,
+        body: str,
+        is_html: bool = False,
     ) -> str:
-        """Constructs and delivers an email message.
+        """
+        Constructs and delivers an email message over SMTP.
 
         Args:
-            to_email (str): Recipient's email address.
-            subject (str): Email subject line.
+            to_email (str): Recipient email address.
+            subject (str): Email subject header.
             body (str): Message content (plain text or HTML).
-            is_html (bool, optional): Set to True if body contains HTML markup.
-            Defaults to False.
+            is_html (bool): Whether the content should be sent as HTML.
 
         Returns:
-            str: Status message indicating successful delivery or error details.
+            str: Status description of the delivery outcome.
         """
         logger.debug(
-            "Attempting mail to %s via %s:%s (Auth Pass: %s)",
+            "Attempting to send email to '%s' via %s:%d (Authenticated: %s)",
             to_email,
             self.server,
             self.port,
@@ -74,24 +70,19 @@ class EmailService:
 
             # Route 1: Local server or unauthenticated connection
             if self.server in ["localhost", "127.0.0.1"] or not self.password:
-                logger.debug("Connecting to SMTP server %s:%s...", self.server, self.port)
                 with smtplib.SMTP(self.server, self.port, timeout=10) as server:
-                    logger.debug("Connected! Sending message...")
                     server.send_message(msg)
-                    logger.debug("SENT via local mail server!")
                 return f"Successfully sent email to '{to_email}' via local mail server."
 
             # Route 2: External SMTP server with TLS authentication
-            logger.debug("Connecting to external SMTP %s:%s...", self.server, self.port)
             with smtplib.SMTP(self.server, self.port, timeout=10) as server:
                 if self.port == 587:
                     server.starttls()
                 if self.user and self.password:
                     server.login(self.user, self.password)
                 server.send_message(msg)
-                logger.debug("SENT via external SMTP!")
             return f"Successfully sent email to '{to_email}' via SMTP."
 
         except Exception as e:
-            logger.error("Failed to send email: %s: %s", type(e).__name__, e, exc_info=True)
+            logger.error("Failed to send email to '%s': %s", to_email, e, exc_info=True)
             return f"Error sending email: {e}"

@@ -1,32 +1,37 @@
+# File: app/services/messaging_service.py
 """
-Messaging Application Service.
+Messaging Application Service Module.
 
-Handles message dispatching, listener notifications, attachment processing, and conversation creation logic.
+Handles message dispatching, listener notifications, attachment linking,
+and conversation lifecycle management.
 """
 
 import logging
 from typing import Callable, List, Optional
+import uuid
 from werkzeug.datastructures import FileStorage
 
-from app.domain.models.message import Message, ActorType
-from app.domain.models.message_attachment import MessageAttachment
+from app.domain.enums import ActorType
+from app.domain.errors import ConversationNotFoundError, MessageNotFoundError
 from app.domain.models.conversation import Conversation
-from app.domain.repositories.message_repository import MessageRepository
+from app.domain.models.message import Message
+from app.domain.models.message_attachment import MessageAttachment
 from app.domain.repositories.conversation_repository import ConversationRepository
+from app.domain.repositories.message_repository import MessageRepository
 from app.services.message_attachment_service import MessageAttachmentService
 
 logger = logging.getLogger(__name__)
 
 
 class MessagingService:
-    """Service managing message creation, database storage, and event distribution."""
+    """Service managing conversations, messages, attachments, and event subscriptions."""
 
     def __init__(
         self,
         message_repo: MessageRepository,
         conversation_repo: ConversationRepository,
         attachment_service: Optional[MessageAttachmentService] = None,
-    ):
+    ) -> None:
         self.message_repo = message_repo
         self.conversation_repo = conversation_repo
         self.attachment_service = attachment_service
@@ -47,7 +52,7 @@ class MessagingService:
         files: Optional[List[FileStorage]] = None,
     ) -> Message:
         """
-        Persists a message and its optional file attachments in storage and triggers observer notifications.
+        Persists a message and its optional file attachments, then triggers observers.
 
         Args:
             conversation_id (Optional[str]): Existing conversation ID or None.
@@ -55,30 +60,28 @@ class MessagingService:
             sender_type (ActorType): Message sender category.
             sender_name (str): Author display name.
             text (str): Message text payload.
-            recipient_id (str, optional): Recipient entity ID.
-            files (List[FileStorage], optional): List of uploaded file objects.
+            recipient_id (Optional[str]): Recipient entity ID.
+            files (Optional[List[FileStorage]]): List of uploaded files.
 
         Returns:
-            Message: The saved message model.
+            Message: The persisted message model.
         """
-        if conversation_id:
-            existing_conv = self.conversation_repo.get_by_id(conversation_id)
-        else:
-            existing_conv = None
+        existing_conv = (
+            self.conversation_repo.get_by_id(conversation_id)
+            if conversation_id
+            else None
+        )
 
         if not existing_conv:
-            conv_kwargs = {
-                "agent_id": recipient_id,
-                "title": f"Chat gestartet von {sender_name}"
-            }
-            if conversation_id:
-                conv_kwargs["id"] = conversation_id
+            new_conv = Conversation(
+                id=conversation_id or str(uuid.uuid4()),
+                agent_id=recipient_id,
+                title=f"Chat gestartet von {sender_name}",
+            )
+            saved_conv = self.conversation_repo.save(new_conv)
+            conversation_id = saved_conv.id
 
-            new_conv = Conversation(**conv_kwargs)
-            self.conversation_repo.save(new_conv)
-            conversation_id = new_conv.id
-
-        attachments = []
+        attachments: List[MessageAttachment] = []
         if files and self.attachment_service:
             for file in files:
                 if file and file.filename:
@@ -102,14 +105,29 @@ class MessagingService:
 
         return saved_message
 
+    def get_conversations_by_agent(self, agent_id: str) -> List[Conversation]:
+        """
+        Retrieves all conversations associated with a specific agent ID.
+
+        Args:
+            agent_id (str): Agent identifier.
+
+        Returns:
+            List[Conversation]: Matching conversation models.
+        """
+        return self.conversation_repo.get_by_agent_id(agent_id)
+
     def get_conversation_history(
-        self, conversation_id: str, limit: int = 50
+        self,
+        conversation_id: str,
+        limit: int = 50,
     ) -> List[Message]:
-        """Retrieves conversation history encapsulating repository access."""
+        """Retrieves messages for a conversation up to the given limit."""
         return self.message_repo.get_by_conversation(conversation_id, limit=limit)
 
     def get_latest_user_attachments(
-        self, conversation_id: str
+        self,
+        conversation_id: str,
     ) -> List[MessageAttachment]:
         """Retrieves attachments from the most recent user message in a conversation."""
         if not conversation_id:
@@ -128,51 +146,65 @@ class MessagingService:
             )
         return []
 
-    def update_message_text(self, message_id: str, text: str) -> Optional[Message]:
-        """Updates the text content of an existing message in the database."""
+    def update_message_text(
+        self,
+        message_id: str,
+        text: str,
+    ) -> Message:
+        """
+        Updates the text content of an existing message.
+
+        Raises:
+            MessageNotFoundError: If the message ID does not exist.
+        """
         message = self.message_repo.get_by_id(message_id)
         if not message:
-            logger.warning("Message with ID %s not found.", message_id)
-            return None
+            raise MessageNotFoundError(f"Message with ID '{message_id}' not found.")
 
         message.text = text
         return self.message_repo.save(message)
 
     def _notify_listeners(self, message: Message) -> None:
-        """Notifies registered listener callbacks."""
+        """Notifies all registered listener callbacks of a new message."""
         for listener in self._message_listeners:
             try:
                 listener(message)
             except Exception as e:
-                logger.error("ERROR notifying message listener: %s", e, exc_info=True)
+                logger.error("Error notifying message listener: %s", e, exc_info=True)
 
     def create_conversation(
-        self, agent_id: str, title: Optional[str] = None
+        self,
+        agent_id: str,
+        title: Optional[str] = None,
     ) -> Conversation:
-        """Creates and persists a new conversation for a specific agent."""
+        """Creates and persists a new conversation associated with an agent."""
         conv_title = title or "Neue Konversation"
-        new_conv = Conversation(agent_id=agent_id, title=conv_title)
+        new_conv = Conversation(
+            id=str(uuid.uuid4()),
+            agent_id=agent_id,
+            title=conv_title,
+        )
         return self.conversation_repo.save(new_conv)
 
-    def get_conversations_by_agent(self, agent_id: str) -> List[Conversation]:
-        """Retrieves all conversations linked to an agent."""
-        return self.conversation_repo.get_by_agent_id(agent_id)
-
-    def get_conversation_by_id(self, conversation_id: str) -> Optional[Conversation]:
-        """Retrieves a single conversation by ID."""
+    def get_conversation_by_id(
+        self,
+        conversation_id: str,
+    ) -> Optional[Conversation]:
+        """Retrieves a conversation by ID."""
         return self.conversation_repo.get_by_id(conversation_id)
-
-    # app/services/messaging_service.py
 
     def delete_conversation(self, conversation_id: str) -> bool:
         """
         Deletes a conversation entity by its ID.
-        Dependant messages/attachments will be cascade-deleted by database relationship rules.
+
+        Raises:
+            ConversationNotFoundError: If the conversation does not exist.
         """
         conv = self.conversation_repo.get_by_id(conversation_id)
         if not conv:
-            logger.warning("Attempted to delete non-existent conversation: %s", conversation_id)
-            return False
+            raise ConversationNotFoundError(
+                f"Conversation with ID '{conversation_id}' was not found."
+            )
 
         self.conversation_repo.delete(conversation_id)
         logger.info("Successfully deleted conversation: %s", conversation_id)

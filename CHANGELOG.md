@@ -9,8 +9,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Introduced trinity examples
+- Added `LLMExecutionRepository` domain protocol for decoupled LLM execution persistence.
+- Added `get_conversations_by_agent` method to `MessagingService` to support multi-conversation history.
 
 ### Changed
+
+- **Clean Architecture Refactoring**:
+  - Extracted ReAct agent loop logic into `ReActLoopRunner`.
+  - Refactored `FileStorageService` to centralize I/O, path validation, and text extraction.
+  - Replaced `flask.current_app` dependencies in `tools.py` with `ToolRegistry` injection.
+  - Standardized domain-specific exception handling across services.
+- **Messaging & Persistence**:
+  - Updated `MessagingService` to manage conversation lifecycles and attachment links directly.
+  - Enhanced `SQLAlchemyConversationRepository` with fallback UUID generation to guarantee primary key constraints.
 
 ## [0.0.7] - 2026-08-13
 

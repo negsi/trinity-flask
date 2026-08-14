@@ -1,3 +1,4 @@
+# File: app/repositories/sqlalchemy_conversation_repository.py
 """
 SQLAlchemy Conversation Repository Implementation.
 
@@ -5,9 +6,11 @@ Handles database persistence and loading of Conversation entities.
 """
 
 from typing import List, Optional
-from app.storage.sqlalchemy.db import db
+import uuid
+
 from app.domain.models.conversation import Conversation
 from app.domain.repositories.conversation_repository import ConversationRepository
+from app.storage.sqlalchemy.db import db
 from app.storage.sqlalchemy.models.conversation import ConversationModel
 
 
@@ -28,13 +31,13 @@ class SQLAlchemyConversationRepository(ConversationRepository):
             db_conv = db.session.get(ConversationModel, conversation.id)
 
         if not db_conv:
+            conv_id = conversation.id or str(uuid.uuid4())
             db_conv = ConversationModel(
+                id=conv_id,
                 title=conversation.title,
                 agent_id=conversation.agent_id,
                 created_at=conversation.created_at,
             )
-            if conversation.id:
-                db_conv.id = conversation.id
             db.session.add(db_conv)
         else:
             db_conv.title = conversation.title

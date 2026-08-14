@@ -1,22 +1,24 @@
 """
-Task Chain Execution Engine.
+Task Chain Execution Engine Module.
 
-Executes individual steps of a structured LLM task chain and resolves context parameters.
+Executes sequential steps of a structured LLM task chain and resolves dynamic context parameters.
 """
 
-import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable, Generator
+import logging
+from typing import Any, Callable, Dict, Generator, Optional
+
+from app.domain.errors import ToolNotFoundError
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class ChainExecutionResult:
-    """Result data structure returned after task chain execution finishes."""
+    """Result data structure returned after task chain execution completes."""
 
     is_complete: bool
-    context: dict[str, Any] = field(default_factory=dict)
+    context: Dict[str, Any] = field(default_factory=dict)
     last_result: str = ""
 
 
@@ -25,37 +27,48 @@ class TaskExecutor:
 
     def __init__(
         self,
-        tools: dict[str, Callable],
-        llm_stream_func: Callable[[str], Generator[str, None, None]] | None = None,
-        email_service: Any | None = None,
+        tools: Dict[str, Callable[..., Any]],
+        llm_stream_func: Optional[Callable[[str], Generator[str, None, None]]] = None,
+        email_service: Optional[Any] = None,
     ) -> None:
         self.tools = tools
         self.llm_stream_func = llm_stream_func
         self.email_service = email_service
 
     def execute_chain_stream(
-        self, execution: Any, initial_context: dict[str, Any] | None = None
+        self,
+        execution: Any,
+        initial_context: Optional[Dict[str, Any]] = None,
     ) -> Generator[str, None, ChainExecutionResult]:
-        """Executes sequence steps and streams live output chunks."""
-        context: dict[str, Any] = initial_context.copy() if initial_context else {}
+        """
+        Executes sequence steps iteratively and streams output chunks.
 
-        for step in execution.steps:
-            step_num = step.step_number
-            tool_name = step.tool_name
-            raw_params = step.parameters or {}
+        Args:
+            execution (Any): The LLMExecution domain model containing steps.
+            initial_context (Optional[Dict[str, Any]]): Initial contextual variables.
 
-            logger.info(f"[TaskExecutor] Step {step_num} ({tool_name}) Raw Params: {raw_params}")
+        Yields:
+            str: Real-time text tokens from tool execution or sub-LLM prompts.
+
+        Returns:
+            ChainExecutionResult: Execution completion summary.
+        """
+        context: Dict[str, Any] = dict(initial_context) if initial_context else {}
+
+        for step in getattr(execution, "steps", []):
+            step_num = getattr(step, "step_number", 0)
+            tool_name = getattr(step, "tool_name", "")
+            raw_params = getattr(step, "parameters", {}) or {}
+
+            logger.info("[TaskExecutor] Step %d (%s) Raw Params: %s", step_num, tool_name, raw_params)
             resolved_params = self._resolve_parameters(raw_params, context)
 
             if tool_name == "message_llm":
                 yield from self._execute_llm_tool(step_num, resolved_params, context)
             else:
-                yield from self._execute_standard_tool(
-                    step_num, tool_name, resolved_params, context
-                )
+                yield from self._execute_standard_tool(step_num, tool_name, resolved_params, context)
 
         is_complete = getattr(execution, "is_complete", True)
-
         return ChainExecutionResult(
             is_complete=is_complete,
             context=context,
@@ -63,12 +76,15 @@ class TaskExecutor:
         )
 
     def _execute_llm_tool(
-        self, step_num: int, params: dict[str, Any], context: dict[str, Any]
+        self,
+        step_num: int,
+        params: Dict[str, Any],
+        context: Dict[str, Any],
     ) -> Generator[str, None, None]:
-        """Executes embedded nested LLM streaming tool requests."""
+        """Executes nested LLM streaming tool requests."""
         prompt = str(params.get("message", "")).strip()
         if not prompt:
-            logger.warning(f"[TaskExecutor] Step {step_num}: Empty prompt string for message_llm.")
+            logger.warning("[TaskExecutor] Step %d: Empty prompt for message_llm.", step_num)
             return
 
         if not self.llm_stream_func:
@@ -99,9 +115,13 @@ class TaskExecutor:
         context["has_previous_llm_output"] = True
 
     def _execute_standard_tool(
-        self, step_num: int, tool_name: str, params: dict[str, Any], context: dict[str, Any]
+        self,
+        step_num: int,
+        tool_name: str,
+        params: Dict[str, Any],
+        context: Dict[str, Any],
     ) -> Generator[str, None, None]:
-        """Executes standard Python tool functions from the tools registry."""
+        """Executes standard callable tool functions."""
         if tool_name not in self.tools:
             err = f"\n[Error: Tool '{tool_name}' is not registered.]"
             logger.error(err)
@@ -110,15 +130,16 @@ class TaskExecutor:
 
         try:
             tool_func = self.tools[tool_name]
+            exec_params = dict(params)
 
-            if "conversation_id" in context and "conversation_id" not in params:
-                params["conversation_id"] = context["conversation_id"]
-            if "base_dir" in context and "base_dir" not in params:
-                params["base_dir"] = context["base_dir"]
-            if self.email_service and "email_service" not in params:
-                params["email_service"] = self.email_service
+            if "conversation_id" in context and "conversation_id" not in exec_params:
+                exec_params["conversation_id"] = context["conversation_id"]
+            if "base_dir" in context and "base_dir" not in exec_params:
+                exec_params["base_dir"] = context["base_dir"]
+            if self.email_service and "email_service" not in exec_params:
+                exec_params["email_service"] = self.email_service
 
-            output = str(tool_func(**params))
+            output = str(tool_func(**exec_params))
             context[f"step_{step_num}"] = output
             context["last_result"] = output
         except Exception as e:
@@ -127,32 +148,32 @@ class TaskExecutor:
             yield err_msg
 
     def _resolve_parameters(
-        self, params: dict[str, Any], context: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Resolves dynamic contextual placeholder tokens recursively across parameters."""
+        self,
+        params: Dict[str, Any],
+        context: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Recursively resolves dynamic contextual placeholders across parameter dictionaries."""
         return {k: self._resolve_value(v, context) for k, v in params.items()}
 
-    def _resolve_value(self, val: Any, context: dict[str, Any]) -> Any:
-        """Recursively resolves dynamic context tokens in strings, dicts, and lists."""
+    def _resolve_value(self, val: Any, context: Dict[str, Any]) -> Any:
+        """Resolves dynamic placeholder tokens within strings, lists, and dicts."""
         if isinstance(val, str):
             stripped = val.strip()
             for ctx_key, ctx_val in context.items():
                 token_upper = f"[{ctx_key.upper()}]"
                 token_lower = f"[{ctx_key.lower()}]"
 
-                # Direct token substitution matching exact key
-                if stripped == token_upper or stripped == token_lower:
+                if stripped in (token_upper, token_lower):
                     return ctx_val
 
-                # String interpolation
                 val_str = str(ctx_val)
                 if token_upper in val:
                     val = val.replace(token_upper, val_str)
                 if token_lower in val:
                     val = val.replace(token_lower, val_str)
             return val
-        elif isinstance(val, dict):
+        if isinstance(val, dict):
             return {k: self._resolve_value(v, context) for k, v in val.items()}
-        elif isinstance(val, list):
+        if isinstance(val, list):
             return [self._resolve_value(item, context) for item in val]
         return val
