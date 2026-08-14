@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+### Changed
+
+## [0.0.8] - 2026-08-14
+
+### Added
+
 - Introduced trinity `examples` directory
 - Added `LLMExecutionRepository` domain protocol for decoupled LLM execution persistence.
 - Added `get_conversations_by_agent` method to `MessagingService` to support multi-conversation history.
@@ -103,7 +109,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.7...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.8...develop
+[0.0.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.8
 [0.0.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.7
 [0.0.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.6
 [0.0.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.5
