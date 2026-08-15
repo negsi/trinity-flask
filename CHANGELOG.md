@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+## [0.0.9] - 2026-08-15
+
+### Added
 - **SSE Stream Attachment Notification**: Added inline attachment payload event (`__ATTACHMENTS__`) to the Server-Sent Events stream after ReAct loop execution to notify clients of newly created files in real time.
 
 ### Changed
 - **Conversation File Endpoint**: Replaced simple `<filename>` route parameter with path-converter (`<path:filename>`) in `get_conversation_file` endpoint to support nested files and relative filepaths.
-- **File Download Path Resolution**: Updated file serving logic to prioritize `CONVERSATIONS_FOLDER` configuration from `current_app.config` (`instance/conversations`), ensuring robust resolution of sandbox directories across different execution environments.
+- **Message Attachment Storage Location**: Updated `MessageAttachmentService` and `MessagingService` to save user-uploaded message attachments directly into the target conversation sandbox directory (`instance/conversations/<conversation_id>/`), keeping all uploaded and generated files unified in the same folder hierarchy.
 
 ## [0.0.8] - 2026-08-14
 
@@ -112,7 +118,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.8...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.9...develop
+[0.0.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.9
 [0.0.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.8
 [0.0.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.7
 [0.0.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.6
