@@ -5,7 +5,7 @@ Coordinates AI agent response streaming, database message lifecycle,
 and task chain persistence.
 """
 
-import logging
+import os, logging, json
 from typing import Generator, Optional
 
 from app.domain.enums import ActorType
@@ -52,6 +52,7 @@ class AgentOrchestrator:
         Yields:
             str: Token chunks emitted during prompt processing and tool runs.
         """
+        print("=== [3] ENTERED stream_agent_response! ===", flush=True)
         fetched_attachments = self.messaging_service.get_latest_user_attachments(conversation_id)
         conversation_history = self.messaging_service.get_conversation_history(
             conversation_id=conversation_id, limit=100
@@ -88,22 +89,69 @@ class AgentOrchestrator:
             on_turn_completed=on_turn_completed,
         )
 
-        summary = None
-        try:
-            while True:
-                chunk = next(loop_gen)
-                yield chunk
-        except StopIteration as e:
-            summary = e.value
+        summary = yield from loop_gen
 
-        if saved_message and summary and summary.final_text:
-            try:
-                self.messaging_service.update_message_text(
-                    message_id=saved_message.id,
-                    text=summary.final_text,
-                )
-            except Exception as e:
-                logger.error("Error updating final message text: %s", e, exc_info=True)
+        if summary:
+            final_text = summary.final_text or summary.accumulated_text
+            created_files = getattr(summary, "created_files", None)
+
+            if not final_text and created_files:
+                file_names = [
+                    os.path.basename(f.get("file_path", "")) 
+                    for f in created_files 
+                    if isinstance(f, dict) and f.get("file_path")
+                ]
+                if file_names:
+                    final_text = f"Dateiexporte: {', '.join(file_names)}"
+                else:
+                    final_text = "Datei(en) erfolgreich generiert."
+
+                yield final_text
+
+            if not saved_message and conversation_id:
+                try:
+                    saved_message = self.messaging_service.send_message(
+                        conversation_id=conversation_id,
+                        sender_id=agent_id,
+                        sender_type=ActorType.AGENT,
+                        sender_name=agent_name,
+                        text=final_text or "…",
+                        recipient_id=user_id,
+                    )
+                except Exception as e:
+                    logger.error("Error creating fallback agent message: %s", e, exc_info=True)
+            elif saved_message and final_text:
+                try:
+                    self.messaging_service.update_message_text(
+                        message_id=saved_message.id,
+                        text=final_text,
+                    )
+                except Exception as e:
+                    logger.error("Error updating final message text: %s", e, exc_info=True)
+
+            if saved_message and created_files:
+                try:
+                    self.messaging_service.add_attachments_to_message(
+                        message_id=saved_message.id,
+                        file_info_list=created_files,
+                    )
+
+                    # TODO: Refactor this to avoid sending raw JSON in the SSE stream. 
+                    # Consider using a structured event format or a separate endpoint for attachments.
+                    attachments_payload = {
+                        "type": "attachments",
+                        "files": [
+                            {
+                                "id": f["file_path"],
+                                "name": os.path.basename(f["file_path"]),
+                                "filename": os.path.basename(f["file_path"])
+                            }
+                            for f in created_files if isinstance(f, dict) and f.get("file_path")
+                        ]
+                    }
+                    yield f"__ATTACHMENTS__:{json.dumps(attachments_payload)}"
+                except Exception as e:
+                    logger.error("Error adding generated attachments to message: %s", e, exc_info=True)
 
     def _save_execution_safe(self, execution: LLMExecution) -> None:
         """Safely persists LLM execution metadata to the repository."""

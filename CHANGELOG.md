@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **SSE Stream Attachment Notification**: Added inline attachment payload event (`__ATTACHMENTS__`) to the Server-Sent Events stream after ReAct loop execution to notify clients of newly created files in real time.
 
 ### Changed
+- **Conversation File Endpoint**: Replaced simple `<filename>` route parameter with path-converter (`<path:filename>`) in `get_conversation_file` endpoint to support nested files and relative filepaths.
+- **File Download Path Resolution**: Updated file serving logic to prioritize `CONVERSATIONS_FOLDER` configuration from `current_app.config` (`instance/conversations`), ensuring robust resolution of sandbox directories across different execution environments.
 
 ## [0.0.8] - 2026-08-14
 
