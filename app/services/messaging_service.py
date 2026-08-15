@@ -84,7 +84,10 @@ class MessagingService:
         if files and self.attachment_service:
             for file in files:
                 if file and file.filename:
-                    attachment = self.attachment_service.save_attachment_file(file)
+                    attachment = self.attachment_service.save_attachment_file(
+                        file=file,
+                        conversation_id=conversation_id,
+                    )
                     attachments.append(attachment)
 
         message = Message(

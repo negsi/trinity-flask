@@ -136,33 +136,20 @@ def stream_chat(
 
 
 @chat_bp.route("/conversations/<conversation_id>/files/<path:filename>", methods=["GET"])
-@inject
 def get_conversation_file(
     conversation_id: str,
     filename: str,
-    file_storage_service = Provide[Container.file_storage_service],
 ):
-    """
-    Serves or downloads a file stored within a specific conversation sandbox folder.
-    Exquisite URL: GET /api/v1/chat/conversations/<conversation_id>/files/<filename>
-    """
+    """Serves files directly from the conversation sandbox folder."""
     conversations_dir = current_app.config.get(
         "CONVERSATIONS_FOLDER",
-        getattr(
-            file_storage_service,
-            "conversations_folder",
-            os.path.join(current_app.root_path, "..", "instance", "conversations")
-        )
+        os.path.join(current_app.root_path, "..", "instance", "conversations"),
     )
 
     target_folder = os.path.abspath(os.path.join(conversations_dir, conversation_id))
 
-    if not os.path.exists(target_folder):
-        print(f"[ERROR] Directory does not exist: {target_folder}", flush=True)
-        abort(404, description="Conversation directory not found")
-
     return send_from_directory(
         directory=target_folder,
         path=filename,
-        as_attachment=True
+        as_attachment=True,
     )

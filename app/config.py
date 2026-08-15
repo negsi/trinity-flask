@@ -38,11 +38,11 @@ class BaseConfig:
     UPLOAD_FOLDER = os.getenv(
         "UPLOAD_FOLDER", os.path.join(BASE_DIR, "instance", "uploads")
     )
-    MESSAGE_UPLOAD_FOLDER = os.getenv(
-        "MESSAGE_UPLOAD_FOLDER", os.path.join(BASE_DIR, "instance", "uploads", "messages")
-    )
     CONVERSATIONS_FOLDER = os.getenv(
         "CONVERSATIONS_FOLDER", os.path.join(BASE_DIR, "instance", "conversations")
+    )
+    MESSAGE_UPLOAD_FOLDER = os.getenv(
+        "MESSAGE_UPLOAD_FOLDER", CONVERSATIONS_FOLDER
     )
 
     # SMTP Mail Settings
