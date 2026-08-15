@@ -5,8 +5,18 @@ Exposes endpoints for messaging operations, conversation histories,
 and real-time streaming LLM agent responses via Server-Sent Events (SSE).
 """
 
+import os
 from typing import Generator
-from flask import Blueprint, jsonify, Response, request, stream_with_context
+from flask import (
+    Blueprint,
+    jsonify,
+    Response,
+    request,
+    stream_with_context,
+    send_from_directory,
+    current_app,
+    abort,
+)
 from dependency_injector.wiring import inject, Provide
 
 from app.containers import Container
@@ -66,17 +76,18 @@ def sse_formatter(
 ) -> Generator[str, None, None]:
     """
     Format text chunks into W3C compliant Server-Sent Events (SSE).
-
-    Splits text containing inner newlines into distinct 'data:' lines
-    to prevent frame corruption.
     """
-    for chunk in generator:
-        if not chunk:
-            continue
-        lines = chunk.split("\n")
-        for line in lines:
-            yield f"data: {line}\n"
-        yield "\n"
+    try:
+        while True:
+            chunk = next(generator)
+            if not chunk:
+                continue
+            lines = chunk.split("\n")
+            for line in lines:
+                yield f"data: {line}\n"
+            yield "\n"
+    except StopIteration:
+        pass
 
 
 @chat_bp.route("/stream", methods=["POST"])
@@ -103,6 +114,7 @@ def stream_chat(
     agent = agent_service.get_agent(agent_id)
     agent_name = agent.name
 
+    print("=== [1] ROUTE stream_chat HIT! ===", flush=True)
     raw_stream = orchestrator.stream_agent_response(
         user_text=user_text,
         conversation_id=conversation_id,
@@ -110,6 +122,7 @@ def stream_chat(
         agent_name=agent_name,
         user_id=user_id,
     )
+    print("=== [2] ORCHESTRATOR GENERATOR CREATED ===", flush=True)
 
     return Response(
         stream_with_context(sse_formatter(raw_stream)),
@@ -119,4 +132,24 @@ def stream_chat(
             "X-Accel-Buffering": "no",
             "Connection": "keep-alive",
         },
+    )
+
+
+@chat_bp.route("/conversations/<conversation_id>/files/<path:filename>", methods=["GET"])
+def get_conversation_file(
+    conversation_id: str,
+    filename: str,
+):
+    """Serves files directly from the conversation sandbox folder."""
+    conversations_dir = current_app.config.get(
+        "CONVERSATIONS_FOLDER",
+        os.path.join(current_app.root_path, "..", "instance", "conversations"),
+    )
+
+    target_folder = os.path.abspath(os.path.join(conversations_dir, conversation_id))
+
+    return send_from_directory(
+        directory=target_folder,
+        path=filename,
+        as_attachment=True,
     )

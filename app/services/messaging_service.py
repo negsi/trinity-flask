@@ -6,9 +6,8 @@ Handles message dispatching, listener notifications, attachment linking,
 and conversation lifecycle management.
 """
 
-import logging
+import os, logging, uuid, mimetypes
 from typing import Callable, List, Optional
-import uuid
 from werkzeug.datastructures import FileStorage
 
 from app.domain.enums import ActorType
@@ -85,7 +84,10 @@ class MessagingService:
         if files and self.attachment_service:
             for file in files:
                 if file and file.filename:
-                    attachment = self.attachment_service.save_attachment_file(file)
+                    attachment = self.attachment_service.save_attachment_file(
+                        file=file,
+                        conversation_id=conversation_id,
+                    )
                     attachments.append(attachment)
 
         message = Message(
@@ -209,3 +211,60 @@ class MessagingService:
         self.conversation_repo.delete(conversation_id)
         logger.info("Successfully deleted conversation: %s", conversation_id)
         return True
+
+    def add_attachments_to_message(
+        self,
+        message_id: str,
+        file_info_list: List[dict],
+    ) -> Message:
+        """
+        Creates MessageAttachment instances for generated files and attaches them to a message.
+
+        Args:
+            message_id (str): Target message ID.
+            file_info_list (List[dict]): List of generated file dictionaries containing paths.
+
+        Returns:
+            Message: The updated message model with persisted attachments.
+
+        Raises:
+            MessageNotFoundError: If the message ID does not exist.
+        """
+        message = self.message_repo.get_by_id(message_id)
+        if not message:
+            raise MessageNotFoundError(f"Message with ID '{message_id}' not found.")
+
+        attachments: List[MessageAttachment] = []
+        for file_info in file_info_list:
+            file_path = file_info.get("file_path", "")
+            if not file_path:
+                continue
+
+            filename = os.path.basename(file_path)
+
+            file_size = 0
+            full_path = file_info.get("full_path") or file_path
+            if os.path.exists(full_path):
+                file_size = os.path.getsize(full_path)
+
+            mime_type, _ = mimetypes.guess_type(filename)
+
+            attachment = MessageAttachment(
+                id=str(uuid.uuid4()),
+                message_id=message_id,
+                name=filename,
+                filename=filename,
+                file_path=file_path,
+                file_size=file_size,
+                mime_type=mime_type or "application/octet-stream",
+            )
+            attachments.append(attachment)
+
+        if not attachments:
+            return message
+
+        if not hasattr(message, "attachments") or message.attachments is None:
+            message.attachments = []
+
+        message.attachments.extend(attachments)
+        return self.message_repo.save(message)

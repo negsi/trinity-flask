@@ -4,7 +4,8 @@ Message Attachment Service Module.
 Handles storage and entity lifecycle for attachments associated with chat messages.
 """
 
-import logging
+import os, logging, uuid, mimetypes
+from flask import current_app
 from typing import Optional
 from werkzeug.datastructures import FileStorage
 
@@ -30,36 +31,39 @@ class MessageAttachmentService:
     def save_attachment_file(
         self,
         file: FileStorage,
-        message_id: Optional[str] = None,
+        conversation_id: str = None,
     ) -> MessageAttachment:
-        """
-        Persists an attachment file to disk and constructs a domain model.
+        """Saves an incoming upload file directly into the conversation sandbox directory."""
+        original_filename = file.filename
+        file_uuid = str(uuid.uuid4())
 
-        Args:
-            file (FileStorage): Uploaded file wrapper.
-            message_id (Optional[str]): Optional parent message ID.
+        stored_filename = f"{file_uuid}_{original_filename}"
 
-        Returns:
-            MessageAttachment: The constructed attachment domain entity.
-
-        Raises:
-            InvalidFileError: If the uploaded file is empty or missing.
-        """
-        if not file or not file.filename:
-            raise InvalidFileError("No valid file provided for message attachment.")
-
-        unique_filename, full_path, file_size, mime_type = self.file_storage_service.save_file(
-            file=file,
-            target_folder=self.upload_folder,
+        # Safely resolve conversations_folder from instance or flask app config
+        base_dir = getattr(self, "conversations_folder", None) or current_app.config.get(
+            "CONVERSATIONS_FOLDER",
+            os.path.join(current_app.root_path, "..", "instance", "conversations"),
         )
 
+        if conversation_id:
+            target_dir = os.path.abspath(os.path.join(base_dir, conversation_id))
+        else:
+            target_dir = os.path.abspath(base_dir)
+
+        os.makedirs(target_dir, exist_ok=True)
+        file_path = os.path.join(target_dir, stored_filename)
+
+        file.save(file_path)
+
+        mime_type, _ = mimetypes.guess_type(original_filename)
+
         return MessageAttachment(
-            name=file.filename,
-            filename=unique_filename,
-            file_path=full_path,
-            mime_type=mime_type,
-            file_size=file_size,
-            message_id=message_id,
+            id=file_uuid,
+            name=original_filename,
+            filename=stored_filename,
+            file_path=file_path,
+            file_size=os.path.getsize(file_path),
+            mime_type=mime_type or file.content_type or "application/octet-stream",
         )
 
     def delete_attachment_file(self, file_path: str) -> None:

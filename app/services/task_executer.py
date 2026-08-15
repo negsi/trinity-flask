@@ -6,7 +6,7 @@ Executes sequential steps of a structured LLM task chain and resolves dynamic co
 
 from dataclasses import dataclass, field
 import logging
-from typing import Any, Callable, Dict, Generator, Optional
+from typing import Any, Callable, Dict, Generator, Optional, List
 
 from app.domain.errors import ToolNotFoundError
 
@@ -20,6 +20,7 @@ class ChainExecutionResult:
     is_complete: bool
     context: Dict[str, Any] = field(default_factory=dict)
     last_result: str = ""
+    created_files: List[Dict[str, Any]] = field(default_factory=list)
 
 
 class TaskExecutor:
@@ -73,6 +74,7 @@ class TaskExecutor:
             is_complete=is_complete,
             context=context,
             last_result=context.get("last_result", ""),
+            created_files=context.get("created_files", []),
         )
 
     def _execute_llm_tool(
@@ -142,6 +144,19 @@ class TaskExecutor:
             output = str(tool_func(**exec_params))
             context[f"step_{step_num}"] = output
             context["last_result"] = output
+
+            if tool_name == "write_file" and not output.startswith("Error"):
+                if "created_files" not in context:
+                    context["created_files"] = []
+                
+                file_path = exec_params.get("file_path")
+                if file_path:
+                    context["created_files"].append({
+                        "file_path": file_path,
+                        "conversation_id": exec_params.get("conversation_id"),
+                        "base_dir": exec_params.get("base_dir")
+                    })
+
         except Exception as e:
             err_msg = f"\n[Error executing tool '{tool_name}' in Step {step_num}: {e}]"
             logger.error(err_msg, exc_info=True)

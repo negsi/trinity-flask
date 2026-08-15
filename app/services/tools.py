@@ -161,13 +161,14 @@ class ToolRegistry:
         """Writes content to a sandboxed file."""
         target_base = base_dir or self.conversations_folder
         try:
-            return self.file_storage_service.write_sandboxed_file(
+            res = self.file_storage_service.write_sandboxed_file(
                 file_path=file_path,
                 content=content,
                 base_dir=target_base,
                 sandbox_id=conversation_id,
                 mode=mode,
             )
+            return res
         except Exception as e:
             logger.error("Error executing write_file tool: %s", e, exc_info=True)
             return f"Error executing write_file: {e}"

@@ -39,6 +39,7 @@ class ReActExecutionSummary:
     accumulated_text: str
     final_text: str
     last_execution: Optional[LLMExecution] = None
+    created_files: List[Dict[str, Any]] = field(default_factory=list)
 
 
 class ReActLoopRunner:
@@ -84,6 +85,7 @@ class ReActLoopRunner:
         """
         state = ReActTurnState(user_prompt=user_text)
         last_execution: Optional[LLMExecution] = None
+        all_created_files: List[Dict[str, Any]] = []
 
         while not state.is_complete and state.turn_count < state.max_turns:
             state.turn_count += 1
@@ -117,7 +119,7 @@ class ReActLoopRunner:
             if on_turn_completed:
                 on_turn_completed(current_text, execution)
 
-            last_result = yield from self._execute_task_chain(
+            last_result, step_created_files = yield from self._execute_task_chain(
                 execution=execution,
                 conversation_id=conversation_id,
                 agent_id=agent_id,
@@ -125,6 +127,9 @@ class ReActLoopRunner:
                 conversation_history=conversation_history,
                 state=state,
             )
+
+            if step_created_files:
+                all_created_files.extend(step_created_files)
 
             if state.is_complete:
                 break
@@ -145,6 +150,7 @@ class ReActLoopRunner:
             accumulated_text="".join(state.accumulated_all_text).strip(),
             final_text=final_text,
             last_execution=last_execution,
+            created_files=all_created_files,
         )
 
     def _run_stream_turn(
@@ -235,6 +241,7 @@ class ReActLoopRunner:
             if exec_result:
                 state.is_complete = exec_result.is_complete
                 last_result = exec_result.last_result
+                created_files = getattr(exec_result, "created_files", [])
 
         rem_chain_text, _ = chain_parser.finalize()
         if rem_chain_text:
@@ -245,4 +252,4 @@ class ReActLoopRunner:
         if chain_text_chunks:
             state.last_chain_chunks = chain_text_chunks
 
-        return last_result
+        return last_result, created_files
