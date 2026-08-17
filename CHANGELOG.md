@@ -7,26 +7,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+## [0.1.0] - 2026-08-17
+
+### Added
 - **`generate_image` Built-in Tool:**
-  - Integrated a new built-in agent tool for image generation supporting configurable aspect ratios (`1:1`, `16:9`, `9:16`) and automated file persistence[cite: 1].
-  - Multi-provider support featuring implementations for **Google Gemini / Imagen** (`GeminiImagenProvider`) and **OpenAI DALL-E 3** (`OpenAIDalleProvider`)[cite: 1].
-  - Support for custom image models via environment configuration (`IMAGE_GENERATOR_PROVIDER`, `IMAGE_GENERATOR_MODEL`)[cite: 1].
+  - Integrated a new built-in agent tool for image generation supporting configurable aspect ratios (`1:1`, `16:9`, `9:16`) and automated file persistence.
+  - Multi-provider support featuring implementations for **Google Gemini / Imagen** (`GeminiImagenProvider`) and **OpenAI DALL-E 3** (`OpenAIDalleProvider`).
+  - Support for custom image models via environment configuration (`IMAGE_GENERATOR_PROVIDER`, `IMAGE_GENERATOR_MODEL`).
 - **Binary Content Storage:**
-  - Extended `FileStorageService.write_sandboxed_file` to natively handle both text and raw binary (`bytes`) payloads (e.g., JPEG/PNG images) with automated mode detection (`wb`/`ab`)[cite: 1].
+  - Extended `FileStorageService.write_sandboxed_file` to natively handle both text and raw binary (`bytes`) payloads (e.g., JPEG/PNG images) with automated mode detection (`wb`/`ab`).
 - **Automatic Attachment Handling for Task Chains:**
-  - Added tracking and context extraction for dynamically generated files during `generate_image` tool execution in `TaskExecutor`[cite: 1].
-  - Implemented automatic image link/attachment detection in `AgentOrchestrator` to prevent duplicate rendering when images are already linked in LLM responses[cite: 1].
+  - Added tracking and context extraction for dynamically generated files during `generate_image` tool execution in `TaskExecutor`.
+  - Implemented automatic image link/attachment detection in `AgentOrchestrator` to prevent duplicate rendering when images are already linked in LLM responses.
 
 ### Changed
 - **Dependency Injection Container:**
-  - Registered image generation providers and injected `image_generator_provider` into `ToolRegistry` via `dependency-injector`[cite: 1].
+  - Registered image generation providers and injected `image_generator_provider` into `ToolRegistry` via `dependency-injector`.
 - **ReAct Loop Execution:**
-  - Extended `ReActLoopRunner` generator return signature to return a tuple `(last_result, created_files)` for downstream pipeline tracking[cite: 1].
-  - Added robust `getattr` fallbacks across execution result parsing[cite: 1].
+  - Extended `ReActLoopRunner` generator return signature to return a tuple `(last_result, created_files)` for downstream pipeline tracking.
+  - Added robust `getattr` fallbacks across execution result parsing.
 - **System Prompts & Documentation:**
-  - Updated `base_agent.prompt.md` and `README.md` with tool specs for `generate_image`[cite: 1].
+  - Updated `base_agent.prompt.md` and `README.md` with tool specs for `generate_image`.
 - **Configuration & Environment:**
-  - Updated `.env.template` and `app/config.py` with default settings for image generation providers[cite: 1].
+  - Updated `.env.template` and `app/config.py` with default settings for image generation providers.
 
 ## [0.0.9] - 2026-08-15
 
@@ -136,7 +142,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.0.9...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.0...develop
+[0.1.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.0
 [0.0.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.9
 [0.0.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.8
 [0.0.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.7
