@@ -8,7 +8,7 @@ sandboxed disk writes, and text extraction from documents (PDFs, plain text).
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 import uuid
 
 import pypdf
@@ -154,20 +154,20 @@ class FileStorageService:
     def write_sandboxed_file(
         self,
         file_path: str,
-        content: str,
+        content: Union[str, bytes],
         base_dir: str,
         sandbox_id: Optional[str] = None,
         mode: str = "w",
     ) -> str:
         """
-        Safely writes content to disk, guarding against directory traversal attacks outside the sandbox.
+        Safely writes content (str or bytes) to disk, guarding against directory traversal attacks.
 
         Args:
             file_path (str): Relative or absolute target path.
-            content (str): String content payload to write.
+            content (Union[str, bytes]): Payload to write (string or raw bytes).
             base_dir (str): Base root directory for workspaces.
             sandbox_id (Optional[str]): Workspace subfolder identifier (e.g. conversation_id).
-            mode (str): File write mode ('w' for overwrite, 'a' for append).
+            mode (str): File write mode ('w', 'a', 'wb', 'ab').
 
         Returns:
             str: Status message detailing the operation result.
@@ -175,8 +175,12 @@ class FileStorageService:
         Raises:
             StorageError: If security boundaries are violated or write fails.
         """
-        if mode not in ("w", "a"):
-            raise StorageError(f"Invalid write mode '{mode}'. Only 'w' and 'a' are supported.")
+        if isinstance(content, bytes) and mode in ("w", "a"):
+            mode = f"{mode}b"
+
+        valid_modes = ("w", "a", "wb", "ab")
+        if mode not in valid_modes:
+            raise StorageError(f"Invalid write mode '{mode}'. Supported modes: {valid_modes}")
 
         target_dir = Path(base_dir).resolve()
         if sandbox_id:
@@ -194,13 +198,20 @@ class FileStorageService:
 
         try:
             resolved_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(resolved_path, mode, encoding="utf-8") as f:
+            
+            is_binary = "b" in mode
+            open_kwargs = {"mode": mode}
+            if not is_binary:
+                open_kwargs["encoding"] = "utf-8"
+
+            with open(resolved_path, **open_kwargs) as f:
                 f.write(content)
 
-            action = "Appended to" if mode == "a" else "Successfully wrote to"
+            action = "Appended to" if "a" in mode else "Successfully wrote to"
+            unit = "bytes" if is_binary else "characters"
             size = len(content)
-            logger.info("%s file '%s' (%d characters)", action, resolved_path, size)
-            return f"{action} file '{resolved_path.name}' at '{resolved_path}' ({size} characters written)."
+            logger.info("%s file '%s' (%d %s)", action, resolved_path, size, unit)
+            return f"{action} file '{resolved_path.name}' at '{resolved_path}' ({size} {unit} written)."
         except OSError as e:
             logger.error("Failed writing to sandboxed file '%s': %s", resolved_path, e, exc_info=True)
             raise StorageError(f"Error writing to file '{file_path}': {e}") from e

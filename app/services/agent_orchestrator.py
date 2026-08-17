@@ -41,18 +41,7 @@ class AgentOrchestrator:
     ) -> Generator[str, None, None]:
         """
         Streams response tokens to the client while orchestrating ReAct loop cycles and persistence.
-
-        Args:
-            user_text (str): Incoming user message content.
-            conversation_id (str): Associated conversation identifier.
-            agent_id (str): Agent entity ID.
-            agent_name (str): Agent display name.
-            user_id (str): Calling user ID.
-
-        Yields:
-            str: Token chunks emitted during prompt processing and tool runs.
         """
-        print("=== [3] ENTERED stream_agent_response! ===", flush=True)
         fetched_attachments = self.messaging_service.get_latest_user_attachments(conversation_id)
         conversation_history = self.messaging_service.get_conversation_history(
             conversation_id=conversation_id, limit=100
@@ -91,21 +80,43 @@ class AgentOrchestrator:
 
         summary = yield from loop_gen
 
+        print(f"=== [ORCHESTRATOR] SUMMARY CREATED FILES: {getattr(summary, 'created_files', 'KEIN ATTRIBUT')} ===", flush=True)
+        print(f"=== [ORCHESTRATOR] SUMMARY FINAL TEXT: {summary.final_text if summary else 'KEINS'} ===", flush=True)
+
         if summary:
-            final_text = summary.final_text or summary.accumulated_text
-            created_files = getattr(summary, "created_files", None)
+            final_text = summary.final_text or summary.accumulated_text or ""
+            created_files = getattr(summary, "created_files", None) or []
 
-            if not final_text and created_files:
-                file_names = [
-                    os.path.basename(f.get("file_path", "")) 
-                    for f in created_files 
-                    if isinstance(f, dict) and f.get("file_path")
-                ]
-                if file_names:
-                    final_text = f"Dateiexporte: {', '.join(file_names)}"
+            image_snippets = []
+            formatted_files = []
+
+            for f in created_files:
+                if isinstance(f, dict):
+                    fpath = f.get("file_path") or f.get("filename") or ""
+                    fname = os.path.basename(fpath)
+                    if fname:
+                        file_url = f"/api/v1/chat/conversations/{conversation_id}/files/{fname}"
+                        formatted_files.append({
+                            "id": fpath,
+                            "name": fname,
+                            "filename": fname,
+                            "url": file_url,
+                        })
+                        if fname.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                            # Prüfen, ob der Dateiname ODER die vollständige URL bereits vom LLM im Text platziert wurde
+                            if fname not in final_text and file_url not in final_text:
+                                image_snippets.append(f"![Generiertes Bild]({file_url})")
+
+            if image_snippets:
+                img_block = "\n\n" + "\n\n".join(image_snippets)
+                if not final_text or final_text.strip() == "Aufgabe ausgeführt.":
+                    final_text = "\n\n".join(image_snippets)
+                    yield final_text
                 else:
-                    final_text = "Datei(en) erfolgreich generiert."
-
+                    final_text += img_block
+                    yield img_block
+            elif not final_text:
+                final_text = "Aufgabe ausgeführt."
                 yield final_text
 
             if not saved_message and conversation_id:
@@ -115,7 +126,7 @@ class AgentOrchestrator:
                         sender_id=agent_id,
                         sender_type=ActorType.AGENT,
                         sender_name=agent_name,
-                        text=final_text or "…",
+                        text=final_text,
                         recipient_id=user_id,
                     )
                 except Exception as e:
@@ -129,27 +140,19 @@ class AgentOrchestrator:
                 except Exception as e:
                     logger.error("Error updating final message text: %s", e, exc_info=True)
 
-            if saved_message and created_files:
+            # Attachments persisten und Event über SSE streamen
+            if saved_message and formatted_files:
                 try:
                     self.messaging_service.add_attachments_to_message(
                         message_id=saved_message.id,
                         file_info_list=created_files,
                     )
 
-                    # TODO: Refactor this to avoid sending raw JSON in the SSE stream. 
-                    # Consider using a structured event format or a separate endpoint for attachments.
                     attachments_payload = {
                         "type": "attachments",
-                        "files": [
-                            {
-                                "id": f["file_path"],
-                                "name": os.path.basename(f["file_path"]),
-                                "filename": os.path.basename(f["file_path"])
-                            }
-                            for f in created_files if isinstance(f, dict) and f.get("file_path")
-                        ]
+                        "files": formatted_files
                     }
-                    yield f"__ATTACHMENTS__:{json.dumps(attachments_payload)}"
+                    yield f"\n__ATTACHMENTS__:{json.dumps(attachments_payload)}"
                 except Exception as e:
                     logger.error("Error adding generated attachments to message: %s", e, exc_info=True)
 

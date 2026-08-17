@@ -7,8 +7,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **`generate_image` Built-in Tool:**
+  - Integrated a new built-in agent tool for image generation supporting configurable aspect ratios (`1:1`, `16:9`, `9:16`) and automated file persistence[cite: 1].
+  - Multi-provider support featuring implementations for **Google Gemini / Imagen** (`GeminiImagenProvider`) and **OpenAI DALL-E 3** (`OpenAIDalleProvider`)[cite: 1].
+  - Support for custom image models via environment configuration (`IMAGE_GENERATOR_PROVIDER`, `IMAGE_GENERATOR_MODEL`)[cite: 1].
+- **Binary Content Storage:**
+  - Extended `FileStorageService.write_sandboxed_file` to natively handle both text and raw binary (`bytes`) payloads (e.g., JPEG/PNG images) with automated mode detection (`wb`/`ab`)[cite: 1].
+- **Automatic Attachment Handling for Task Chains:**
+  - Added tracking and context extraction for dynamically generated files during `generate_image` tool execution in `TaskExecutor`[cite: 1].
+  - Implemented automatic image link/attachment detection in `AgentOrchestrator` to prevent duplicate rendering when images are already linked in LLM responses[cite: 1].
 
 ### Changed
+- **Dependency Injection Container:**
+  - Registered image generation providers and injected `image_generator_provider` into `ToolRegistry` via `dependency-injector`[cite: 1].
+- **ReAct Loop Execution:**
+  - Extended `ReActLoopRunner` generator return signature to return a tuple `(last_result, created_files)` for downstream pipeline tracking[cite: 1].
+  - Added robust `getattr` fallbacks across execution result parsing[cite: 1].
+- **System Prompts & Documentation:**
+  - Updated `base_agent.prompt.md` and `README.md` with tool specs for `generate_image`[cite: 1].
+- **Configuration & Environment:**
+  - Updated `.env.template` and `app/config.py` with default settings for image generation providers[cite: 1].
 
 ## [0.0.9] - 2026-08-15
 

@@ -2,7 +2,7 @@
 Configuration Management Module.
 
 Defines environment-specific configuration settings for database connections,
-LLM providers, upload paths, and application execution parameters.
+LLM providers, image generator providers, upload paths, and application execution parameters.
 """
 
 import os
@@ -32,6 +32,10 @@ class BaseConfig:
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
     LLM_API_KEY = os.getenv("LLM_API_KEY")
     LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+
+    # Image Generator Settings
+    IMAGE_GENERATOR_PROVIDER = os.getenv("IMAGE_GENERATOR_PROVIDER", "gemini")
+    IMAGE_GENERATOR_MODEL = os.getenv("IMAGE_GENERATOR_MODEL")
 
     # File Storage Settings
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))

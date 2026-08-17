@@ -196,7 +196,7 @@ class ReActLoopRunner:
         attachments: List[MessageAttachment],
         conversation_history: List[Any],
         state: ReActTurnState,
-    ) -> Generator[str, None, str]:
+    ) -> Generator[str, None, Tuple[str, List[Dict[str, Any]]]]:
         """Executes tools specified in the task chain plan."""
 
         def llm_stream_adapter(prompt_text: str) -> Generator[str, None, None]:
@@ -224,6 +224,7 @@ class ReActLoopRunner:
         chain_parser = StreamResponseParser()
         chain_text_chunks: List[str] = []
         last_result = ""
+        created_files: List[Dict[str, Any]] = []
 
         chain_gen = executor.execute_chain_stream(execution, initial_context=initial_context)
 
@@ -239,9 +240,9 @@ class ReActLoopRunner:
         except StopIteration as e:
             exec_result = e.value
             if exec_result:
-                state.is_complete = exec_result.is_complete
-                last_result = exec_result.last_result
-                created_files = getattr(exec_result, "created_files", [])
+                state.is_complete = getattr(exec_result, "is_complete", False)
+                last_result = getattr(exec_result, "last_result", "") or ""
+                created_files = getattr(exec_result, "created_files", []) or []
 
         rem_chain_text, _ = chain_parser.finalize()
         if rem_chain_text:
@@ -253,3 +254,4 @@ class ReActLoopRunner:
             state.last_chain_chunks = chain_text_chunks
 
         return last_result, created_files
+

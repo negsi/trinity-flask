@@ -6,8 +6,10 @@ Executes sequential steps of a structured LLM task chain and resolves dynamic co
 
 from dataclasses import dataclass, field
 import logging
+import os
 from typing import Any, Callable, Dict, Generator, Optional, List
 
+from app.config import BaseConfig
 from app.domain.errors import ToolNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -141,17 +143,36 @@ class TaskExecutor:
             if self.email_service and "email_service" not in exec_params:
                 exec_params["email_service"] = self.email_service
 
-            output = str(tool_func(**exec_params))
+            tool_raw_result = tool_func(**exec_params)
+            output = str(tool_raw_result)
             context[f"step_{step_num}"] = output
             context["last_result"] = output
 
-            if tool_name == "write_file" and not output.startswith("Error"):
-                if "created_files" not in context:
-                    context["created_files"] = []
-                
+            if "created_files" not in context:
+                context["created_files"] = []
+
+            if tool_name == "generate_image" and isinstance(tool_raw_result, dict):
+                if tool_raw_result.get("status") == "success":
+                    filename = tool_raw_result.get("filename")
+                    conversation_id = exec_params.get("conversation_id") or context.get("conversation_id")
+                    
+                    if conversation_id and filename:
+                        clean_path = os.path.join(BaseConfig.CONVERSATIONS_FOLDER, conversation_id, filename)
+                    else:
+                        clean_path = filename
+
+                    context["created_files"].append({
+                        "filename": filename,
+                        "file_path": clean_path,
+                        "conversation_id": conversation_id,
+                        "base_dir": exec_params.get("base_dir")
+                    })
+
+            elif tool_name == "write_file" and not output.startswith("Error"):
                 file_path = exec_params.get("file_path")
                 if file_path:
                     context["created_files"].append({
+                        "filename": os.path.basename(file_path),
                         "file_path": file_path,
                         "conversation_id": exec_params.get("conversation_id"),
                         "base_dir": exec_params.get("base_dir")

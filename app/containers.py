@@ -2,7 +2,7 @@
 Dependency Injection Container Module.
 
 Configures application repositories, domain services, context builders,
-storage services, tool registries, and system orchestrators.
+storage services, image generator providers, tool registries, and system orchestrators.
 """
 
 from dependency_injector import containers, providers
@@ -20,6 +20,7 @@ from app.services.agent_service import AgentService
 from app.services.datasource_service import DatasourceService
 from app.services.email_service import EmailService
 from app.services.file_storage_service import FileStorageService
+from app.services.llm.providers import GeminiImagenProvider, OpenAIDalleProvider
 from app.services.llm_service import LLMService
 from app.services.message_attachment_service import MessageAttachmentService
 from app.services.messaging_service import MessagingService
@@ -74,12 +75,30 @@ class Container(containers.DeclarativeContainer):
     )
 
     # -------------------------------------------------------------------------
+    # Image Generation Providers
+    # -------------------------------------------------------------------------
+    gemini_imagen_provider = providers.Factory(
+        GeminiImagenProvider,
+    )
+
+    openai_dalle_provider = providers.Factory(
+        OpenAIDalleProvider,
+    )
+
+    image_generator_provider = providers.Selector(
+        config.IMAGE_GENERATOR_PROVIDER,
+        gemini=gemini_imagen_provider,
+        openai=openai_dalle_provider,
+    )
+
+    # -------------------------------------------------------------------------
     # Tools & Tool Registry
     # -------------------------------------------------------------------------
     tool_registry = providers.Singleton(
         ToolRegistry,
         file_storage_service=file_storage_service,
         email_service=email_service,
+        image_generator_provider=image_generator_provider,
         conversations_folder=config.CONVERSATIONS_FOLDER,
     )
 
