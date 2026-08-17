@@ -2,12 +2,14 @@
 System Tools Registry Module.
 
 Provides standard execution tools for web fetching, RSS feed parsing, PDF parsing,
-file management, email dispatching, and a decoupled registry for tool dependency injection.
+file management, email dispatching, image generation, and a decoupled registry
+for tool dependency injection.
 """
 
 import io
 import json
 import logging
+import uuid
 from typing import Any, Callable, Dict, Optional
 
 from bs4 import BeautifulSoup
@@ -16,6 +18,7 @@ from pypdf import PdfReader
 import requests
 
 from app.domain.errors import ToolExecutionError
+from app.domain.image_generator import ImageGeneratorProvider
 from app.services.email_service import EmailService
 from app.services.file_storage_service import FileStorageService
 
@@ -138,11 +141,13 @@ class ToolRegistry:
         self,
         file_storage_service: FileStorageService,
         email_service: Optional[EmailService] = None,
+        image_generator_provider: Optional[ImageGeneratorProvider] = None,
         conversations_folder: Optional[str] = None,
     ) -> None:
         self.file_storage_service = file_storage_service
         self.email_service = email_service
-        self.conversations_folder = conversations_folder or "/tmp/conversations"
+        self.image_generator_provider = image_generator_provider
+        self.conversations_folder = conversations_folder
         self._custom_tools: Dict[str, Callable[..., Any]] = {}
 
     def register_tool(self, name: str, func: Callable[..., Any]) -> None:
@@ -197,6 +202,51 @@ class ToolRegistry:
             logger.error("Error executing send_email tool: %s", e, exc_info=True)
             return f"Error executing send_email: {e}"
 
+    def generate_image(
+        self,
+        prompt: str,
+        filename: Optional[str] = None,
+        aspect_ratio: str = "1:1",
+        conversation_id: Optional[str] = None,
+        base_dir: Optional[str] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Generates an image and returns file metadata for attachment handling."""
+        if not self.image_generator_provider:
+            raise ToolExecutionError("Image generation provider is not configured.")
+
+        try:
+            image_bytes = self.image_generator_provider.generate_image(
+                prompt=prompt,
+                aspect_ratio=aspect_ratio,
+            )
+
+            safe_filename = filename or f"generated_{uuid.uuid4().hex[:8]}.png"
+            if not safe_filename.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                safe_filename = f"{safe_filename}.png"
+
+            target_base = base_dir or self.conversations_folder
+            saved_path = self.file_storage_service.write_sandboxed_file(
+                file_path=safe_filename,
+                content=image_bytes,
+                base_dir=target_base,
+                sandbox_id=conversation_id,
+            )
+
+            res = {
+                "status": "success",
+                "filename": safe_filename,
+                "file_path": saved_path,
+                "mime_type": "image/png",
+                "is_attachment": True
+            }
+
+            return res
+
+        except Exception as e:
+            logger.error("Error executing generate_image tool: %s", e, exc_info=True)
+            return {"status": "error", "error": str(e)}
+
     def get_tools(self) -> Dict[str, Callable[..., Any]]:
         """Returns the dictionary mapping tool names to bound callable functions."""
         tools: Dict[str, Callable[..., Any]] = {
@@ -204,6 +254,7 @@ class ToolRegistry:
             "message_llm": message_llm,
             "write_file": self.write_file,
             "send_email": self.send_email,
+            "generate_image": self.generate_image,
         }
         tools.update(self._custom_tools)
         return tools

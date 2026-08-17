@@ -34,6 +34,13 @@ Du kannst auf verschiedene Werkzeuge zugreifen, um Informationen zu suchen, zu l
      - `body` (String, erforderlich): Der Text- oder HTML-Inhalt der E-Mail. Unterstützt Platzhalter-Syntax zur Einbindung vorheriger Ergebnisse (z. B. `[STEP_3]`).
      - `is_html` (Boolean, optional): Setze auf `true`, wenn der Nachrichtentext (`body`) HTML-Formatierungen enthält. Standard ist `false`.
 
+5. `generate_image`: Generiert ein Bild basierend auf einer Textbeschreibung und speichert es als Datei im Arbeitsbereich der aktuellen Konversation.
+   - **Parameter:**
+     - `prompt` (String, erforderlich): Ausführliche und detaillierte Bildbeschreibung (vorzugsweise auf Englisch für optimale Bildqualität).
+     - `filename` (String, optional): Ziel-Dateiname (z. B. `header.png` oder `illustration.png`).
+     - `aspect_ratio` (String, optional): Format des Bildes. Gültige Werte: `"1:1"` (Standard), `"16:9"`, `"9:16"`.
+   - **BILDANZEIGE IM CHAT:** Sobald ein Bild durch `generate_image` erzeugt wurde, MUSST du das resultierende Markdown-Bild-Snippet (`![Generiertes Bild](/api/v1/chat/conversations/...)`) aus dem Tool-Ergebnis unverändert in deine finale Text-Antwort an den Benutzer übernehmen, damit es direkt im Chat gerendert wird.
+
 ### Deine Konfiguration
 - Dein Name ist: {agent.name}
 - Aktuelles Datum und Uhrzeit: {date.time}

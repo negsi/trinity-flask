@@ -172,6 +172,13 @@ Trinity agents execute complex web gathering, data processing, and analysis task
      - **`is_html`** (boolean, optional): Set to `true` if the body contains HTML markup. Defaults to `false`.
      - Automatically routes through local unauthenticated delivery or configured SMTP credentials via the application's `EmailService`.
 
+5. **`generate_image`**
+   - **Purpose:** Generates an image based on a detailed text prompt and saves it as a file inside the active conversation workspace.
+   - **Rules & Syntax:**
+     - **`prompt`** (string, required): A detailed and descriptive image prompt (preferably in English for optimal image generation quality).
+     - **`filename`** (string, optional): Target filename (e.g., `scene.png` or `illustration.jpg`).
+     - **`aspect_ratio`** (string, optional): Aspect ratio of the generated image. Supported values: `"1:1"` (default), `"16:9"`, `"9:16"`.
+
 ### Task Execution Workflow
 
 - **Internal Knowledge / Datasources:** For queries answerable directly via model knowledge or uploaded files (Knowledge Base), the agent responds immediately without triggering external tools.

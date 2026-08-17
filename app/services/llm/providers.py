@@ -1,12 +1,15 @@
 """
-LLM Provider Implementations.
+LLM and Image Generator Provider Implementations.
 
-Integrates concrete LLM backend APIs (OpenAI and Google Gemini) supporting token streaming.
+Integrates concrete LLM and Image Generation backend APIs (OpenAI and Google Gemini).
 """
 
+import base64
 import os
-from typing import Generator, List
-from app.domain.llm import LLMProvider, LLMMessage
+from typing import Any, Generator, List, Optional   
+
+from app.domain.image_generator import ImageGeneratorProvider
+from app.domain.llm import LLMMessage, LLMProvider
 
 
 class OpenAIProvider(LLMProvider):
@@ -65,3 +68,90 @@ class GeminiProvider(LLMProvider):
         for chunk in response:
             if chunk.text:
                 yield chunk.text
+
+
+class GeminiImagenProvider:
+    """Google Image Generation Provider using Gemini or Imagen Models."""
+
+    def __init__(self, model: Optional[str] = None):
+        from google import genai  # type: ignore
+
+        self.client = genai.Client(api_key=os.getenv("LLM_API_KEY"))
+        # Default fallback to Gemini flash image if not explicitly configured
+        self.model = model or os.getenv("IMAGE_GENERATOR_MODEL", "gemini-3.1-flash-image")
+
+    def generate_image(
+        self,
+        prompt: str,
+        aspect_ratio: str = "1:1",
+        **kwargs: Any,
+    ) -> bytes:
+        """Generates image bytes using Gemini's native or Imagen image generation models."""
+        clean_model = self.model.replace("models/", "")
+
+        # Branch 1: Dedicated Imagen 4 Models (using generate_images)
+        if "imagen" in clean_model.lower():
+            response = self.client.models.generate_images(
+                model=clean_model,
+                prompt=prompt,
+                config=dict(
+                    number_of_images=1,
+                    aspect_ratio=aspect_ratio,
+                    output_mime_type="image/png",
+                ),
+            )
+            if response.generated_images:
+                return response.generated_images[0].image.image_bytes
+
+        # Branch 2: Gemini Multimodal Native Image Models (using generate_content)
+        else:
+            formatted_prompt = (
+                f"Generate an image: {prompt}. "
+                f"Aspect ratio: {aspect_ratio}."
+            )
+
+            response = self.client.models.generate_content(
+                model=clean_model,
+                contents=formatted_prompt,
+            )
+
+            if response.candidates:
+                for part in response.candidates[0].content.parts:
+                    if hasattr(part, "inline_data") and part.inline_data:
+                        if part.inline_data.mime_type.startswith("image/"):
+                            return part.inline_data.data
+
+        raise RuntimeError(f"No image binary received from model {clean_model}.")
+
+
+class OpenAIDalleProvider(ImageGeneratorProvider):
+    """OpenAI DALL-E 3 implementation."""
+
+    def __init__(self, model: str = "dall-e-3"):
+        from openai import OpenAI  # type: ignore
+
+        self.client = OpenAI(api_key=os.getenv("LLM_API_KEY"))
+        self.model = model
+
+    def generate_image(
+        self,
+        prompt: str,
+        aspect_ratio: str = "1:1",
+        **kwargs: Any,
+    ) -> bytes:
+        """Generates image bytes using OpenAI DALL-E 3."""
+        size = "1024x1024"
+        if aspect_ratio == "16:9":
+            size = "1792x1024"
+        elif aspect_ratio == "9:16":
+            size = "1024x1792"
+
+        response = self.client.images.generate(
+            model=self.model,
+            prompt=prompt,
+            size=size,
+            response_format="b64_json",
+            n=1,
+        )
+        b64_data = response.data[0].b64_json
+        return base64.b64decode(b64_data)
