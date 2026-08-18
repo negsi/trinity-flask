@@ -9,6 +9,8 @@ for tool dependency injection.
 import io
 import json
 import logging
+import os
+import re
 import uuid
 from typing import Any, Callable, Dict, Optional
 
@@ -184,19 +186,94 @@ class ToolRegistry:
         subject: str,
         body: str,
         is_html: bool = False,
+        attachments: Optional[list] = None,
+        conversation_id: Optional[str] = None,
+        base_dir: Optional[str] = None,
         **kwargs: Any,
     ) -> str:
-        """Dispatches an email using the injected EmailService."""
+        """Dispatches an email using the injected EmailService, auto-resolving local files as email attachments."""
         if not self.email_service:
             error_msg = "EmailService is not configured in the tool registry."
             logger.error(error_msg)
             return f"Error: {error_msg}"
+
+        resolved_attachments = list(attachments) if attachments else []
+        target_base = base_dir or self.conversations_folder or os.getcwd()
+
+        def locate_file(filename: str) -> Optional[str]:
+            """Searches for a filename in potential target directories."""
+            clean_name = os.path.basename(filename)
+            
+            # Direct checks
+            direct_candidates = [
+                filename,
+                clean_name,
+                os.path.join(target_base, clean_name),
+            ]
+            if conversation_id and target_base:
+                direct_candidates.insert(0, os.path.join(target_base, conversation_id, clean_name))
+
+            for path in direct_candidates:
+                if os.path.exists(path) and os.path.isfile(path):
+                    return path
+
+            # Recursive search in target_base as fallback
+            if target_base and os.path.exists(target_base):
+                for root, _, files in os.walk(target_base):
+                    if clean_name in files:
+                        return os.path.join(root, clean_name)
+
+            return None
+
+        # 1. Resolve explicit attachments passed in arguments
+        final_attachments = []
+        for att in resolved_attachments:
+            found = locate_file(att)
+            if found:
+                final_attachments.append(found)
+            else:
+                logger.warning("Specified attachment not found: %s", att)
+
+        # 2. Extract image/file references mentioned in the email body
+        file_references = re.findall(r'([a-zA-Z0-9_\-]+\.(?:png|jpg|jpeg|webp|pdf|txt|csv))', body, re.IGNORECASE)
+        processed_body = body
+
+        for raw_ref in set(file_references):
+            found_path = locate_file(raw_ref)
+            if found_path:
+                if found_path not in final_attachments:
+                    final_attachments.append(found_path)
+                    logger.info("Auto-resolved email attachment from body match: %s", found_path)
+
+                # Clean up broken Markdown/HTML image snippets from body
+                md_pattern = rf'!\[.*?\]\([^)]*{re.escape(os.path.basename(raw_ref))}[^)]*\)'
+                processed_body = re.sub(md_pattern, '', processed_body)
+                html_pattern = rf'<img\s+[^>]*src=["\'][^"\']*{re.escape(os.path.basename(raw_ref))}["\'][^>]*>'
+                processed_body = re.sub(html_pattern, '', processed_body, flags=re.IGNORECASE)
+
+        # 3. Last Resort Fallback: If still no attachments, pick the latest generated image in target_base
+        if not final_attachments and target_base and os.path.exists(target_base):
+            found_images = []
+            for root, _, files in os.walk(target_base):
+                for f in files:
+                    if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+                        fp = os.path.join(root, f)
+                        found_images.append((fp, os.path.getmtime(fp)))
+
+            if found_images:
+                # Pick the most recently created image
+                found_images.sort(key=lambda x: x[1], reverse=True)
+                latest_image = found_images[0][0]
+                final_attachments.append(latest_image)
+                logger.info("Fallback: Auto-attached most recent image: %s", latest_image)
+
         try:
             return self.email_service.send_email(
                 to_email=to_email,
                 subject=subject,
-                body=body,
+                body=processed_body,
                 is_html=is_html,
+                attachments=final_attachments,
             )
         except Exception as e:
             logger.error("Error executing send_email tool: %s", e, exc_info=True)
@@ -238,7 +315,7 @@ class ToolRegistry:
                 "filename": safe_filename,
                 "file_path": saved_path,
                 "mime_type": "image/png",
-                "is_attachment": True
+                "is_attachment": True,
             }
 
             return res
