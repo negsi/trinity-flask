@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+## [0.1.3] - 2026-08-18
+
+### Added
+
+- `TAVILY_API_KEY` placeholder to `.env.template`.
+
 ## [0.1.2] - 2026-08-18
 
 ### Added
@@ -166,7 +172,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.2...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.3...develop
+[0.1.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.3
 [0.1.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.2
 [0.1.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.1
 [0.1.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.0
