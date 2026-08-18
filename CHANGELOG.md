@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+## [0.1.1] - 2026-08-18
+
+### Added
 - **Task Chain Execution Streaming:** Real-time execution status signals (`task_chain_init`, `task_step_update`) emitted via SSE stream for visual progress indicators in the frontend UI.
 - **Robust Email Attachment Resolution:** Added multi-tier attachment resolution (`locate_file`) in `ToolRegistry.send_email` using recursive directory walking and a fallback mechanism to automatically attach the most recently generated image if omitted by LLM tool arguments. (pip install -r requirements.txt)
 
@@ -147,7 +153,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.0...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.1...develop
+[0.1.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.1
 [0.1.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.0
 [0.0.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.9
 [0.0.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.8
