@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+## [0.1.2] - 2026-08-18
+
+### Added
+
+- Added `web_search` tool implementation supporting hybrid web searches using Tavily with automatic fallback to DuckDuckGo (`ddgs`).
+- Added `ddgs` and `tavily-python` dependencies to `requirements.txt`. (`pip install -r requirements.txt`)
+- Added `web_search` documentation to `README.md` under built-in agent tools and `.env` setup guide.
+- Added `web_search` tool prompt instructions and usage guidelines in `base_agent.prompt.md`.
+
+### Changed
+
+- Registered `web_search` tool in `ToolRegistry` to expose web search capabilities to agents.
+
 ## [0.1.1] - 2026-08-18
 
 ### Added
@@ -153,7 +166,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.1...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.2...develop
+[0.1.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.2
 [0.1.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.1
 [0.1.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.0
 [0.0.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.0.9

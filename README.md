@@ -109,6 +109,10 @@ Optionally, configure your mail setup depending on your environment:
 
 `External Mail Provider:` Enter your SMTP credentials (`SMTP_SERVER`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`) to send emails via an authenticated server using TLS.
 
+For enhanced web search capabilities, you can optionally configure Tavily:
+
+**Web Search Provider:** Set `TAVILY_API_KEY` to your Tavily API token to enable deep, LLM-optimized web search results. If left unset, the web_search tool will automatically fall back to `DuckDuckGo` with zero configuration required.
+
 ### 7. Install Database schema
 
 ```bash
@@ -178,6 +182,15 @@ Trinity agents execute complex web gathering, data processing, and analysis task
      - **`prompt`** (string, required): A detailed and descriptive image prompt (preferably in English for optimal image generation quality).
      - **`filename`** (string, optional): Target filename (e.g., `scene.png` or `illustration.jpg`).
      - **`aspect_ratio`** (string, optional): Aspect ratio of the generated image. Supported values: `"1:1"` (default), `"16:9"`, `"9:16"`.
+
+6. **`web_search`**
+   - **Purpose:** Executes live web search queries to discover current information, links, and real-time market or news updates.
+   - **Rules & Behavior:**
+     - **`query`** (string, required): The search terms or research prompt to execute.
+     - **Hybrid Provider Resolution:** Automatically selects the search backend based on environmental configuration:
+       - **Tavily Search API:** Utilized when `TAVILY_API_KEY` is configured in `.env`. Provides LLM-optimized, structured search results and deep factual content.
+       - **DuckDuckGo Search:** Functions as a zero-config, privacy-focused fallback provider when no API key is present.
+     - Designed for initial discovery phases in multi-step task chains, providing actionable target URLs for subsequent `fetch_url` analysis.
 
 ### Task Execution Workflow
 
