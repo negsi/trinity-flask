@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Task Chain Execution Streaming:** Real-time execution status signals (`task_chain_init`, `task_step_update`) emitted via SSE stream for visual progress indicators in the frontend UI.
 
 ### Changed
+- **TaskExecutor:** Integrated task chain cycle event dispatching before and after step execution cycles (`pending`, `running`, `completed`).
+- **ReActLoopRunner:** Bypassed task chain control markers (`__TASK_CHAIN__:`) from message memory accumulation to preserve clean database chat history.
 
 ## [0.1.0] - 2026-08-17
 

@@ -4,9 +4,8 @@ Task Chain Execution Engine Module.
 Executes sequential steps of a structured LLM task chain and resolves dynamic context parameters.
 """
 
+import os, logging, json
 from dataclasses import dataclass, field
-import logging
-import os
 from typing import Any, Callable, Dict, Generator, Optional, List
 
 from app.config import BaseConfig
@@ -57,11 +56,36 @@ class TaskExecutor:
             ChainExecutionResult: Execution completion summary.
         """
         context: Dict[str, Any] = dict(initial_context) if initial_context else {}
+        steps = getattr(execution, "steps", []) or []        
 
-        for step in getattr(execution, "steps", []):
+        # Send task chain to frontend for if steps exist
+        if steps:
+            chain_init_payload = {
+                "type": "task_chain_init",
+                "steps": [
+                    {
+                        "step_number": getattr(s, "step_number", idx + 1),
+                        "description": getattr(s, "description", ""),
+                        "tool_name": getattr(s, "tool_name", ""),
+                        "status": "pending"
+                    }
+                    for idx, s in enumerate(steps)
+                ]
+            }
+            yield f"\n__TASK_CHAIN__:{json.dumps(chain_init_payload)}\n"
+
+        for step in steps:
             step_num = getattr(step, "step_number", 0)
             tool_name = getattr(step, "tool_name", "")
             raw_params = getattr(step, "parameters", {}) or {}
+
+            # Tell frontend that this step is running
+            step_start_payload = {
+                "type": "task_step_update",
+                "step_number": step_num,
+                "status": "running"
+            }
+            yield f"\n__TASK_CHAIN__:{json.dumps(step_start_payload)}\n"
 
             logger.info("[TaskExecutor] Step %d (%s) Raw Params: %s", step_num, tool_name, raw_params)
             resolved_params = self._resolve_parameters(raw_params, context)
@@ -70,6 +94,14 @@ class TaskExecutor:
                 yield from self._execute_llm_tool(step_num, resolved_params, context)
             else:
                 yield from self._execute_standard_tool(step_num, tool_name, resolved_params, context)
+
+            # Tell frontend that this step is completed
+            step_done_payload = {
+                "type": "task_step_update",
+                "step_number": step_num,
+                "status": "completed"
+            }
+            yield f"\n__TASK_CHAIN__:{json.dumps(step_done_payload)}\n"
 
         is_complete = getattr(execution, "is_complete", True)
         return ChainExecutionResult(

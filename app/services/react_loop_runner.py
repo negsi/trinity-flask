@@ -232,6 +232,12 @@ class ReActLoopRunner:
             while True:
                 raw_chunk = next(chain_gen)
                 if raw_chunk:
+                    # Send signal to frontend that this is a task chain update
+                    if "__TASK_CHAIN__:" in raw_chunk:
+                        yield raw_chunk
+                        continue
+
+                    # Normal LLM stream chunk, process for display and accumulation
                     display_text, _ = chain_parser.process_chunk(raw_chunk)
                     if display_text:
                         chain_text_chunks.append(display_text)
