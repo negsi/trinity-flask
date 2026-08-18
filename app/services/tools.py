@@ -19,6 +19,9 @@ import feedparser
 from pypdf import PdfReader
 import requests
 
+from ddgs import DDGS
+from tavily import TavilyClient
+
 from app.domain.errors import ToolExecutionError
 from app.domain.image_generator import ImageGeneratorProvider
 from app.services.email_service import EmailService
@@ -133,6 +136,55 @@ def message_llm(message: str, **kwargs: Any) -> str:
     """
     return message
 
+
+def web_search(query: str, max_results: int = 5, **kwargs: Any) -> Any:
+    """
+    Hybrid Web Search Tool:
+    Uses Tavily if TAVILY_API_KEY is present in environment variables.
+    Falls back seamlessly to DuckDuckGo (ddgs) otherwise.
+
+    Args:
+        query (str): Search query or keywords.
+        max_results (int): Maximum number of search results to return.
+
+    Returns:
+        list[dict] or str: Search results containing title, url, and snippet.
+    """
+    tavily_api_key = os.getenv("TAVILY_API_KEY")
+
+    if tavily_api_key:
+        try:
+            client = TavilyClient(api_key=tavily_api_key)
+            response = client.search(query=query, max_results=max_results, search_depth="basic")
+            results = []
+            for item in response.get("results", []):
+                results.append({
+                    "title": item.get("title"),
+                    "url": item.get("url"),
+                    "snippet": item.get("content"),
+                    "source_provider": "tavily"
+                })
+            if results:
+                return results
+        except Exception as e:
+            logger.warning("[web_search] Tavily request failed (%s). Falling back to DuckDuckGo...", e)
+
+    try:
+        with DDGS() as ddgs:
+            ddg_results = list(ddgs.text(query, region="de-de", max_results=max_results))
+            results = []
+            for item in ddg_results:
+                results.append({
+                    "title": item.get("title"),
+                    "url": item.get("href"),
+                    "snippet": item.get("body"),
+                    "source_provider": "duckduckgo"
+                })
+            return results
+    except Exception as e:
+        logger.error("[web_search] DuckDuckGo search failed: %s", e, exc_info=True)
+        return f"Error executing web search: {e}"
+        
 
 class ToolRegistry:
     """
@@ -328,6 +380,7 @@ class ToolRegistry:
         """Returns the dictionary mapping tool names to bound callable functions."""
         tools: Dict[str, Callable[..., Any]] = {
             "fetch_url": fetch_url,
+            "web_search": web_search,
             "message_llm": message_llm,
             "write_file": self.write_file,
             "send_email": self.send_email,
