@@ -101,9 +101,9 @@ pip install openai # for OpenAI
 cp .env.template .env
 ```
 
-In `.env`, specify your AI provider, your preferred large language model, and the API token. If you want to use a MySQL-Server as storage backend, then add the necessary parameters there as well.
+In `.env`, specify your AI provider, your preferred large language model, and the API token. If you plan to use image generation capabilities, configure the `IMAGE_GENERATOR_PROVIDER` (`gemini` or `openai`) and optionally specify `IMAGE_GENERATOR_MODEL`. If you want to use a MySQL-Server as storage backend, then add the necessary parameters there as well.
 
-Additionally, configure your mail setup depending on your environment:
+Optionally, configure your mail setup depending on your environment:
 
 `Local Development (e.g., Mailpit):` Set `SMTP_SERVER=localhost` and `SMTP_PORT=1025`. Leave `SMTP_USER` and `SMTP_PASSWORD` empty.
 

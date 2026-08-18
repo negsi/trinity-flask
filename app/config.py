@@ -55,6 +55,10 @@ class BaseConfig:
     SMTP_USER = os.getenv("SMTP_USER")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
     SMTP_FROM = os.getenv("SMTP_FROM", "trinity@localhost")
+    SMTP_TEMPLATE_PATH = os.getenv(
+        "SMTP_TEMPLATE_PATH", 
+        os.path.join(BASE_DIR, "app", "templates", "base_email.html")
+    )
 
     @staticmethod
     def init_app(app):

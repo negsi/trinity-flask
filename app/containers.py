@@ -72,6 +72,7 @@ class Container(containers.DeclarativeContainer):
         user=config.SMTP_USER,
         password=config.SMTP_PASSWORD,
         sender=config.SMTP_FROM,
+        template_path=config.SMTP_TEMPLATE_PATH,
     )
 
     # -------------------------------------------------------------------------
