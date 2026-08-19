@@ -1,20 +1,22 @@
-# File: app/services/messaging_service.py
 """
 Messaging Application Service Module.
 
-Handles message dispatching, listener notifications, attachment linking,
+Handles message dispatching, observer notifications, attachment associations,
 and conversation lifecycle management.
 """
 
-import os, logging, uuid, mimetypes
-from typing import Callable, List, Optional
+from collections.abc import Callable
+import logging
+import mimetypes
+from pathlib import Path
+from typing import Any
+import uuid
 from werkzeug.datastructures import FileStorage
 
 from app.domain.enums import ActorType
 from app.domain.errors import ConversationNotFoundError, MessageNotFoundError
 from app.domain.models.conversation import Conversation
-from app.domain.models.message import Message
-from app.domain.models.message import MessageAttachment
+from app.domain.models.message import Message, MessageAttachment
 from app.domain.repositories.conversation_repository import ConversationRepository
 from app.domain.repositories.message_repository import MessageRepository
 from app.services.message_attachment_service import MessageAttachmentService
@@ -29,12 +31,12 @@ class MessagingService:
         self,
         message_repo: MessageRepository,
         conversation_repo: ConversationRepository,
-        attachment_service: Optional[MessageAttachmentService] = None,
+        attachment_service: MessageAttachmentService | None = None,
     ) -> None:
         self.message_repo = message_repo
         self.conversation_repo = conversation_repo
         self.attachment_service = attachment_service
-        self._message_listeners: List[Callable[[Message], None]] = []
+        self._message_listeners: list[Callable[[Message], None]] = []
 
     def subscribe(self, callback: Callable[[Message], None]) -> None:
         """Registers an observer callback for incoming message events."""
@@ -42,33 +44,31 @@ class MessagingService:
 
     def send_message(
         self,
-        conversation_id: Optional[str],
+        conversation_id: str | None,
         sender_id: str,
         sender_type: ActorType,
         sender_name: str,
         text: str,
-        recipient_id: Optional[str] = None,
-        files: Optional[List[FileStorage]] = None,
+        recipient_id: str | None = None,
+        files: list[FileStorage] | None = None,
     ) -> Message:
         """
         Persists a message and its optional file attachments, then triggers observers.
 
         Args:
-            conversation_id (Optional[str]): Existing conversation ID or None.
-            sender_id (str): Author entity ID.
-            sender_type (ActorType): Message sender category.
-            sender_name (str): Author display name.
-            text (str): Message text payload.
-            recipient_id (Optional[str]): Recipient entity ID.
-            files (Optional[List[FileStorage]]): List of uploaded files.
+            conversation_id: Existing conversation ID or None.
+            sender_id: Author entity ID.
+            sender_type: Message sender category.
+            sender_name: Author display name.
+            text: Message text payload.
+            recipient_id: Recipient entity ID.
+            files: List of uploaded files.
 
         Returns:
             Message: The persisted message model.
         """
         existing_conv = (
-            self.conversation_repo.get_by_id(conversation_id)
-            if conversation_id
-            else None
+            self.conversation_repo.get_by_id(conversation_id) if conversation_id else None
         )
 
         if not existing_conv:
@@ -80,7 +80,7 @@ class MessagingService:
             saved_conv = self.conversation_repo.save(new_conv)
             conversation_id = saved_conv.id
 
-        attachments: List[MessageAttachment] = []
+        attachments: list[MessageAttachment] = []
         if files and self.attachment_service:
             for file in files:
                 if file and file.filename:
@@ -107,30 +107,15 @@ class MessagingService:
 
         return saved_message
 
-    def get_conversations_by_agent(self, agent_id: str) -> List[Conversation]:
-        """
-        Retrieves all conversations associated with a specific agent ID.
-
-        Args:
-            agent_id (str): Agent identifier.
-
-        Returns:
-            List[Conversation]: Matching conversation models.
-        """
+    def get_conversations_by_agent(self, agent_id: str) -> list[Conversation]:
+        """Retrieves all conversations associated with a specific agent ID."""
         return self.conversation_repo.get_by_agent_id(agent_id)
 
-    def get_conversation_history(
-        self,
-        conversation_id: str,
-        limit: int = 50,
-    ) -> List[Message]:
+    def get_conversation_history(self, conversation_id: str, limit: int = 50) -> list[Message]:
         """Retrieves messages for a conversation up to the given limit."""
         return self.message_repo.get_by_conversation(conversation_id, limit=limit)
 
-    def get_latest_user_attachments(
-        self,
-        conversation_id: str,
-    ) -> List[MessageAttachment]:
+    def get_latest_user_attachments(self, conversation_id: str) -> list[MessageAttachment]:
         """Retrieves attachments from the most recent user message in a conversation."""
         if not conversation_id:
             return []
@@ -139,20 +124,11 @@ class MessagingService:
             user_messages = [m for m in messages if m.sender_type == ActorType.USER]
             if user_messages:
                 return user_messages[-1].attachments or []
-        except Exception as e:
-            logger.error(
-                "Error fetching attachments for conversation '%s': %s",
-                conversation_id,
-                e,
-                exc_info=True,
-            )
+        except Exception as exc:
+            logger.error("Error fetching attachments for conversation '%s': %s", conversation_id, exc)
         return []
 
-    def update_message_text(
-        self,
-        message_id: str,
-        text: str,
-    ) -> Message:
+    def update_message_text(self, message_id: str, text: str) -> Message:
         """
         Updates the text content of an existing message.
 
@@ -166,32 +142,16 @@ class MessagingService:
         message.text = text
         return self.message_repo.save(message)
 
-    def _notify_listeners(self, message: Message) -> None:
-        """Notifies all registered listener callbacks of a new message."""
-        for listener in self._message_listeners:
-            try:
-                listener(message)
-            except Exception as e:
-                logger.error("Error notifying message listener: %s", e, exc_info=True)
-
-    def create_conversation(
-        self,
-        agent_id: str,
-        title: Optional[str] = None,
-    ) -> Conversation:
+    def create_conversation(self, agent_id: str, title: str | None = None) -> Conversation:
         """Creates and persists a new conversation associated with an agent."""
-        conv_title = title or "Neue Konversation"
         new_conv = Conversation(
             id=str(uuid.uuid4()),
             agent_id=agent_id,
-            title=conv_title,
+            title=title or "Neue Konversation",
         )
         return self.conversation_repo.save(new_conv)
 
-    def get_conversation_by_id(
-        self,
-        conversation_id: str,
-    ) -> Optional[Conversation]:
+    def get_conversation_by_id(self, conversation_id: str) -> Conversation | None:
         """Retrieves a conversation by ID."""
         return self.conversation_repo.get_by_id(conversation_id)
 
@@ -204,28 +164,22 @@ class MessagingService:
         """
         conv = self.conversation_repo.get_by_id(conversation_id)
         if not conv:
-            raise ConversationNotFoundError(
-                f"Conversation with ID '{conversation_id}' was not found."
-            )
+            raise ConversationNotFoundError(f"Conversation with ID '{conversation_id}' was not found.")
 
         self.conversation_repo.delete(conversation_id)
         logger.info("Successfully deleted conversation: %s", conversation_id)
         return True
 
-    def add_attachments_to_message(
-        self,
-        message_id: str,
-        file_info_list: List[dict],
-    ) -> Message:
+    def add_attachments_to_message(self, message_id: str, file_info_list: list[dict[str, Any]]) -> Message:
         """
-        Creates MessageAttachment instances for generated files and attaches them to a message.
+        Creates MessageAttachment records for generated files and associates them with a message.
 
         Args:
-            message_id (str): Target message ID.
-            file_info_list (List[dict]): List of generated file dictionaries containing paths.
+            message_id: Target message ID.
+            file_info_list: List of generated file dictionaries containing paths.
 
         Returns:
-            Message: The updated message model with persisted attachments.
+            Message: The updated message domain model.
 
         Raises:
             MessageNotFoundError: If the message ID does not exist.
@@ -234,19 +188,17 @@ class MessagingService:
         if not message:
             raise MessageNotFoundError(f"Message with ID '{message_id}' not found.")
 
-        attachments: List[MessageAttachment] = []
+        attachments: list[MessageAttachment] = []
         for file_info in file_info_list:
             file_path = file_info.get("file_path", "")
             if not file_path:
                 continue
 
-            filename = os.path.basename(file_path)
-
-            file_size = 0
+            path_obj = Path(file_path)
+            filename = path_obj.name
             full_path = file_info.get("full_path") or file_path
-            if os.path.exists(full_path):
-                file_size = os.path.getsize(full_path)
 
+            file_size = Path(full_path).stat().st_size if Path(full_path).is_file() else 0
             mime_type, _ = mimetypes.guess_type(filename)
 
             attachment = MessageAttachment(
@@ -268,3 +220,11 @@ class MessagingService:
 
         message.attachments.extend(attachments)
         return self.message_repo.save(message)
+
+    def _notify_listeners(self, message: Message) -> None:
+        """Notifies all registered listener callbacks of a new message."""
+        for listener in self._message_listeners:
+            try:
+                listener(message)
+            except Exception as exc:
+                logger.error("Error notifying message listener: %s", exc, exc_info=True)

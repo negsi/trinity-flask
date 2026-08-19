@@ -8,12 +8,11 @@ sandboxed disk writes, and text extraction from documents (PDFs, plain text).
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Tuple, Union
 import uuid
-
-import pypdf
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
+
+import pypdf
 
 from app.domain.errors import InvalidFileError, StorageError
 
@@ -24,36 +23,41 @@ class FileStorageService:
     """Centralized service managing filesystem storage, sandboxing, and document text extraction."""
 
     @staticmethod
-    def ensure_directory(directory_path: str) -> None:
+    def ensure_directory(directory_path: str | Path) -> Path:
         """
-        Ensures that a specified directory exists, creating it if necessary.
+        Ensures that a specified directory exists, creating intermediate parents if needed.
 
         Args:
-            directory_path (str): Target directory path.
+            directory_path: Target directory path.
+
+        Returns:
+            Path: The resolved absolute directory path.
 
         Raises:
-            StorageError: If directory creation fails.
+            StorageError: If directory creation fails due to filesystem permissions.
         """
+        target = Path(directory_path).resolve()
         try:
-            os.makedirs(directory_path, exist_ok=True)
-        except OSError as e:
-            logger.error("Failed to create directory '%s': %s", directory_path, e, exc_info=True)
-            raise StorageError(f"Failed to create storage directory '{directory_path}': {e}") from e
+            target.mkdir(parents=True, exist_ok=True)
+            return target
+        except OSError as exc:
+            logger.error("Failed to create directory '%s': %s", target, exc, exc_info=True)
+            raise StorageError(f"Failed to create storage directory '{target}': {exc}") from exc
 
     def save_file(
         self,
         file: FileStorage,
-        target_folder: str,
-    ) -> Tuple[str, str, int, str]:
+        target_folder: str | Path,
+    ) -> tuple[str, str, int, str]:
         """
-        Persists an uploaded file to the target directory with a unique filename prefix.
+        Persists an uploaded file to the target directory with a unique UUID filename prefix.
 
         Args:
-            file (FileStorage): Werkzeug uploaded file wrapper.
-            target_folder (str): Absolute or relative folder destination path.
+            file: Werkzeug uploaded file wrapper.
+            target_folder: Absolute or relative folder destination path.
 
         Returns:
-            Tuple[str, str, int, str]: A tuple of (unique_filename, full_path, file_size_bytes, mime_type).
+            tuple[str, str, int, str]: Tuple of (unique_filename, full_path, file_size_bytes, mime_type).
 
         Raises:
             InvalidFileError: If the file object is missing or has no filename.
@@ -62,34 +66,30 @@ class FileStorageService:
         if not file or not file.filename:
             raise InvalidFileError("No valid file payload or filename provided.")
 
-        self.ensure_directory(target_folder)
-
-        orig_filename = secure_filename(file.filename)
-        if not orig_filename:
-            orig_filename = "unnamed_file"
-
-        unique_filename = f"{uuid.uuid4()}_{orig_filename}"
-        full_path = os.path.abspath(os.path.join(target_folder, unique_filename))
+        folder_path = self.ensure_directory(target_folder)
+        original_name = secure_filename(file.filename) or "unnamed_file"
+        unique_filename = f"{uuid.uuid4()}_{original_name}"
+        full_path = folder_path / unique_filename
 
         try:
-            file.save(full_path)
-            file_size = os.path.getsize(full_path)
+            file.save(str(full_path))
+            file_size = full_path.stat().st_size
             mime_type = file.content_type or "application/octet-stream"
             logger.info("Saved file '%s' (%d bytes) to '%s'", unique_filename, file_size, full_path)
-            return unique_filename, full_path, file_size, mime_type
-        except OSError as e:
-            logger.error("Failed to save file to '%s': %s", full_path, e, exc_info=True)
-            raise StorageError(f"Failed to write file to disk: {e}") from e
+            return unique_filename, str(full_path), file_size, mime_type
+        except OSError as exc:
+            logger.error("Failed to save file to '%s': %s", full_path, exc, exc_info=True)
+            raise StorageError(f"Failed to write file to disk: {exc}") from exc
 
-    def delete_file(self, file_path: str) -> bool:
+    def delete_file(self, file_path: str | Path | None) -> bool:
         """
         Deletes a file from disk if it exists.
 
         Args:
-            file_path (str): Path of the file to remove.
+            file_path: Path of the file to remove.
 
         Returns:
-            bool: True if the file was deleted, False if it did not exist.
+            bool: True if the file was deleted, False if it did not exist or was None.
 
         Raises:
             StorageError: If deletion fails due to filesystem permissions.
@@ -97,121 +97,122 @@ class FileStorageService:
         if not file_path:
             return False
 
-        path = Path(file_path)
-        if not path.exists():
-            logger.warning("Attempted to delete non-existent file: %s", file_path)
+        target = Path(file_path).resolve()
+        if not target.is_file():
+            logger.warning("Attempted to delete non-existent file: %s", target)
             return False
 
         try:
-            path.unlink()
-            logger.info("Successfully deleted file: %s", file_path)
+            target.unlink()
+            logger.info("Successfully deleted file: %s", target)
             return True
-        except OSError as e:
-            logger.error("Error deleting file '%s': %s", file_path, e, exc_info=True)
-            raise StorageError(f"Failed to delete file '{file_path}': {e}") from e
+        except OSError as exc:
+            logger.error("Error deleting file '%s': %s", target, exc, exc_info=True)
+            raise StorageError(f"Failed to delete file '{target}': {exc}") from exc
 
     def extract_text_content(
         self,
-        file_path_str: str,
-        mime_type: Optional[str] = None,
-    ) -> Optional[str]:
+        file_path_str: str | Path,
+        mime_type: str | None = None,
+    ) -> str | None:
         """
         Extracts textual content from local PDF or plain text documents.
 
         Args:
-            file_path_str (str): Path to the target document.
-            mime_type (Optional[str]): Optional MIME type string for parser selection.
+            file_path_str: Path to the target document.
+            mime_type: Optional MIME type string for parser selection.
 
         Returns:
-            Optional[str]: Extracted text content or None if extraction fails.
+            str | None: Extracted text content or None if extraction fails or file is absent.
         """
-        path = Path(file_path_str)
-        if not path.exists():
-            logger.warning("File does not exist for text extraction: %s", file_path_str)
+        target = Path(file_path_str).resolve()
+        if not target.is_file():
+            logger.warning("File does not exist for text extraction: %s", target)
             return None
 
-        is_pdf = (mime_type == "application/pdf") or (path.suffix.lower() == ".pdf")
-
+        is_pdf = (mime_type == "application/pdf") or (target.suffix.lower() == ".pdf")
         if is_pdf:
-            try:
-                reader = pypdf.PdfReader(str(path))
-                extracted_pages = []
-                for idx, page in enumerate(reader.pages):
-                    page_text = page.extract_text()
-                    if page_text:
-                        extracted_pages.append(f"--- Page {idx + 1} ---\n{page_text}")
-                return "\n\n".join(extracted_pages).strip()
-            except Exception as e:
-                logger.error("Failed to extract PDF text from '%s': %s", file_path_str, e, exc_info=True)
-                return None
+            return self._extract_pdf_text(target)
 
-        try:
-            return path.read_text(encoding="utf-8", errors="ignore").strip()
-        except Exception as e:
-            logger.error("Failed to read text file '%s': %s", file_path_str, e, exc_info=True)
-            return None
+        return self._extract_plain_text(target)
 
     def write_sandboxed_file(
         self,
-        file_path: str,
-        content: Union[str, bytes],
-        base_dir: str,
-        sandbox_id: Optional[str] = None,
+        file_path: str | Path,
+        content: str | bytes,
+        base_dir: str | Path,
+        sandbox_id: str | None = None,
         mode: str = "w",
     ) -> str:
         """
-        Safely writes content (str or bytes) to disk, guarding against directory traversal attacks.
+        Safely writes content to disk, guarding strictly against directory traversal.
 
         Args:
-            file_path (str): Relative or absolute target path.
-            content (Union[str, bytes]): Payload to write (string or raw bytes).
-            base_dir (str): Base root directory for workspaces.
-            sandbox_id (Optional[str]): Workspace subfolder identifier (e.g. conversation_id).
-            mode (str): File write mode ('w', 'a', 'wb', 'ab').
+            file_path: Relative or absolute target path.
+            content: Payload to write (str or bytes).
+            base_dir: Base root directory for workspaces.
+            sandbox_id: Optional workspace subfolder identifier.
+            mode: File write mode ('w', 'a', 'wb', 'ab').
 
         Returns:
-            str: Status message detailing the operation result.
+            str: Informational message detailing the operation result.
 
         Raises:
             StorageError: If security boundaries are violated or write fails.
         """
-        if isinstance(content, bytes) and mode in ("w", "a"):
-            mode = f"{mode}b"
+        valid_modes = {"w", "a", "wb", "ab"}
+        normalized_mode = f"{mode}b" if isinstance(content, bytes) and mode in {"w", "a"} else mode
 
-        valid_modes = ("w", "a", "wb", "ab")
-        if mode not in valid_modes:
-            raise StorageError(f"Invalid write mode '{mode}'. Supported modes: {valid_modes}")
+        if normalized_mode not in valid_modes:
+            raise StorageError(f"Invalid write mode '{mode}'. Supported: {sorted(valid_modes)}")
 
-        target_dir = Path(base_dir).resolve()
-        if sandbox_id:
-            target_dir = (target_dir / sandbox_id).resolve()
-
-        self.ensure_directory(str(target_dir))
+        base_root = Path(base_dir).resolve()
+        target_dir = (base_root / sandbox_id).resolve() if sandbox_id else base_root
+        self.ensure_directory(target_dir)
 
         raw_path = Path(file_path)
         resolved_path = (target_dir / raw_path).resolve() if not raw_path.is_absolute() else raw_path.resolve()
 
         if not resolved_path.is_relative_to(target_dir):
-            error_msg = f"Security Violation: Target path '{resolved_path}' is outside sandbox '{target_dir}'."
+            error_msg = f"Security Violation: Path '{resolved_path}' escapes sandbox '{target_dir}'."
             logger.error(error_msg)
             raise StorageError(error_msg)
 
         try:
             resolved_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            is_binary = "b" in mode
-            open_kwargs = {"mode": mode}
-            if not is_binary:
-                open_kwargs["encoding"] = "utf-8"
+            is_binary = "b" in normalized_mode
+            encoding = None if is_binary else "utf-8"
 
-            with open(resolved_path, **open_kwargs) as f:
-                f.write(content)
+            with open(resolved_path, mode=normalized_mode, encoding=encoding) as file_handle:
+                file_handle.write(content)
 
-            action = "Appended to" if "a" in mode else "Successfully wrote to"
+            action = "Appended to" if "a" in normalized_mode else "Successfully wrote to"
             unit = "bytes" if is_binary else "characters"
             size = len(content)
             logger.info("%s file '%s' (%d %s)", action, resolved_path, size, unit)
             return f"{action} file '{resolved_path.name}' at '{resolved_path}' ({size} {unit} written)."
-        except OSError as e:
-            logger.error("Failed writing to sandboxed file '%s': %s", resolved_path, e, exc_info=True)
-            raise StorageError(f"Error writing to file '{file_path}': {e}") from e
+        except OSError as exc:
+            logger.error("Failed writing sandboxed file '%s': %s", resolved_path, exc, exc_info=True)
+            raise StorageError(f"Error writing to file '{file_path}': {exc}") from exc
+
+    def _extract_pdf_text(self, path: Path) -> str | None:
+        """Helper extracting pages from a PDF document safely."""
+        try:
+            reader = pypdf.PdfReader(str(path))
+            pages_text = [
+                f"--- Page {idx + 1} ---\n{text}"
+                for idx, page in enumerate(reader.pages)
+                if (text := page.extract_text())
+            ]
+            return "\n\n".join(pages_text).strip() if pages_text else None
+        except Exception as exc:
+            logger.error("Failed to extract PDF text from '%s': %s", path, exc, exc_info=True)
+            return None
+
+    def _extract_plain_text(self, path: Path) -> str | None:
+        """Helper reading utf-8 plain text documents safely."""
+        try:
+            return path.read_text(encoding="utf-8", errors="ignore").strip()
+        except OSError as exc:
+            logger.error("Failed to read text file '%s': %s", path, exc, exc_info=True)
+            return None

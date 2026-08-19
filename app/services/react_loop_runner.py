@@ -5,9 +5,10 @@ Encapsulates multi-turn reasoning and tool execution loops, managing turn iterat
 sub-step stream parsing, and conversational follow-up prompt compilation.
 """
 
+from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
 import logging
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
+from typing import Any
 
 from app.domain.models.llm_execution import LLMExecution
 from app.domain.models.message import MessageAttachment
@@ -19,14 +20,16 @@ from app.services.tools import ToolRegistry
 
 logger = logging.getLogger(__name__)
 
+PROTOCOL_TASK_CHAIN = "__TASK_CHAIN__:"
+
 
 @dataclass
 class ReActTurnState:
     """State container for multi-turn ReAct workflow execution."""
 
     user_prompt: str
-    accumulated_all_text: List[str] = field(default_factory=list)
-    last_chain_chunks: List[str] = field(default_factory=list)
+    accumulated_all_text: list[str] = field(default_factory=list)
+    last_chain_chunks: list[str] = field(default_factory=list)
     is_complete: bool = False
     turn_count: int = 0
     max_turns: int = 5
@@ -38,19 +41,19 @@ class ReActExecutionSummary:
 
     accumulated_text: str
     final_text: str
-    last_execution: Optional[LLMExecution] = None
-    created_files: List[Dict[str, Any]] = field(default_factory=list)
+    last_execution: LLMExecution | None = None
+    created_files: list[dict[str, Any]] = field(default_factory=list)
 
 
 class ReActLoopRunner:
-    """Service managing the multi-turn ReAct reasoning and tool invocation lifecycle."""
+    """Service managing multi-turn ReAct reasoning and tool invocation cycles."""
 
     def __init__(
         self,
         llm_service: LLMService,
         context_builder: AgentContextBuilder,
         tool_registry: ToolRegistry,
-        email_service: Optional[Any] = None,
+        email_service: Any | None = None,
     ) -> None:
         self.llm_service = llm_service
         self.context_builder = context_builder
@@ -62,34 +65,34 @@ class ReActLoopRunner:
         user_text: str,
         conversation_id: str,
         agent_id: str,
-        attachments: List[MessageAttachment],
-        conversation_history: List[Any],
-        on_turn_completed: Optional[Callable[[str, Optional[LLMExecution]], None]] = None,
+        attachments: list[MessageAttachment],
+        conversation_history: list[Any],
+        on_turn_completed: Callable[[str, LLMExecution | None], None] | None = None,
     ) -> Generator[str, None, ReActExecutionSummary]:
         """
-        Executes the ReAct loop iteratively, yielding text stream chunks to the caller.
+        Executes the ReAct loop iteratively, yielding stream chunks to the caller.
 
         Args:
-            user_text (str): Initial user prompt.
-            conversation_id (str): Conversation UUID.
-            agent_id (str): Target Agent UUID.
-            attachments (List[MessageAttachment]): Associated user attachments.
-            conversation_history (List[Any]): Past conversation messages.
-            on_turn_completed (Optional[Callable]): Callback invoked when an execution turn completes.
+            user_text: Initial user prompt.
+            conversation_id: Active conversation UUID.
+            agent_id: Target Agent UUID.
+            attachments: Message attachments.
+            conversation_history: Past conversation messages.
+            on_turn_completed: Turn-end callback for intermediate persistence.
 
         Yields:
-            str: Streamed text tokens for live user display.
+            str: Streamed text tokens for user output.
 
         Returns:
             ReActExecutionSummary: The aggregated execution result summary.
         """
         state = ReActTurnState(user_prompt=user_text)
-        last_execution: Optional[LLMExecution] = None
-        all_created_files: List[Dict[str, Any]] = []
+        last_execution: LLMExecution | None = None
+        all_created_files: list[dict[str, Any]] = []
 
         while not state.is_complete and state.turn_count < state.max_turns:
             state.turn_count += 1
-            logger.info("[ReActLoopRunner] Starting ReAct Turn %d/%d...", state.turn_count, state.max_turns)
+            logger.info("[ReActLoopRunner] Starting Turn %d/%d...", state.turn_count, state.max_turns)
 
             extracted_json = yield from self._run_stream_turn(
                 state=state,
@@ -119,7 +122,7 @@ class ReActLoopRunner:
             if on_turn_completed:
                 on_turn_completed(current_text, execution)
 
-            last_result, step_created_files = yield from self._execute_task_chain(
+            last_result, step_files = yield from self._execute_task_chain(
                 execution=execution,
                 conversation_id=conversation_id,
                 agent_id=agent_id,
@@ -128,8 +131,8 @@ class ReActLoopRunner:
                 state=state,
             )
 
-            if step_created_files:
-                all_created_files.extend(step_created_files)
+            if step_files:
+                all_created_files.extend(step_files)
 
             if state.is_complete:
                 break
@@ -157,10 +160,10 @@ class ReActLoopRunner:
         self,
         state: ReActTurnState,
         agent_id: str,
-        attachments: List[MessageAttachment],
-        conversation_history: List[Any],
-    ) -> Generator[str, None, Optional[Dict[str, Any]]]:
-        """Streams a single LLM turn, isolating embedded JSON blocks."""
+        attachments: list[MessageAttachment],
+        conversation_history: list[Any],
+    ) -> Generator[str, None, dict[str, Any] | None]:
+        """Streams a single turn, isolating embedded JSON blocks."""
         llm_messages = self.context_builder.build_llm_messages(
             user_text=state.user_prompt,
             agent_id=agent_id,
@@ -169,7 +172,7 @@ class ReActLoopRunner:
         )
 
         parser = StreamResponseParser()
-        extracted_json: Optional[Dict[str, Any]] = None
+        extracted_json: dict[str, Any] | None = None
 
         for chunk in self.llm_service.stream(llm_messages):
             if not chunk:
@@ -193,10 +196,10 @@ class ReActLoopRunner:
         execution: LLMExecution,
         conversation_id: str,
         agent_id: str,
-        attachments: List[MessageAttachment],
-        conversation_history: List[Any],
+        attachments: list[MessageAttachment],
+        conversation_history: list[Any],
         state: ReActTurnState,
-    ) -> Generator[str, None, Tuple[str, List[Dict[str, Any]]]]:
+    ) -> Generator[str, None, tuple[str, list[dict[str, Any]]]]:
         """Executes tools specified in the task chain plan."""
 
         def llm_stream_adapter(prompt_text: str) -> Generator[str, None, None]:
@@ -222,9 +225,9 @@ class ReActLoopRunner:
 
         initial_context = {"conversation_id": conversation_id}
         chain_parser = StreamResponseParser()
-        chain_text_chunks: List[str] = []
+        chain_text_chunks: list[str] = []
         last_result = ""
-        created_files: List[Dict[str, Any]] = []
+        created_files: list[dict[str, Any]] = []
 
         chain_gen = executor.execute_chain_stream(execution, initial_context=initial_context)
 
@@ -232,20 +235,17 @@ class ReActLoopRunner:
             while True:
                 raw_chunk = next(chain_gen)
                 if raw_chunk:
-                    # Send signal to frontend that this is a task chain update
-                    if "__TASK_CHAIN__:" in raw_chunk:
+                    if PROTOCOL_TASK_CHAIN in raw_chunk:
                         yield raw_chunk
                         continue
 
-                    # Normal LLM stream chunk, process for display and accumulation
                     display_text, _ = chain_parser.process_chunk(raw_chunk)
                     if display_text:
                         chain_text_chunks.append(display_text)
                         state.accumulated_all_text.append(display_text)
                         yield display_text
-        except StopIteration as e:
-            exec_result = e.value
-            if exec_result:
+        except StopIteration as stop_err:
+            if exec_result := stop_err.value:
                 state.is_complete = getattr(exec_result, "is_complete", False)
                 last_result = getattr(exec_result, "last_result", "") or ""
                 created_files = getattr(exec_result, "created_files", []) or []
@@ -260,4 +260,3 @@ class ReActLoopRunner:
             state.last_chain_chunks = chain_text_chunks
 
         return last_result, created_files
-

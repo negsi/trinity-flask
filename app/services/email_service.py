@@ -1,16 +1,17 @@
 """
 Email Delivery Service Module.
 
-Handles outbound email dispatch via local or authenticated external SMTP servers.
+Handles outbound email dispatch via authenticated or unauthenticated SMTP servers
+with Markdown parsing, HTML template wrapping, and file attachments.
 """
 
+from email.message import EmailMessage
 import logging
 import mimetypes
 import os
+from pathlib import Path
 import smtplib
-from email.message import EmailMessage
 from string import Template
-from typing import List, Optional
 
 from markdown_it import MarkdownIt
 
@@ -24,40 +25,23 @@ class EmailService:
         self,
         server: str,
         port: int,
-        user: Optional[str],
-        password: Optional[str],
+        user: str | None,
+        password: str | None,
         sender: str,
-        template_path: Optional[str] = None,
+        template_path: str | Path | None = None,
     ) -> None:
         self.server = server
         self.port = port
         self.user = user
         self.password = password
         self.sender = sender
+        self._markdown_parser = MarkdownIt("gfm-like", {"html": True})
 
-        # Enable raw HTML parsing generically for all HTML blocks & inline tags
-        self._md = MarkdownIt("gfm-like", {"html": True})
-
-        # Directly use the injected template path or resolve a clean relative fallback
         if template_path:
-            self.template_path = template_path
+            self.template_path = Path(template_path).resolve()
         else:
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            self.template_path = os.path.join(base_dir, "app", "templates", "base_email.html")
-
-    def _render_template(self, html_content: str) -> str:
-        """Injects HTML body content into the external base template."""
-        try:
-            if self.template_path and os.path.exists(self.template_path):
-                with open(self.template_path, "r", encoding="utf-8") as f:
-                    template_str = f.read()
-                return Template(template_str).safe_substitute(content=html_content)
-            else:
-                logger.warning("Email template not found at '%s'. Using un-wrapped HTML.", self.template_path)
-                return html_content
-        except Exception as e:
-            logger.error("Error rendering email template: %s", e, exc_info=True)
-            return html_content
+            base_dir = Path(__file__).resolve().parents[2]
+            self.template_path = base_dir / "templates" / "base_email.html"
 
     def send_email(
         self,
@@ -65,13 +49,23 @@ class EmailService:
         subject: str,
         body: str,
         is_html: bool = False,
-        attachments: Optional[List[str]] = None,
+        attachments: list[str | Path] | None = None,
     ) -> str:
         """
-        Constructs and delivers an email message over SMTP with Markdown & Attachment support.
+        Constructs and delivers an email message over SMTP.
+
+        Args:
+            to_email: Target recipient email address.
+            subject: Subject line.
+            body: Message body (Markdown or raw HTML).
+            is_html: If True, treats body as raw HTML without Markdown parsing.
+            attachments: List of file paths to attach.
+
+        Returns:
+            str: Status description of the email dispatch.
         """
         logger.debug(
-            "Attempting to send email to '%s' via %s:%d (Authenticated: %s)",
+            "Sending email to '%s' via %s:%d (auth=%s)",
             to_email,
             self.server,
             self.port,
@@ -84,56 +78,68 @@ class EmailService:
             msg["From"] = self.sender
             msg["To"] = to_email
 
-            # 1. Plain Text Fallback
+            # 1. Plaintext fallback
             msg.set_content(body)
 
-            # 2. HTML Alternative Rendering
-            if not is_html:
-                rendered_html = self._md.render(body)
-                full_html = self._render_template(rendered_html)
-                msg.add_alternative(full_html, subtype="html")
-            else:
-                msg.add_alternative(self._render_template(body), subtype="html")
+            # 2. Render HTML alternative
+            html_content = body if is_html else self._markdown_parser.render(body)
+            wrapped_html = self._render_template(html_content)
+            msg.add_alternative(wrapped_html, subtype="html")
 
-            # 3. File Attachments
-            if attachments:
-                for file_path in attachments:
-                    if not os.path.exists(file_path):
-                        logger.warning("Attachment file not found: %s", file_path)
-                        continue
+            # 3. Attachments
+            attached_count = self._attach_files(msg, attachments or [])
 
-                    ctype, encoding = mimetypes.guess_type(file_path)
-                    if ctype is None or encoding is not None:
-                        ctype = "application/octet-stream"
+            # 4. Dispatch
+            self._dispatch_smtp(msg)
+            return f"Successfully sent email to '{to_email}' with {attached_count} attachment(s)."
+        except Exception as exc:
+            logger.error("Failed to send email to '%s': %s", to_email, exc, exc_info=True)
+            return f"Error sending email: {exc}"
 
-                    maintype, subtype = ctype.split("/", 1)
-                    with open(file_path, "rb") as fp:
-                        file_data = fp.read()
-                        filename = os.path.basename(file_path)
+    def _render_template(self, html_content: str) -> str:
+        """Wraps inner HTML body into the configured outer template."""
+        if self.template_path and self.template_path.is_file():
+            try:
+                template_str = self.template_path.read_text(encoding="utf-8")
+                return Template(template_str).safe_substitute(content=html_content)
+            except OSError as exc:
+                logger.warning("Error reading email template at '%s': %s", self.template_path, exc)
 
-                        msg.add_attachment(
-                            file_data,
-                            maintype=maintype,
-                            subtype=subtype,
-                            filename=filename,
-                        )
-                    logger.info("Attached file '%s' (%s) to outbound email", filename, ctype)
+        return html_content
 
-            # Route 1: Local server or unauthenticated connection
-            if self.server in ["localhost", "127.0.0.1"] or not self.password:
-                with smtplib.SMTP(self.server, self.port, timeout=10) as server:
-                    server.send_message(msg)
-                return f"Successfully sent email to '{to_email}' with {len(attachments or [])} attachment(s)."
+    def _attach_files(self, msg: EmailMessage, attachment_paths: list[str | Path]) -> int:
+        """Attaches existing local files to the EmailMessage."""
+        attached_count = 0
+        for file_ref in attachment_paths:
+            path = Path(file_ref).resolve()
+            if not path.is_file():
+                logger.warning("Attachment file not found: %s", path)
+                continue
 
-            # Route 2: External SMTP server with TLS authentication
-            with smtplib.SMTP(self.server, self.port, timeout=10) as server:
-                if self.port == 587:
-                    server.starttls()
-                if self.user and self.password:
-                    server.login(self.user, self.password)
-                server.send_message(msg)
-            return f"Successfully sent email to '{to_email}' with {len(attachments or [])} attachment(s)."
+            content_type, _ = mimetypes.guess_type(str(path))
+            content_type = content_type or "application/octet-stream"
+            maintype, subtype = content_type.split("/", 1)
 
-        except Exception as e:
-            logger.error("Failed to send email to '%s': %s", to_email, e, exc_info=True)
-            return f"Error sending email: {e}"
+            try:
+                file_bytes = path.read_bytes()
+                msg.add_attachment(
+                    file_bytes,
+                    maintype=maintype,
+                    subtype=subtype,
+                    filename=path.name,
+                )
+                attached_count += 1
+                logger.info("Attached file '%s' (%s)", path.name, content_type)
+            except OSError as exc:
+                logger.error("Failed to read attachment '%s': %s", path, exc)
+
+        return attached_count
+
+    def _dispatch_smtp(self, msg: EmailMessage) -> None:
+        """Executes the raw SMTP socket transmission."""
+        with smtplib.SMTP(self.server, self.port, timeout=15) as server:
+            if self.port == 587:
+                server.starttls()
+            if self.user and self.password:
+                server.login(self.user, self.password)
+            server.send_message(msg)

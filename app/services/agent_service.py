@@ -5,7 +5,7 @@ Encapsulates business operations for agent creation, modification, retrieval, an
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.domain.errors import AgentNotFoundError, ToolExecutionError, ToolNotFoundError
 from app.domain.models.agent import Agent
@@ -21,7 +21,7 @@ class AgentService:
     def __init__(
         self,
         agent_repo: AgentRepository,
-        tool_registry: Optional[ToolRegistry] = None,
+        tool_registry: ToolRegistry | None = None,
     ) -> None:
         self.agent_repo = agent_repo
         self.tool_registry = tool_registry
@@ -29,18 +29,27 @@ class AgentService:
     def create_agent(
         self,
         name: str,
-        system_prompt: Optional[str] = None,
-        description: Optional[str] = None,
+        system_prompt: str | None = None,
+        description: str | None = None,
         memory_enabled: bool = False,
         memory_mode: str = "user_only",
         memory_limit_type: str = "all",
-        memory_message_count: Optional[int] = None,
+        memory_message_count: int | None = None,
     ) -> Agent:
         """
         Creates and persists a new Agent entity.
 
+        Args:
+            name: Display name.
+            system_prompt: Custom system prompt instruction.
+            description: Short summary of agent purpose.
+            memory_enabled: Whether agent recalls historical chat turns.
+            memory_mode: Memory filtering strategy ('user_only', 'full').
+            memory_limit_type: Truncation strategy ('all', 'message_count').
+            memory_message_count: Number of recent turns to retain.
+
         Returns:
-            Agent: The newly created and saved Agent entity.
+            Agent: The saved agent model.
         """
         new_agent = Agent(
             name=name,
@@ -60,11 +69,11 @@ class AgentService:
         agent_id: str,
         name: str,
         system_prompt: str,
-        description: Optional[str] = None,
+        description: str | None = None,
         memory_enabled: bool = False,
         memory_mode: str = "user_only",
         memory_limit_type: str = "all",
-        memory_message_count: Optional[int] = None,
+        memory_message_count: int | None = None,
     ) -> Agent:
         """
         Updates an existing Agent entity.
@@ -91,14 +100,14 @@ class AgentService:
         Retrieves an Agent entity by ID.
 
         Raises:
-            AgentNotFoundError: If the Agent cannot be found.
+            AgentNotFoundError: If the agent cannot be found.
         """
         agent = self.agent_repo.get_by_id(agent_id)
         if not agent:
             raise AgentNotFoundError(f"Agent with ID '{agent_id}' was not found.")
         return agent
 
-    def get_all_agents(self) -> List[Agent]:
+    def get_all_agents(self) -> list[Agent]:
         """Retrieves all registered Agent entities."""
         return self.agent_repo.get_all()
 
@@ -107,7 +116,7 @@ class AgentService:
         Permanently deletes an Agent entity.
 
         Raises:
-            AgentNotFoundError: If the Agent does not exist.
+            AgentNotFoundError: If the agent does not exist.
         """
         self.get_agent(agent_id)
         self.agent_repo.delete(agent_id)
@@ -117,23 +126,23 @@ class AgentService:
         self,
         agent_id: str,
         skill_name: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
     ) -> str:
         """
         Executes a registered skill or tool function on behalf of an agent.
 
         Args:
-            agent_id (str): ID of the requesting agent.
-            skill_name (str): Tool identifier to execute.
-            parameters (Dict[str, Any]): Keyword parameters for tool execution.
+            agent_id: ID of the requesting agent.
+            skill_name: Registered tool identifier.
+            parameters: Keyword parameters for tool execution.
 
         Returns:
             str: Output of the tool execution.
 
         Raises:
-            AgentNotFoundError: If the agent is not found.
-            ToolNotFoundError: If the requested tool is not registered.
-            ToolExecutionError: If tool execution encounters an error.
+            AgentNotFoundError: If the agent is missing.
+            ToolExecutionError: If registry is unconfigured or tool execution fails.
+            ToolNotFoundError: If skill name is unmapped.
         """
         self.get_agent(agent_id)
 
@@ -147,6 +156,6 @@ class AgentService:
         tool_func = available_tools[skill_name]
         try:
             return str(tool_func(**parameters))
-        except Exception as e:
-            logger.error("Error executing skill '%s' for agent '%s': %s", skill_name, agent_id, e, exc_info=True)
-            raise ToolExecutionError(f"Error executing skill '{skill_name}': {e}") from e
+        except Exception as exc:
+            logger.error("Error executing skill '%s' for agent '%s': %s", skill_name, agent_id, exc, exc_info=True)
+            raise ToolExecutionError(f"Error executing skill '{skill_name}': {exc}") from exc

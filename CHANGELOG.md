@@ -9,12 +9,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - New built-in agent tool `call_api` for executing structured HTTP API requests (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) with query params, JSON payloads, and custom headers.
 - Multimodal attachment support for image uploads (`image/jpeg`, `image/png`, `image/webp`) in `AgentContextBuilder`.
+- `ActorIdentity` `TypedDict` structure in `SecurityContextService` for strongly typed caller identity metadata.
+- Centralized protocol stream constants (`PROTOCOL_ATTACHMENTS`, `PROTOCOL_TASK_CHAIN`) across `AgentOrchestrator`, `ReActLoopRunner`, and `TaskExecutor`.
+- Public module re-exports in `app.services.llm.__init__` via `__all__` for provider, registry, and stream parser classes.
 
 ### Changed
 - `call_api` signature: Added `**kwargs` catch-all parameter to gracefully absorb framework-injected execution context (such as `conversation_id`).
 - `LLMMessage` domain model: Expanded `content` field to accept structured lists/parts for multimodal payloads alongside strings.
 - `GeminiProvider`: Added dynamic conversion of provider-agnostic image dictionaries (`type: image`, `bytes`, `mime_type`) into `google.genai.types.Part.from_bytes`.
 - `AgentContextBuilder`: Decoupled text document parsing (PDF/TXT) from binary image MIME type handling for clean provider-neutral payload assembly.
+- Modernized type annotations across all service modules to standard Python 3.10+ syntax (`list`, `dict`, `tuple`, `X | Y` union types).
+- Refactored file and path operations across `FileStorageService`, `EmailService`, `MessageAttachmentService`, `DatasourceService`, and `AgentOrchestrator` from `os.path` functions to `pathlib.Path`.
+- `MessageAttachmentService`: Decoupled path resolution from Flask runtime `current_app` context by adding an explicit `conversations_folder` constructor parameter.
+- `AgentOrchestrator`: Extracted final turn persistence, markdown image formatting, and attachment protocol markers into a dedicated `_finalize_agent_turn` helper method.
+- `FileStorageService`: Modularized document parsing logic into separate `_extract_pdf_text` and `_extract_plain_text` helper methods.
+- `EmailService`: Refactored message delivery into dedicated `_attach_files` and `_dispatch_smtp` helper routines.
+- `GeminiImagenProvider`: Enforced explicit inheritance from `ImageGeneratorProvider`.
+- `OpenAIDalleProvider`: Replaced conditional aspect ratio logic with a dictionary lookup table (`size_map`).
 
 ### Fixed
 - Resolved `TypeError` in `call_api` tool execution caused by unexpected keyword arguments injected by `TaskExecutor`.
