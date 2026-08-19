@@ -80,9 +80,6 @@ class AgentOrchestrator:
 
         summary = yield from loop_gen
 
-        print(f"=== [ORCHESTRATOR] SUMMARY CREATED FILES: {getattr(summary, 'created_files', 'KEIN ATTRIBUT')} ===", flush=True)
-        print(f"=== [ORCHESTRATOR] SUMMARY FINAL TEXT: {summary.final_text if summary else 'KEINS'} ===", flush=True)
-
         if summary:
             final_text = summary.final_text or summary.accumulated_text or ""
             created_files = getattr(summary, "created_files", None) or []
@@ -103,7 +100,6 @@ class AgentOrchestrator:
                             "url": file_url,
                         })
                         if fname.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
-                            # Prüfen, ob der Dateiname ODER die vollständige URL bereits vom LLM im Text platziert wurde
                             if fname not in final_text and file_url not in final_text:
                                 image_snippets.append(f"![Generiertes Bild]({file_url})")
 
@@ -140,7 +136,6 @@ class AgentOrchestrator:
                 except Exception as e:
                     logger.error("Error updating final message text: %s", e, exc_info=True)
 
-            # Attachments persisten und Event über SSE streamen
             if saved_message and formatted_files:
                 try:
                     self.messaging_service.add_attachments_to_message(

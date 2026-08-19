@@ -4,7 +4,7 @@ Defines unified message structures and streaming communication protocols for LLM
 """
 
 from dataclasses import dataclass
-from typing import Generator, Protocol
+from typing import Generator, Protocol, List, Union, Any
 
 
 @dataclass(slots=True)
@@ -13,11 +13,11 @@ class LLMMessage:
 
     Attributes:
         role (str): The role of the message author (e.g., 'system', 'user', 'assistant').
-        content (str): The text content of the message.
+        content (Union[str, List[Any]]): Text string or multimodal list (parts/images).
     """
 
     role: str
-    content: str
+    content: Union[str, List[Any]]
 
 
 class LLMProvider(Protocol):

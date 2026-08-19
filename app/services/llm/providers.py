@@ -44,27 +44,33 @@ class GeminiProvider(LLMProvider):
         self.model = model
 
     def stream(self, messages: List[LLMMessage]) -> Generator[str, None, None]:
-        """Streams content tokens from Google Gemini using system instruction configs."""
         from google.genai import types
 
-        system_prompts = [m.content for m in messages if m.role == "system"]
-        system_instruction_text = (
-            "\n\n---\n\n".join(system_prompts) if system_prompts else None
-        )
+        system_prompts = [m.content for m in messages if m.role == "system" and isinstance(m.content, str)]
+        system_instruction_text = "\n\n---\n\n".join(system_prompts) if system_prompts else None
 
-        contents = [m.content for m in messages if m.role != "system"]
+        contents = []
+        for m in messages:
+            if m.role == "system":
+                continue
 
-        config = (
-            types.GenerateContentConfig(
-                system_instruction=system_instruction_text
-            )
-            if system_instruction_text
-            else None
-        )
+            if isinstance(m.content, list):
+                for part in m.content:
+                    if isinstance(part, dict) and part.get("type") == "image":
+                        contents.append(
+                            types.Part.from_bytes(
+                                data=part["data"],
+                                mime_type=part["mime_type"],
+                            )
+                        )
+                    else:
+                        contents.append(part)
+            else:
+                contents.append(m.content)
 
-        response = self.client.models.generate_content_stream(
-            model=self.model, contents=contents, config=config
-        )
+        config = types.GenerateContentConfig(system_instruction=system_instruction_text) if system_instruction_text else None
+        response = self.client.models.generate_content_stream(model=self.model, contents=contents, config=config)
+        
         for chunk in response:
             if chunk.text:
                 yield chunk.text

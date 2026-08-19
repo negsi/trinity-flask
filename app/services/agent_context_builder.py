@@ -8,7 +8,7 @@ instructions, dynamic timestamps, knowledge base files, message attachments, and
 from datetime import datetime, timezone
 import logging
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 from app.domain.llm import LLMMessage
 from app.services.agent_service import AgentService
@@ -99,15 +99,75 @@ class AgentContextBuilder:
             if conversation_history:
                 messages.extend(self._build_agent_context_history(agent, conversation_history))
 
-        # 2. Build current user turn message
-        final_user_content = user_text or ""
-        if attachments:
-            att_context = self._format_attachments_context(attachments)
-            if att_context:
-                final_user_content = f"{final_user_content}\n\n{att_context}".strip()
+        # 2. Build current user turn message (incorporating multimodal attachments)
+        user_content = self._build_user_message_content(user_text, attachments)
+        messages.append(LLMMessage(role="user", content=user_content))
 
-        messages.append(LLMMessage(role="user", content=final_user_content))
         return messages
+
+    def _build_user_message_content(
+        self,
+        user_text: str,
+        attachments: Optional[List[Any]],
+    ) -> Union[str, List[Any]]:
+        """
+        Separates text attachments from binary media attachments (e.g. images)
+        and builds a provider-agnostic content payload.
+        """
+        if not attachments:
+            return user_text or ""
+
+        text_attachments_context: List[str] = []
+        image_parts: List[dict] = []
+
+        for att in attachments:
+            file_path = getattr(att, "file_path", None)
+            mime_type = getattr(att, "mime_type", "") or ""
+            filename = (
+                getattr(att, "name", None)
+                or getattr(att, "filename", None)
+                or "Untitled"
+            )
+
+            if not file_path or not Path(file_path).exists():
+                continue
+
+            # Process Image Attachments
+            if mime_type.startswith("image/"):
+                try:
+                    with open(file_path, "rb") as f:
+                        img_bytes = f.read()
+                    image_parts.append({
+                        "type": "image",
+                        "mime_type": mime_type,
+                        "data": img_bytes,
+                        "filename": filename,
+                    })
+                except Exception as e:
+                    logger.error("Failed to read image file attachment '%s': %s", file_path, e, exc_info=True)
+            else:
+                # Process Document / Text Attachments
+                content = self.file_storage_service.extract_text_content(file_path, mime_type)
+                if content:
+                    text_attachments_context.append(
+                        f"--- START ATTACHMENT: {filename} ---\n{content}\n--- END ATTACHMENT: {filename} ---"
+                    )
+
+        # Build final user text string
+        final_text = user_text or ""
+        if text_attachments_context:
+            att_str = "### ATTACHED_FILES_IN_THIS_MESSAGE:\n" + "\n\n".join(text_attachments_context)
+            final_text = f"{final_text}\n\n{att_str}".strip()
+
+        # If image attachments are present, return structured multimodal list
+        if image_parts:
+            multimodal_payload: List[Any] = []
+            if final_text:
+                multimodal_payload.append(final_text)
+            multimodal_payload.extend(image_parts)
+            return multimodal_payload
+
+        return final_text
 
     def _build_agent_context_history(self, agent: Any, conversation_messages: List[Any]) -> List[LLMMessage]:
         """Filters historical conversation messages according to agent memory rules."""
@@ -175,32 +235,6 @@ class AgentContextBuilder:
             if content:
                 context_blocks.append(
                     f"--- START FILE: {filename} ---\n{content}\n--- END FILE: {filename} ---"
-                )
-
-        return "\n\n".join(context_blocks)
-
-    def _format_attachments_context(self, attachments: List[Any]) -> str:
-        """Extracts and formats message attachment text for the prompt."""
-        if not attachments:
-            return ""
-
-        context_blocks = ["### ATTACHED_FILES_IN_THIS_MESSAGE:"]
-        for att in attachments:
-            filename = (
-                getattr(att, "name", None)
-                or getattr(att, "filename", None)
-                or "Untitled"
-            )
-            file_path = getattr(att, "file_path", None)
-            mime_type = getattr(att, "mime_type", "")
-
-            if not file_path:
-                continue
-
-            content = self.file_storage_service.extract_text_content(file_path, mime_type)
-            if content:
-                context_blocks.append(
-                    f"--- START ATTACHMENT: {filename} ---\n{content}\n--- END ATTACHMENT: {filename} ---"
                 )
 
         return "\n\n".join(context_blocks)
