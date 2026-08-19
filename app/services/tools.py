@@ -30,6 +30,83 @@ from app.services.file_storage_service import FileStorageService
 logger = logging.getLogger(__name__)
 
 
+def call_api(
+    url: str,
+    method: str = "GET",
+    params: Optional[Dict[str, Any]] = None,
+    json_data: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
+    timeout: int = 30,
+    **kwargs: Any,
+) -> str:
+    """Performs an HTTP API request (GET, POST, PUT, PATCH, DELETE) to a target URL.
+
+    Args:
+        url (str): The complete target URL for the request (e.g. 'http://127.0.0.1:5000/api/v1/agents').
+        method (str): HTTP method (GET, POST, PUT, PATCH, DELETE). Defaults to 'GET'.
+        params (Optional[Dict[str, Any]]): Key-value pairs for query string parameters.
+        json_data (Optional[Dict[str, Any]]): JSON payload for POST/PUT/PATCH requests.
+        headers (Optional[Dict[str, str]]): Optional custom HTTP headers.
+        timeout (int): Request timeout in seconds. Defaults to 30.
+
+    Returns:
+        str: JSON string response containing 'status_code', 'success', and 'data' or 'error'.
+    """
+    method_upper = method.upper()
+    valid_methods = {"GET", "POST", "PUT", "PATCH", "DELETE"}
+    if method_upper not in valid_methods:
+        return json.dumps({
+            "success": False,
+            "error": f"Invalid HTTP method '{method}'. Supported methods: {sorted(list(valid_methods))}"
+        })
+
+    request_headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    if headers:
+        request_headers.update(headers)
+
+    try:
+        logger.info("Executing API Call: %s %s", method_upper, url)
+
+        response = requests.request(
+            method=method_upper,
+            url=url,
+            params=params,
+            json=json_data,
+            headers=request_headers,
+            timeout=timeout,
+        )
+
+        try:
+            res_payload = response.json()
+        except ValueError:
+            res_payload = response.text
+
+        is_success = 200 <= response.status_code < 300
+
+        result = {
+            "success": is_success,
+            "status_code": response.status_code,
+            "data" if is_success else "error": res_payload,
+        }
+        return json.dumps(result, ensure_ascii=False)
+
+    except requests.exceptions.Timeout:
+        logger.error("API Call timed out for %s %s", method_upper, url)
+        return json.dumps({
+            "success": False,
+            "error": f"Request timed out after {timeout} seconds.",
+        })
+    except requests.exceptions.RequestException as e:
+        logger.error("API Call failed for %s %s: %s", method_upper, url, e)
+        return json.dumps({
+            "success": False,
+            "error": f"HTTP Request failed: {str(e)}",
+        })
+
+
 def fetch_url(url: str, **kwargs: Any) -> str:
     """
     Fetches and extracts clean textual content from a URL (supports HTML, RSS/Atom, JSON, and PDF).
@@ -382,9 +459,11 @@ class ToolRegistry:
             "fetch_url": fetch_url,
             "web_search": web_search,
             "message_llm": message_llm,
+            "call_api": call_api,
             "write_file": self.write_file,
             "send_email": self.send_email,
             "generate_image": self.generate_image,
         }
         tools.update(self._custom_tools)
         return tools
+

@@ -192,6 +192,17 @@ Trinity agents execute complex web gathering, data processing, and analysis task
        - **DuckDuckGo Search:** Functions as a zero-config, privacy-focused fallback provider when no API key is present.
      - Designed for initial discovery phases in multi-step task chains, providing actionable target URLs for subsequent `fetch_url` analysis.
 
+7. **`call_api`**
+   - **Purpose:** Executes structured HTTP API requests (GET, POST, PUT, PATCH, DELETE) against local or remote REST endpoints.
+   - **Rules & Syntax:**
+     - **`url`** (string, required): Full target URL including scheme and host (e.g., `http://127.0.0.1:5000/api/v1/customers`).
+     - **`method`** (string, optional): HTTP request method. Supported values: `"GET"` (default), `"POST"`, `"PUT"`, `"PATCH"`, `"DELETE"`.
+     - **`params`** (object, optional): Key-value pairs for query string parameters. Supports step reference placeholders (e.g., `[STEP_1]`).
+     - **`json_data`** (object, optional): JSON payload body for write operations (`POST`, `PUT`, `PATCH`). Supports step reference placeholders.
+     - **`headers`** (object, optional): Custom HTTP request headers (e.g., `{"Authorization": "Bearer ..."}`).
+     - **`timeout`** (integer, optional): Request timeout duration in seconds. Defaults to `30`.
+   - **Usage Context:** Designed specifically for structured endpoints and REST APIs. For unstructured web pages, documents, or RSS feeds, use `fetch_url` instead.
+   
 ### Task Execution Workflow
 
 - **Internal Knowledge / Datasources:** For queries answerable directly via model knowledge or uploaded files (Knowledge Base), the agent responds immediately without triggering external tools.

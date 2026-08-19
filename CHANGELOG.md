@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-- Multimodal attachment support for image uploads (`image/jpeg`, `image/png`, `image/webp`) in `AgentContextBuilder`[cite: 7].
+- New built-in agent tool `call_api` for executing structured HTTP API requests (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) with query params, JSON payloads, and custom headers.
+- Multimodal attachment support for image uploads (`image/jpeg`, `image/png`, `image/webp`) in `AgentContextBuilder`.
 
 ### Changed
-- `LLMMessage` domain model: Expanded `content` field to accept structured lists/parts for multimodal payloads alongside strings[cite: 3].
-- `GeminiProvider`: Added dynamic conversion of provider-agnostic image dictionaries (`type: image`, `bytes`, `mime_type`) into `google.genai.types.Part.from_bytes`[cite: 5].
-- `AgentContextBuilder`: Decoupled text document parsing (PDF/TXT) from binary image MIME type handling for clean provider-neutral payload assembly[cite: 6, 7].
+- `call_api` signature: Added `**kwargs` catch-all parameter to gracefully absorb framework-injected execution context (such as `conversation_id`).
+- `LLMMessage` domain model: Expanded `content` field to accept structured lists/parts for multimodal payloads alongside strings.
+- `GeminiProvider`: Added dynamic conversion of provider-agnostic image dictionaries (`type: image`, `bytes`, `mime_type`) into `google.genai.types.Part.from_bytes`.
+- `AgentContextBuilder`: Decoupled text document parsing (PDF/TXT) from binary image MIME type handling for clean provider-neutral payload assembly.
+
+### Fixed
+- Resolved `TypeError` in `call_api` tool execution caused by unexpected keyword arguments injected by `TaskExecutor`.
 
 ## [0.1.3] - 2026-08-18
 
