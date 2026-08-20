@@ -8,7 +8,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Modular tool package architecture under `app/services/tools/` to split domain-specific system tools:
+  - `file_tools.py`: Contains sandboxed file operation `write_file` and path resolution helpers (`locate_file`, `get_latest_image_in_dir`).
+  - `media_tools.py`: Contains `generate_image` execution logic and payload handling.
+  - `communication_tools.py`: Houses `send_email` and LLM delegation helper `message_llm`.
+  - `api_tools.py`: Encapsulates HTTP request utilities (`call_api`, `fetch_url`).
+  - `search_tools.py`: Implements web search aggregators (`web_search`).
+
 ### Changed
+
+- Refactored monolithic `app/services/tools.py` into a structured, modular `app/services/tools/` package.
+- Refactored `ToolRegistry` in `registry.py` to act as a lightweight dependency injection binding layer, delegating execution logic to individual tool modules.
+- Modernized type hints across tool modules using standard Python 3.10+ annotations (`dict[str, Any]`, `Path | None`).
+- Standardized file path resolution using `pathlib.Path` across sandbox operations.
 
 ## [0.1.4] - 2026-08-20
 
