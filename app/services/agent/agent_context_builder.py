@@ -12,12 +12,12 @@ from typing import Any
 
 from app.domain.llm import LLMMessage
 from app.domain.models.agent import Agent
-from app.services.agent_service import AgentService
-from app.services.file_storage_service import FileStorageService
+from app.services.agent.agent_service import AgentService
+from app.services.infrastructure.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
 
-LLM_DIR = Path(__file__).resolve().parent / "llm"
+LLM_DIR = Path(__file__).resolve().parents[1] / "llm"
 BASE_PROMPT_PATH = LLM_DIR / "base_agent.prompt.md"
 RESPONSE_FORMAT_PATH = LLM_DIR / "base_agent.response_format.md"
 

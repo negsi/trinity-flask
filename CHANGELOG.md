@@ -10,6 +10,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+## [0.1.5] - 2026-08-20
+
+### Added
+
+- Modular tool package architecture under `app/services/tools/` to split domain-specific system tools:
+  - `file_tools.py`: Contains sandboxed file operation `write_file` and path resolution helpers (`locate_file`, `get_latest_image_in_dir`).
+  - `media_tools.py`: Contains `generate_image` execution logic and payload handling.
+  - `communication_tools.py`: Houses `send_email` and LLM delegation helper `message_llm`.
+  - `api_tools.py`: Encapsulates HTTP request utilities (`call_api`, `fetch_url`).
+  - `search_tools.py`: Implements web search aggregators (`web_search`).
+
+### Changed
+
+- Reorganized core application services into domain-specific package structures:
+  - `app/services/agent/`: Houses `AgentService`, `AgentOrchestrator`, `AgentContextBuilder`, and `ReActLoopRunner`.
+  - `app/services/messaging/`: Houses `MessagingService` and `MessageAttachmentService`.
+  - `app/services/knowledge/`: Houses `DatasourceService`.
+  - `app/services/infrastructure/`: Houses `EmailService`, `FileStorageService`, `LLMService`, and `SecurityContextService`.
+- Refactored monolithic `app/services/tools.py` into a structured, modular `app/services/tools/` package.
+- Refactored `ToolRegistry` in `app/services/tools/registry.py` to act as a lightweight dependency injection binding layer, delegating execution logic to individual tool modules.
+- Updated Dependency Injection container bindings (`app/containers.py`) and API route blueprints (`app/routes/agents.py`, `app/routes/chat.py`) to align with the new modular service namespaces.
+- Updated infrastructure service imports across tool modules (`file_tools.py`, `media_tools.py`, `communication_tools.py`, `registry.py`) to reference `app.services.infrastructure`[cite: 6].
+- Refactored `send_email` in `communication_tools.py` to remove the unrequested latest-image fallback, preventing unexpected attachments in text-only dispatches[cite: 6].
+- Safely stripped `email_service` from `kwargs` in `ToolRegistry.send_email` to prevent `TypeError` duplicate keyword argument conflicts when invoked via runner/agent context[cite: 6].
+- Modernized type hints across tool modules using standard Python 3.10+ annotations (`dict[str, Any]`, `Path | None`).
+- Standardized file path resolution using `pathlib.Path` across sandbox operations.
+
 ## [0.1.4] - 2026-08-20
 
 ### Added
@@ -198,7 +225,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.4...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.5...develop
+[0.1.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.5
 [0.1.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.4
 [0.1.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.3
 [0.1.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.2

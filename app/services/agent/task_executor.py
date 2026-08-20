@@ -8,15 +8,13 @@ from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
 from app.config import BaseConfig
+from app.services.agent.constants import PROTOCOL_TASK_CHAIN
 
 logger = logging.getLogger(__name__)
-
-PROTOCOL_TASK_CHAIN = "__TASK_CHAIN__:"
 
 
 @dataclass

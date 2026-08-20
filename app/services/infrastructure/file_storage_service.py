@@ -6,7 +6,6 @@ sandboxed disk writes, and text extraction from documents (PDFs, plain text).
 """
 
 import logging
-import os
 from pathlib import Path
 import uuid
 from werkzeug.datastructures import FileStorage

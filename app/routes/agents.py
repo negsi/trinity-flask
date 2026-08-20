@@ -8,9 +8,9 @@ from flask import Blueprint, jsonify, request
 from dependency_injector.wiring import inject, Provide
 
 from app.containers import Container
-from app.services.agent_service import AgentService
-from app.services.datasource_service import DatasourceService
-from app.services.messaging_service import MessagingService
+from app.services.agent import AgentService
+from app.services.knowledge import DatasourceService
+from app.services.messaging import MessagingService
 from app.routes.decorators import validate_json
 from app.routes.schemas import CreateAgentRequest
 

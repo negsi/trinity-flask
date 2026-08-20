@@ -14,19 +14,24 @@ from app.repositories import (
     SQLAlchemyLLMExecutionRepository,
     SQLAlchemyMessageRepository,
 )
-from app.services.agent_context_builder import AgentContextBuilder
-from app.services.agent_orchestrator import AgentOrchestrator
-from app.services.agent_service import AgentService
-from app.services.datasource_service import DatasourceService
-from app.services.email_service import EmailService
-from app.services.file_storage_service import FileStorageService
+
+from app.services.agent.agent_context_builder import AgentContextBuilder
+from app.services.agent.agent_orchestrator import AgentOrchestrator
+from app.services.agent.agent_service import AgentService
+from app.services.agent.react_loop_runner import ReActLoopRunner
+
+from app.services.messaging.message_attachment_service import MessageAttachmentService
+from app.services.messaging.messaging_service import MessagingService
+
+from app.services.knowledge.datasource_service import DatasourceService
+
+from app.services.infrastructure.email_service import EmailService
+from app.services.infrastructure.file_storage_service import FileStorageService
+from app.services.infrastructure.llm_service import LLMService
+from app.services.infrastructure.security_context import SecurityContextService
+
 from app.services.llm.providers import GeminiImagenProvider, OpenAIDalleProvider
-from app.services.llm_service import LLMService
-from app.services.message_attachment_service import MessageAttachmentService
-from app.services.messaging_service import MessagingService
-from app.services.react_loop_runner import ReActLoopRunner
-from app.services.security_context import SecurityContextService
-from app.services.tools import ToolRegistry
+from app.services.tools.registry import ToolRegistry
 
 
 class Container(containers.DeclarativeContainer):

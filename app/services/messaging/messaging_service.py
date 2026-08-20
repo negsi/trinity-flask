@@ -19,7 +19,7 @@ from app.domain.models.conversation import Conversation
 from app.domain.models.message import Message, MessageAttachment
 from app.domain.repositories.conversation_repository import ConversationRepository
 from app.domain.repositories.message_repository import MessageRepository
-from app.services.message_attachment_service import MessageAttachmentService
+from app.services.messaging.message_attachment_service import MessageAttachmentService
 
 logger = logging.getLogger(__name__)
 
