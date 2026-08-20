@@ -8,7 +8,7 @@
   </a>
   <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white" alt="Flask">
-  <img src="https://img.shields.io/github/v/tag/negsi/trinity-flask?style=flat-square&color=blue" alt="Latest Tag">
+  <img src="https://img.shields.io/github/v/tag/negsi/trinity-flask?style=flat-square&label=Version&color=blue" alt="Latest Version">
 </p>
 
 <p align="right">
