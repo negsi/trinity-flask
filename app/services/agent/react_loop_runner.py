@@ -12,15 +12,14 @@ from typing import Any
 
 from app.domain.models.llm_execution import LLMExecution
 from app.domain.models.message import MessageAttachment
-from app.services.agent_context_builder import AgentContextBuilder
+from app.services.agent.agent_context_builder import AgentContextBuilder
+from app.services.agent.constants import PROTOCOL_TASK_CHAIN
+from app.services.agent.task_executor import TaskExecutor
+from app.services.infrastructure.llm_service import LLMService
 from app.services.llm.stream_parser import StreamResponseParser
-from app.services.llm_service import LLMService
-from app.services.task_executer import TaskExecutor
-from app.services.tools import ToolRegistry
+from app.services.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
-
-PROTOCOL_TASK_CHAIN = "__TASK_CHAIN__:"
 
 
 @dataclass

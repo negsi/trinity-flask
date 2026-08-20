@@ -10,7 +10,7 @@ from typing import Any
 from app.domain.errors import AgentNotFoundError, ToolExecutionError, ToolNotFoundError
 from app.domain.models.agent import Agent
 from app.domain.repositories.agent_repository import AgentRepository
-from app.services.tools import ToolRegistry
+from app.services.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 

@@ -9,18 +9,16 @@ from collections.abc import Generator
 import json
 import logging
 from pathlib import Path
-from typing import Any
 
 from app.domain.enums import ActorType
 from app.domain.models.llm_execution import LLMExecution
 from app.domain.models.message import Message
 from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
-from app.services.messaging_service import MessagingService
-from app.services.react_loop_runner import ReActExecutionSummary, ReActLoopRunner
+from app.services.agent.constants import PROTOCOL_ATTACHMENTS
+from app.services.agent.react_loop_runner import ReActExecutionSummary, ReActLoopRunner
+from app.services.messaging.messaging_service import MessagingService
 
 logger = logging.getLogger(__name__)
-
-PROTOCOL_ATTACHMENTS = "__ATTACHMENTS__:"
 
 
 class AgentOrchestrator:

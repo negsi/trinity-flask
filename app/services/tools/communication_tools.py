@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 from typing import Any
 
-from app.services.email_service import EmailService
+from app.services.infrastructure.email_service import EmailService
 from app.services.tools.file_tools import get_latest_image_in_dir, locate_file
 
 logger = logging.getLogger(__name__)
@@ -87,12 +87,6 @@ def send_email(
             processed_body = re.sub(md_pattern, "", processed_body)
             html_pattern = rf'<img\s+[^>]*src=["\'][^"\']*{re.escape(found.name)}["\'][^>]*>'
             processed_body = re.sub(html_pattern, "", processed_body, flags=re.IGNORECASE)
-
-    # 3. Fallback: Latest image
-    if not final_attachments and target_base.is_dir():
-        latest_img = get_latest_image_in_dir(target_base)
-        if latest_img:
-            final_attachments.append(str(latest_img))
 
     try:
         return email_service.send_email(

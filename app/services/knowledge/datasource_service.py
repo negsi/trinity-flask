@@ -11,7 +11,7 @@ from werkzeug.datastructures import FileStorage
 from app.domain.errors import DatasourceNotFoundError, InvalidFileError
 from app.domain.models.datasource import Datasource
 from app.domain.repositories.datasource_repository import DatasourceRepository
-from app.services.file_storage_service import FileStorageService
+from app.services.infrastructure.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
 

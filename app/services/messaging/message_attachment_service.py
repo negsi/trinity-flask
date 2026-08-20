@@ -6,13 +6,12 @@ Handles physical file storage and entity creation for chat message attachments.
 
 import logging
 import mimetypes
-import os
 from pathlib import Path
 import uuid
 from werkzeug.datastructures import FileStorage
 
 from app.domain.models.message import MessageAttachment
-from app.services.file_storage_service import FileStorageService
+from app.services.infrastructure.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
 

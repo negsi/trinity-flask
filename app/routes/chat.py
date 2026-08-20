@@ -20,10 +20,10 @@ from flask import (
 from dependency_injector.wiring import inject, Provide
 
 from app.containers import Container
-from app.services.messaging_service import MessagingService
-from app.services.agent_orchestrator import AgentOrchestrator
-from app.services.security_context import SecurityContextService
-from app.services.agent_service import AgentService
+from app.services.messaging import MessagingService
+from app.services.agent import AgentOrchestrator
+from app.services.agent import AgentService
+from app.services.infrastructure import SecurityContextService
 from app.routes.schemas import SendMessageRequest
 from app.domain.errors import ValidationError
 

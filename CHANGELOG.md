@@ -17,8 +17,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Reorganized core application services into domain-specific package structures:
+  - `app/services/agent/`: Houses `AgentService`, `AgentOrchestrator`, `AgentContextBuilder`, and `ReActLoopRunner`.
+  - `app/services/messaging/`: Houses `MessagingService` and `MessageAttachmentService`.
+  - `app/services/knowledge/`: Houses `DatasourceService`.
+  - `app/services/infrastructure/`: Houses `EmailService`, `FileStorageService`, `LLMService`, and `SecurityContextService`.
 - Refactored monolithic `app/services/tools.py` into a structured, modular `app/services/tools/` package.
-- Refactored `ToolRegistry` in `registry.py` to act as a lightweight dependency injection binding layer, delegating execution logic to individual tool modules.
+- Refactored `ToolRegistry` in `app/services/tools/registry.py` to act as a lightweight dependency injection binding layer, delegating execution logic to individual tool modules.
+- Updated Dependency Injection container bindings (`app/containers.py`) and API route blueprints (`app/routes/agents.py`, `app/routes/chat.py`) to align with the new modular service namespaces.
 - Updated infrastructure service imports across tool modules (`file_tools.py`, `media_tools.py`, `communication_tools.py`, `registry.py`) to reference `app.services.infrastructure`[cite: 6].
 - Refactored `send_email` in `communication_tools.py` to remove the unrequested latest-image fallback, preventing unexpected attachments in text-only dispatches[cite: 6].
 - Safely stripped `email_service` from `kwargs` in `ToolRegistry.send_email` to prevent `TypeError` duplicate keyword argument conflicts when invoked via runner/agent context[cite: 6].
