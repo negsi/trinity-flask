@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+## [0.1.4] - 2026-08-20
+
+### Added
 - New built-in agent tool `call_api` for executing structured HTTP API requests (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) with query params, JSON payloads, and custom headers.
 - Multimodal attachment support for image uploads (`image/jpeg`, `image/png`, `image/webp`) in `AgentContextBuilder`.
 - `ActorIdentity` `TypedDict` structure in `SecurityContextService` for strongly typed caller identity metadata.
@@ -192,7 +198,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.3...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.4...develop
+[0.1.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.4
 [0.1.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.3
 [0.1.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.2
 [0.1.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.1
