@@ -2,7 +2,8 @@
 Agent Context Builder Service Module.
 
 Assembles prompt components into structured LLM message sequences, incorporating system
-instructions, dynamic timestamps, knowledge base files, message attachments, and memory history.
+instructions, dynamic timestamps, knowledge base files, message attachments, memory history,
+and available system agents.
 """
 
 from datetime import datetime, timezone
@@ -81,6 +82,10 @@ class AgentContextBuilder:
 
         if agent:
             combined_system = combined_system.replace("{agent.name}", agent.name)
+            combined_system = combined_system.replace("{agent.id}", str(agent.id))
+
+        agents_summary = self._build_available_agents_context()
+        combined_system = combined_system.replace("{available_agents_list}", agents_summary)
 
         messages: list[LLMMessage] = [LLMMessage(role="system", content=combined_system)]
 
@@ -100,6 +105,18 @@ class AgentContextBuilder:
         messages.append(LLMMessage(role="user", content=user_content))
 
         return messages
+
+    def _build_available_agents_context(self) -> str:
+        """Retrieves and formats all active agents in the system into a prompt summary."""
+        try:
+            agents = self.agent_service.get_all_agents()
+            if not agents:
+                return "Keine weiteren Agenten im System vorhanden."
+
+            return "\n".join([f'- Agent "{a.name}" (ID: `{a.id}`)' for a in agents])
+        except Exception as exc:
+            logger.error("Error building available agents context: %s", exc)
+            return "Fehler beim Laden der System-Agenten."
 
     def _build_user_message_content(
         self,

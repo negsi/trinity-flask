@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+* **Dynamic Agent Awareness Context:** Injected full system agent directory (IDs and names) into system prompts to establish foundations for Agent-to-Agent (A2A) orchestration.
 
 ### Changed
+* **Base Prompt Configuration Header:** Updated system prompt templates to expose current `agent.id` alongside dynamic agent network availability.
+* **Agent Context Builder Extensions:** Enhanced `AgentContextBuilder` to resolve available system agents at prompt composition time.
 
 ## [0.1.5] - 2026-08-20
 
