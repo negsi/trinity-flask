@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 from app.domain.image_generator import ImageGeneratorProvider
-from app.services.email_service import EmailService
-from app.services.file_storage_service import FileStorageService
+from app.services.infrastructure.email_service import EmailService
+from app.services.infrastructure.file_storage_service import FileStorageService
 from app.services.tools.api_tools import call_api, fetch_url
 from app.services.tools.communication_tools import message_llm, send_email
 from app.services.tools.file_tools import write_file
@@ -73,6 +73,10 @@ class ToolRegistry:
         **kwargs: Any,
     ) -> str:
         """Dispatches an email and resolves body-referenced local files."""
+
+        # Remove email_service from kwargs if passed by agent/runner
+        kwargs.pop("email_service", None)
+
         return send_email(
             email_service=self.email_service,
             to_email=to_email,

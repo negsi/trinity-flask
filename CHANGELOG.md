@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Refactored monolithic `app/services/tools.py` into a structured, modular `app/services/tools/` package.
 - Refactored `ToolRegistry` in `registry.py` to act as a lightweight dependency injection binding layer, delegating execution logic to individual tool modules.
+- Updated infrastructure service imports across tool modules (`file_tools.py`, `media_tools.py`, `communication_tools.py`, `registry.py`) to reference `app.services.infrastructure`[cite: 6].
+- Refactored `send_email` in `communication_tools.py` to remove the unrequested latest-image fallback, preventing unexpected attachments in text-only dispatches[cite: 6].
+- Safely stripped `email_service` from `kwargs` in `ToolRegistry.send_email` to prevent `TypeError` duplicate keyword argument conflicts when invoked via runner/agent context[cite: 6].
 - Modernized type hints across tool modules using standard Python 3.10+ annotations (`dict[str, Any]`, `Path | None`).
 - Standardized file path resolution using `pathlib.Path` across sandbox operations.
 

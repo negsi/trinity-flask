@@ -11,7 +11,7 @@ import uuid
 
 from app.domain.errors import ToolExecutionError
 from app.domain.image_generator import ImageGeneratorProvider
-from app.services.file_storage_service import FileStorageService
+from app.services.infrastructure.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
 

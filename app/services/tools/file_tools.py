@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from app.services.file_storage_service import FileStorageService
+from app.services.infrastructure.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
 
