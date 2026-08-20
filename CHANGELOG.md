@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+### Changed
+
+## [0.1.5] - 2026-08-20
+
+### Added
+
 - Modular tool package architecture under `app/services/tools/` to split domain-specific system tools:
   - `file_tools.py`: Contains sandboxed file operation `write_file` and path resolution helpers (`locate_file`, `get_latest_image_in_dir`).
   - `media_tools.py`: Contains `generate_image` execution logic and payload handling.
@@ -219,7 +225,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.4...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.5...develop
+[0.1.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.5
 [0.1.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.4
 [0.1.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.3
 [0.1.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.2
