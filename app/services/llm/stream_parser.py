@@ -2,12 +2,12 @@
 Stream Response Parser Module.
 
 Extracts regular text and structured JSON payloads from streaming token chunks,
-preventing markers from bleeding into output text.
+preventing boundary markers from leaking into user-visible streams.
 """
 
 import json
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,19 +22,19 @@ class StreamResponseParser:
         self.buffer: str = ""
         self.is_inside_json: bool = False
 
-    def process_chunk(self, chunk: str) -> Tuple[str, Optional[Dict[str, Any]]]:
+    def process_chunk(self, chunk: str) -> tuple[str, dict[str, Any] | None]:
         """
-        Processes an incoming chunk and extracts display text and complete JSON payloads.
+        Processes an incoming text chunk and extracts display text and complete JSON payloads.
 
         Args:
-            chunk (str): Newly received text token chunk.
+            chunk: Newly received text token chunk.
 
         Returns:
-            Tuple[str, Optional[Dict[str, Any]]]: Tuple containing text to display and parsed JSON data (if complete).
+            tuple[str, dict[str, Any] | None]: Displayable text and parsed JSON object (if closed).
         """
         self.buffer += chunk
         display_text = ""
-        completed_json: Optional[Dict[str, Any]] = None
+        completed_json: dict[str, Any] | None = None
 
         while self.buffer:
             if not self.is_inside_json:
@@ -70,8 +70,8 @@ class StreamResponseParser:
 
         return display_text, completed_json
 
-    def finalize(self) -> Tuple[str, Optional[Dict[str, Any]]]:
-        """Flushes buffered text when stream closes."""
+    def finalize(self) -> tuple[str, dict[str, Any] | None]:
+        """Flushes remaining buffered text when stream closes."""
         remaining_text = self.buffer if not self.is_inside_json else ""
         self.buffer = ""
         self.is_inside_json = False
@@ -87,10 +87,10 @@ class StreamResponseParser:
         return 0
 
     @staticmethod
-    def _parse_json(raw_json: str) -> Optional[Dict[str, Any]]:
+    def _parse_json(raw_json: str) -> dict[str, Any] | None:
         """Safely parses raw JSON payload strings."""
         try:
             return json.loads(raw_json.strip())
-        except json.JSONDecodeError as e:
-            logger.error("[StreamResponseParser] JSONDecodeError: %s", e)
+        except json.JSONDecodeError as exc:
+            logger.error("[StreamResponseParser] JSONDecodeError: %s", exc)
             return None

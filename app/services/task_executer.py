@@ -4,14 +4,19 @@ Task Chain Execution Engine Module.
 Executes sequential steps of a structured LLM task chain and resolves dynamic context parameters.
 """
 
-import os, logging, json
+from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Generator, Optional, List
+import json
+import logging
+import os
+from pathlib import Path
+from typing import Any
 
 from app.config import BaseConfig
-from app.domain.errors import ToolNotFoundError
 
 logger = logging.getLogger(__name__)
+
+PROTOCOL_TASK_CHAIN = "__TASK_CHAIN__:"
 
 
 @dataclass
@@ -19,9 +24,9 @@ class ChainExecutionResult:
     """Result data structure returned after task chain execution completes."""
 
     is_complete: bool
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     last_result: str = ""
-    created_files: List[Dict[str, Any]] = field(default_factory=list)
+    created_files: list[dict[str, Any]] = field(default_factory=list)
 
 
 class TaskExecutor:
@@ -29,9 +34,9 @@ class TaskExecutor:
 
     def __init__(
         self,
-        tools: Dict[str, Callable[..., Any]],
-        llm_stream_func: Optional[Callable[[str], Generator[str, None, None]]] = None,
-        email_service: Optional[Any] = None,
+        tools: dict[str, Callable[..., Any]],
+        llm_stream_func: Callable[[str], Generator[str, None, None]] | None = None,
+        email_service: Any | None = None,
     ) -> None:
         self.tools = tools
         self.llm_stream_func = llm_stream_func
@@ -40,14 +45,14 @@ class TaskExecutor:
     def execute_chain_stream(
         self,
         execution: Any,
-        initial_context: Optional[Dict[str, Any]] = None,
+        initial_context: dict[str, Any] | None = None,
     ) -> Generator[str, None, ChainExecutionResult]:
         """
         Executes sequence steps iteratively and streams output chunks.
 
         Args:
-            execution (Any): The LLMExecution domain model containing steps.
-            initial_context (Optional[Dict[str, Any]]): Initial contextual variables.
+            execution: The LLMExecution domain model containing steps.
+            initial_context: Initial contextual variables.
 
         Yields:
             str: Real-time text tokens from tool execution or sub-LLM prompts.
@@ -55,10 +60,9 @@ class TaskExecutor:
         Returns:
             ChainExecutionResult: Execution completion summary.
         """
-        context: Dict[str, Any] = dict(initial_context) if initial_context else {}
-        steps = getattr(execution, "steps", []) or []        
+        context: dict[str, Any] = dict(initial_context or {})
+        steps = getattr(execution, "steps", []) or []
 
-        # Send task chain to frontend for if steps exist
         if steps:
             chain_init_payload = {
                 "type": "task_chain_init",
@@ -67,27 +71,21 @@ class TaskExecutor:
                         "step_number": getattr(s, "step_number", idx + 1),
                         "description": getattr(s, "description", ""),
                         "tool_name": getattr(s, "tool_name", ""),
-                        "status": "pending"
+                        "status": "pending",
                     }
                     for idx, s in enumerate(steps)
-                ]
+                ],
             }
-            yield f"\n__TASK_CHAIN__:{json.dumps(chain_init_payload)}\n"
+            yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps(chain_init_payload)}\n"
 
         for step in steps:
             step_num = getattr(step, "step_number", 0)
             tool_name = getattr(step, "tool_name", "")
             raw_params = getattr(step, "parameters", {}) or {}
 
-            # Tell frontend that this step is running
-            step_start_payload = {
-                "type": "task_step_update",
-                "step_number": step_num,
-                "status": "running"
-            }
-            yield f"\n__TASK_CHAIN__:{json.dumps(step_start_payload)}\n"
-
+            yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps({'type': 'task_step_update', 'step_number': step_num, 'status': 'running'})}\n"
             logger.info("[TaskExecutor] Step %d (%s) Raw Params: %s", step_num, tool_name, raw_params)
+
             resolved_params = self._resolve_parameters(raw_params, context)
 
             if tool_name == "message_llm":
@@ -95,13 +93,7 @@ class TaskExecutor:
             else:
                 yield from self._execute_standard_tool(step_num, tool_name, resolved_params, context)
 
-            # Tell frontend that this step is completed
-            step_done_payload = {
-                "type": "task_step_update",
-                "step_number": step_num,
-                "status": "completed"
-            }
-            yield f"\n__TASK_CHAIN__:{json.dumps(step_done_payload)}\n"
+            yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps({'type': 'task_step_update', 'step_number': step_num, 'status': 'completed'})}\n"
 
         is_complete = getattr(execution, "is_complete", True)
         return ChainExecutionResult(
@@ -114,8 +106,8 @@ class TaskExecutor:
     def _execute_llm_tool(
         self,
         step_num: int,
-        params: Dict[str, Any],
-        context: Dict[str, Any],
+        params: dict[str, Any],
+        context: dict[str, Any],
     ) -> Generator[str, None, None]:
         """Executes nested LLM streaming tool requests."""
         prompt = str(params.get("message", "")).strip()
@@ -133,14 +125,14 @@ class TaskExecutor:
         if context.get("has_previous_llm_output", False):
             yield "\n\n"
 
-        accumulated_response = []
+        accumulated_response: list[str] = []
         try:
             for chunk in self.llm_stream_func(prompt):
                 if chunk:
                     accumulated_response.append(chunk)
                     yield chunk
-        except Exception as e:
-            error_msg = f"\n[Error during LLM execution in Step {step_num}: {e}]"
+        except Exception as exc:
+            error_msg = f"\n[Error during LLM execution in Step {step_num}: {exc}]"
             logger.error(error_msg, exc_info=True)
             yield error_msg
             accumulated_response.append(error_msg)
@@ -154,8 +146,8 @@ class TaskExecutor:
         self,
         step_num: int,
         tool_name: str,
-        params: Dict[str, Any],
-        context: Dict[str, Any],
+        params: dict[str, Any],
+        context: dict[str, Any],
     ) -> Generator[str, None, None]:
         """Executes standard callable tool functions."""
         if tool_name not in self.tools:
@@ -183,48 +175,51 @@ class TaskExecutor:
             if "created_files" not in context:
                 context["created_files"] = []
 
-            if tool_name == "generate_image" and isinstance(tool_raw_result, dict):
-                if tool_raw_result.get("status") == "success":
-                    filename = tool_raw_result.get("filename")
-                    conversation_id = exec_params.get("conversation_id") or context.get("conversation_id")
-                    
-                    if conversation_id and filename:
-                        clean_path = os.path.join(BaseConfig.CONVERSATIONS_FOLDER, conversation_id, filename)
-                    else:
-                        clean_path = filename
-
-                    context["created_files"].append({
-                        "filename": filename,
-                        "file_path": clean_path,
-                        "conversation_id": conversation_id,
-                        "base_dir": exec_params.get("base_dir")
-                    })
-
-            elif tool_name == "write_file" and not output.startswith("Error"):
-                file_path = exec_params.get("file_path")
-                if file_path:
-                    context["created_files"].append({
-                        "filename": os.path.basename(file_path),
-                        "file_path": file_path,
-                        "conversation_id": exec_params.get("conversation_id"),
-                        "base_dir": exec_params.get("base_dir")
-                    })
-
-        except Exception as e:
-            err_msg = f"\n[Error executing tool '{tool_name}' in Step {step_num}: {e}]"
+            self._collect_created_files(tool_name, tool_raw_result, exec_params, context, output)
+        except Exception as exc:
+            err_msg = f"\n[Error executing tool '{tool_name}' in Step {step_num}: {exc}]"
             logger.error(err_msg, exc_info=True)
             yield err_msg
 
-    def _resolve_parameters(
+    def _collect_created_files(
         self,
-        params: Dict[str, Any],
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """Recursively resolves dynamic contextual placeholders across parameter dictionaries."""
+        tool_name: str,
+        raw_result: Any,
+        exec_params: dict[str, Any],
+        context: dict[str, Any],
+        output_str: str,
+    ) -> None:
+        """Helper to register created files in execution context."""
+        if tool_name == "generate_image" and isinstance(raw_result, dict) and raw_result.get("status") == "success":
+            filename = raw_result.get("filename")
+            conversation_id = exec_params.get("conversation_id") or context.get("conversation_id")
+            clean_path = (
+                str(Path(BaseConfig.CONVERSATIONS_FOLDER) / conversation_id / filename)
+                if conversation_id and filename
+                else filename
+            )
+            context["created_files"].append({
+                "filename": filename,
+                "file_path": clean_path,
+                "conversation_id": conversation_id,
+                "base_dir": exec_params.get("base_dir"),
+            })
+        elif tool_name == "write_file" and not output_str.startswith("Error"):
+            file_path = exec_params.get("file_path")
+            if file_path:
+                context["created_files"].append({
+                    "filename": Path(file_path).name,
+                    "file_path": file_path,
+                    "conversation_id": exec_params.get("conversation_id"),
+                    "base_dir": exec_params.get("base_dir"),
+                })
+
+    def _resolve_parameters(self, params: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
+        """Recursively resolves dynamic context placeholders across parameter dictionaries."""
         return {k: self._resolve_value(v, context) for k, v in params.items()}
 
-    def _resolve_value(self, val: Any, context: Dict[str, Any]) -> Any:
-        """Resolves dynamic placeholder tokens within strings, lists, and dicts."""
+    def _resolve_value(self, val: Any, context: dict[str, Any]) -> Any:
+        """Resolves placeholder tokens in values."""
         if isinstance(val, str):
             stripped = val.strip()
             for ctx_key, ctx_val in context.items():

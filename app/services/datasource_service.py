@@ -5,7 +5,7 @@ Handles knowledge base document uploads, file storage management, and entity per
 """
 
 import logging
-from typing import Optional
+from pathlib import Path
 from werkzeug.datastructures import FileStorage
 
 from app.domain.errors import DatasourceNotFoundError, InvalidFileError
@@ -23,33 +23,32 @@ class DatasourceService:
         self,
         datasource_repo: DatasourceRepository,
         file_storage_service: FileStorageService,
-        upload_folder: str,
+        upload_folder: str | Path,
     ) -> None:
         self.datasource_repo = datasource_repo
         self.file_storage_service = file_storage_service
-        self.upload_folder = upload_folder
+        self.upload_folder = Path(upload_folder).resolve()
         self.file_storage_service.ensure_directory(self.upload_folder)
 
     def process_and_save_file(
         self,
         file: FileStorage,
-        display_name: Optional[str] = None,
-        agent_id: Optional[str] = None,
+        display_name: str | None = None,
+        agent_id: str | None = None,
     ) -> Datasource:
         """
-        Saves an uploaded document to disk and persists its metadata in the repository.
+        Saves an uploaded document to disk and persists its metadata.
 
         Args:
-            file (FileStorage): Werkzeug uploaded file object.
-            display_name (Optional[str]): User-friendly display name.
-            agent_id (Optional[str]): Associated Agent ID.
+            file: Werkzeug uploaded file object.
+            display_name: User-friendly display name.
+            agent_id: Associated Agent ID.
 
         Returns:
             Datasource: The persisted datasource domain entity.
 
         Raises:
-            InvalidFileError: If the uploaded file is invalid.
-            StorageError: If disk storage fails.
+            InvalidFileError: If the uploaded file is missing or invalid.
         """
         if not file or not file.filename:
             raise InvalidFileError("No valid file payload provided for datasource creation.")
@@ -68,24 +67,24 @@ class DatasourceService:
             agent_id=agent_id,
         )
 
-        saved_datasource = self.datasource_repo.save(datasource)
-        logger.info("Persisted Datasource '%s' for agent '%s'", saved_datasource.id, agent_id)
-        return saved_datasource
+        saved = self.datasource_repo.save(datasource)
+        logger.info("Persisted Datasource '%s' for agent '%s'", saved.id, agent_id)
+        return saved
 
     def delete_datasource(
         self,
         datasource_id: str,
-        agent_id: Optional[str] = None,
+        agent_id: str | None = None,
     ) -> None:
         """
-        Deletes a datasource record and removes its physical file from storage.
+        Deletes a datasource record and its underlying physical storage file.
 
         Args:
-            datasource_id (str): Unique datasource identifier.
-            agent_id (Optional[str]): Optional parent agent ID for scope validation.
+            datasource_id: Unique datasource identifier.
+            agent_id: Optional parent agent ID for authorization/scope checks.
 
         Raises:
-            DatasourceNotFoundError: If the datasource record is missing.
+            DatasourceNotFoundError: If the datasource record does not exist.
         """
         datasource = self.datasource_repo.get_by_id(datasource_id)
         if not datasource:
