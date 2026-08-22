@@ -94,9 +94,7 @@ Dieses Dokument dient als zentrale Referenz für die Arbeit mit dem Trinity Proj
 | :--- | :--- | :--- |
 | **fetch_url** | Dokumentinhalt aus dem Web abrufen. | NUR für konkrete URLs verwenden. RSS/Übersichtsseiten MÜSSEN im nächsten Step für JEDEN Artikel einzeln aufgerufen werden. |
 | **message_llm** | Auswertung, Zusammenfassung, Transformation. | MUSS bei Datenbeschaffung zwingend als letzter Schritt zur Verarbeitung genutzt werden. KEIN JSON-Output in Unteraufrufen. |
-| **write_file** | Erstellen/Ändern von Dateien. | Paramete
-#### 🤖 Trinity Projekt
-`file_path`, `content`, `mode` ("w" oder "a"). |
+| **write_file** | Erstellen/Ändern von Dateien. | Parameter: `file_path`, `content`, `mode` ("w" oder "a"). |
 | **send_email** | Versand von E-Mails. | Unterstützt Platzhalter für Step-Ergebnisse. Bild-Anhänge per Dateinamen explizit angeben. |
 | **generate_image** | Bildgenerierung. | Resultierendes Markdown-Bild-Snippet MUSS unverändert in die finale Antwort übernommen werden. |
 | **web_search** | Live-Websuche. | Nur bei Fehlen von URLs verwenden. Relevante Links für Folge-Schritte merken. |
