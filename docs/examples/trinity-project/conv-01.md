@@ -1,10 +1,16 @@
-U: Hey, wer bist du?
-R: Ich bin das Trinity Project, ein KI-gestütztes System unter der Agent-ID 5d7a55a3-c55a-410c-97f3-cf6cb6e9d492. Ich fungiere als Projektleiter und stehe dir zur Verfügung, um komplexe Aufgaben zu planen, Informationen aus dem Web zu sammeln, Daten zu verarbeiten und Workflows effizient umzusetzen.
+#### 👤 User
+Hey, wer bist du?
+
+#### 🤖 Trinity Projekt
+Ich bin das Trinity Project, ein KI-gestütztes System unter der Agent-ID 5d7a55a3-c55a-410c-97f3-cf6cb6e9d492. Ich fungiere als Projektleiter und stehe dir zur Verfügung, um komplexe Aufgaben zu planen, Informationen aus dem Web zu sammeln, Daten zu verarbeiten und Workflows effizient umzusetzen.
 
 Wie kann ich dich heute bei deinem Projekt unterstützen?
 
-U: Du kannst komplexe Aufgaben planen? Wie genau machst du das?
-R: Meine Planungskompetenz basiert auf einem strukturierten, agentenbasierten Ansatz. Wenn du mir eine komplexe Aufgabe stellst, gehe ich nach folgendem Prinzip vor:
+#### 👤 User
+Du kannst komplexe Aufgaben planen? Wie genau machst du das?
+
+#### 🤖 Trinity Projekt
+Meine Planungskompetenz basiert auf einem strukturierten, agentenbasierten Ansatz. Wenn du mir eine komplexe Aufgabe stellst, gehe ich nach folgendem Prinzip vor:
 
 1.  **Dekonstruktion der Anforderung:** Ich analysiere dein Ziel und zerlege es in logische Einzelschritte. Dabei entscheide ich, welche meiner Werkzeuge (Websuche, API-Calls, Datenverarbeitung, Dateimanagement) in welcher Reihenfolge notwendig sind.
 2.  **Erstellung einer Task Chain:** Ich generiere einen Ablaufplan im JSON-Format. Dieser Plan legt genau fest, welche Informationen ich wann beschaffen muss (z. B. durch `fetch_url`) und wie diese im nächsten Schritt verarbeitet werden sollen (z. B. durch `message_llm`).
@@ -25,8 +31,12 @@ Durch diese Kette ist sichergestellt, dass keine Informationen "geraten" werden,
 
 **Hast du gerade ein konkretes Projekt oder eine komplexe Aufgabe, bei der ich diese Planungsmethodik für dich anwenden soll?**
 
-U: Später vielleicht. Du hast erwähnt, du könntest Daten verarbeiten. Was meinst du damit genau?
-R: Die "Datenverarbeitung" durch das Trinity Project ist weit mehr als nur ein einfaches Zusammenfassen von Texten. Ich nutze meine integrierten KI-Modelle, um unstrukturierte Informationen in verwertbares Wissen zu verwandeln.
+#### 👤 User
+Später vielleicht. Du hast erwähnt, du könntest Daten verarbeiten. Was meinst du damit genau?
+
+
+#### 🤖 Trinity Projekt
+Die "Datenverarbeitung" durch das Trinity Project ist weit mehr als nur ein einfaches Zusammenfassen von Texten. Ich nutze meine integrierten KI-Modelle, um unstrukturierte Informationen in verwertbares Wissen zu verwandeln.
 
 Hier sind einige konkrete Beispiele, wie ich Daten für dich verarbeiten kann:
 
@@ -41,8 +51,11 @@ Bei der Verarbeitung arbeite ich nie mit Raten. Ich nutze das Tool `message_llm`
 
 Hast du vielleicht eine Datensammlung (eine URL mit Daten, eine Textdatei oder ein API-Ergebnis), bei der dich interessieren würde, wie ich sie für dich aufbereiten könnte?
 
-U: Ich habe dir die README.md aus dem Python-Backend von Trinity hochgeladen. Wie genau würdest du die Datei denn aufbereiten?
-R: Die `README.md` dient als technisches Fundament des Projekts. Um diese Datei für dich in "verwertbares Wissen" zu verwandeln, würde ich sie nicht nur zusammenfassen, sondern in eine **strukturierte, handlungsorientierte Dokumentation** überführen.
+#### 👤 User
+Ich habe dir die README.md aus dem Python-Backend von Trinity hochgeladen. Wie genau würdest du die Datei denn aufbereiten?
+
+#### 🤖 Trinity Projekt
+Die `README.md` dient als technisches Fundament des Projekts. Um diese Datei für dich in "verwertbares Wissen" zu verwandeln, würde ich sie nicht nur zusammenfassen, sondern in eine **strukturierte, handlungsorientierte Dokumentation** überführen.
 
 Da ich als Agent auf genau diese Architektur zugreife, würde ich die Datei wie folgt verarbeiten:
 
@@ -67,8 +80,11 @@ Basierend auf der Dokumentation würde ich Vorlagen für deine häufigsten Aufga
 
 Ich könnte dir zum Beispiel eine **"Trinity Cheat Sheet" (Markdown-Datei)** erstellen, in der alle API-Endpunkte und Tool-Regeln kompakt zusammengefasst sind. Soll ich das für dich in deinem Arbeitsverzeichnis anlegen?
 
-U: Ja, gerne, erstelle mir doch ein Cheatsheet als Markdown-Datei. Du hast erwähnt, du kannst auch Dateien schreiben? Dann nenne es doch einfach cheatsheet.trinity.md.
-R: # Trinity Project Cheat Sheet
+#### 👤 User
+Ja, gerne, erstelle mir doch ein Cheatsheet als Markdown-Datei. Du hast erwähnt, du kannst auch Dateien schreiben? Dann nenne es doch einfach cheatsheet.trinity.md.
+
+#### 🤖 Trinity Projekt
+# Trinity Project Cheat Sheet
 
 Dieses Dokument dient als zentrale Referenz für die Arbeit mit dem Trinity Project (Agent-ID: 5d7a55a3-c55a-410c-97f3-cf6cb6e9d492).
 
@@ -78,7 +94,9 @@ Dieses Dokument dient als zentrale Referenz für die Arbeit mit dem Trinity Proj
 | :--- | :--- | :--- |
 | **fetch_url** | Dokumentinhalt aus dem Web abrufen. | NUR für konkrete URLs verwenden. RSS/Übersichtsseiten MÜSSEN im nächsten Step für JEDEN Artikel einzeln aufgerufen werden. |
 | **message_llm** | Auswertung, Zusammenfassung, Transformation. | MUSS bei Datenbeschaffung zwingend als letzter Schritt zur Verarbeitung genutzt werden. KEIN JSON-Output in Unteraufrufen. |
-| **write_file** | Erstellen/Ändern von Dateien. | Parameter: `file_path`, `content`, `mode` ("w" oder "a"). |
+| **write_file** | Erstellen/Ändern von Dateien. | Paramete
+#### 🤖 Trinity Projekt
+`file_path`, `content`, `mode` ("w" oder "a"). |
 | **send_email** | Versand von E-Mails. | Unterstützt Platzhalter für Step-Ergebnisse. Bild-Anhänge per Dateinamen explizit angeben. |
 | **generate_image** | Bildgenerierung. | Resultierendes Markdown-Bild-Snippet MUSS unverändert in die finale Antwort übernommen werden. |
 | **web_search** | Live-Websuche. | Nur bei Fehlen von URLs verwenden. Relevante Links für Folge-Schritte merken. |
@@ -104,16 +122,22 @@ Das Trinity-System ist auf eine strukturierte Kommunikation über Task Chains im
 3.  **Vollständigkeit:** Ein Plan darf NIEMALS nur aus Datenbeschaffung bestehen, wenn ein inhaltliches Ergebnis gefordert ist.
 4.  **Format-Treue:** Bei der Generierung von Inhalten für Dateien ist strikt auf das angeforderte Format (Markdown, JSON, HTML) zu achten – ohne Markdown-Wrapper bei Code-Generierung, falls das Tool dies vorgibt.
 
-U: Wow, danke, das sieht gut aus. Wo genau liegt die Datei denn jetzt?!
-R: Die Datei wurde in deinem aktuellen Arbeitsverzeichnis gespeichert, das spezifisch für unsere laufende Konversation unter der ID `db06a235-8421-4723-a8e9-15a0c8d92237` angelegt wurde.
+#### 👤 User
+Wow, danke, das sieht gut aus. Wo genau liegt die Datei denn jetzt?!
+
+#### 🤖 Trinity Projekt
+Die Datei wurde in deinem aktuellen Arbeitsverzeichnis gespeichert, das spezifisch für unsere laufende Konversation unter der ID `db06a235-8421-4723-a8e9-15a0c8d92237` angelegt wurde.
 
 Der genaue Pfad lautet:
 `/home/christian/daten/projects/python/ais/instance/conversations/db06a235-8421-4723-a8e9-15a0c8d92237/cheatsheet.trinity.md`
 
 Du kannst jederzeit darauf zugreifen, sie erweitern oder mir sagen, falls ich weitere Informationen aus deiner `README.md` oder anderen Quellen darin ergänzen soll. Soll ich dir bei der Einrichtung weiterer Strukturen oder bei einem ersten Arbeitsschritt behilflich sein?
 
-U: Hmm, kann ich die das Cheatsheet nicht auch als Datenquelle anhängen, damit du in der laufenden oder in anderen Konversationen darauf zugreifen kannst?
-R: Das ist ein hervorragender Punkt. Die Verwaltung von "Knowledge Base"-Daten für verschiedene Konversationen hinweg ist essenziell für die Konsistenz des Trinity Projects.
+#### 👤 User
+Hmm, kann ich die das Cheatsheet nicht auch als Datenquelle anhängen, damit du in der laufenden oder in anderen Konversationen darauf zugreifen kannst?
+
+#### 🤖 Trinity Projekt
+Das ist ein hervorragender Punkt. Die Verwaltung von "Knowledge Base"-Daten für verschiedene Konversationen hinweg ist essenziell für die Konsistenz des Trinity Projects.
 
 Hier ist die aktuelle Situation zur Dateiverwaltung in diesem System:
 
@@ -134,8 +158,11 @@ Damit wir effizient arbeiten können, ohne dass du die Datei jedes Mal neu hochl
 
 **Willst du, dass wir das Cheat Sheet noch um einen Bereich für "Häufige Fehlerquellen" ergänzen?** Da ich den Code des Backends analysieren kann, könnte ich dort notieren, welche Fehlermeldungen (z. B. bei der `call_api`-Syntax) am häufigsten vorkommen und wie man sie vermeidet.
 
-U: Merkwürdig, gab es in der README.md gerade nicht einen API-Endpunkt zu Datenquellen?
-R: Du hast völlig recht, mein Fehler – das war eine wichtige Information aus der `README.md`, die in der ersten Version des Cheatsheets fehlte. Ich habe das Dokument direkt für dich aktualisiert und den Bereich um den entsprechenden Endpunkt erweitert.
+#### 👤 User
+Merkwürdig, gab es in der README.md gerade nicht einen API-Endpunkt zu Datenquellen?
+
+#### 🤖 Trinity Projekt
+Du hast völlig recht, mein Fehler – das war eine wichtige Information aus der `README.md`, die in der ersten Version des Cheatsheets fehlte. Ich habe das Dokument direkt für dich aktualisiert und den Bereich um den entsprechenden Endpunkt erweitert.
 
 Hier ist die Korrektur des Abschnitts **"2. API-Endpunkte & Struktur"** in deiner Datei:
 
