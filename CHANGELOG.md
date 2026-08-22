@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+### Changed
+
+## [0.1.8] - 2026-08-22
+
+### Added
+
 - Introduced `POST /api/v1/agents/<agent_id>/stream` endpoint to consolidate user message persistence (including file uploads via `multipart/form-data`) and real-time LLM execution streaming into a single SSE request.
 - Added an initial metadata event (`{"type": "meta", ...}`) at the start of the SSE stream to immediately send the assigned `conversation_id` and `user_message_id` back to the client.
 
@@ -263,7 +269,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.6...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.8...develop
+[0.1.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.8
+[0.1.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.7
 [0.1.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.6
 [0.1.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.5
 [0.1.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.4
