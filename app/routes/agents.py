@@ -4,15 +4,20 @@ Agent Management HTTP Endpoints.
 Provides RESTful endpoints for CRUD operations on agents and datasource file uploads.
 """
 
-from flask import Blueprint, jsonify, request  
+import json
+from typing import Generator
+from flask import Blueprint, jsonify, request, Response, stream_with_context
 from dependency_injector.wiring import inject, Provide
 
 from app.containers import Container
 from app.services.agent import AgentService
 from app.services.knowledge import DatasourceService
 from app.services.messaging import MessagingService
+from app.services.agent.agent_orchestrator import AgentOrchestrator
+from app.services.infrastructure.security_context import SecurityContextService
 from app.routes.decorators import validate_json
 from app.routes.schemas import CreateAgentRequest
+from app.domain.errors import ValidationError
 
 agents_bp = Blueprint("agents", __name__, url_prefix="/api/v1/agents")
 
@@ -174,3 +179,96 @@ def delete_conversation(
 
     messaging_service.delete_conversation(conversation_id)
     return "", 204
+
+
+@agents_bp.route("/<agent_id>/stream", methods=["POST"])
+@inject
+def stream_agent_execution(
+    agent_id: str,
+    agent_service: AgentService = Provide[Container.agent_service],
+    messaging_service: MessagingService = Provide[Container.messaging_service],
+    orchestrator: AgentOrchestrator = Provide[Container.agent_orchestrator],
+    security_context: SecurityContextService = Provide[
+        Container.security_context_service
+    ],
+):
+    """
+    Persists an incoming user message (and optional attachments) and streams 
+    the agent's real-time LLM execution via Server-Sent Events (SSE).
+    """
+    # 1. Agent validieren
+    agent = agent_service.get_agent(agent_id)
+
+    # 2. Payload und Dateien extrahieren
+    if request.is_json:
+        payload = request.get_json() or {}
+        files = []
+    else:
+        payload = request.form.to_dict()
+        files = (
+            request.files.getlist("files")
+            or request.files.getlist("files[]")
+            or request.files.getlist("file")
+        )
+
+    text = payload.get("text") or payload.get("message") or ""
+    conversation_id = payload.get("conversation_id")
+
+    if not text.strip() and not files:
+        raise ValidationError("EMPTY_MESSAGE_PAYLOAD")
+
+    # 3. Kontext des aktuellen Nutzers bestimmen
+    current_actor = security_context.get_current_actor()
+
+    # 4. User-Nachricht direkt vor dem Stream persistieren (recipient_id ist die agent_id)
+    saved_message = messaging_service.send_message(
+        conversation_id=conversation_id,
+        sender_id=current_actor["id"],
+        sender_type=current_actor["type"],
+        sender_name=current_actor["name"],
+        text=text,
+        recipient_id=agent_id,
+        files=files,
+    )
+
+    resolved_conversation_id = saved_message.conversation_id
+
+    # 5. Live SSE Generator initialisieren
+    raw_stream = orchestrator.stream_agent_response(
+        user_text=text,
+        conversation_id=resolved_conversation_id,
+        agent_id=agent_id,
+        agent_name=agent.name,
+        user_id=current_actor["id"],
+    )
+
+    def sse_formatter(generator: Generator[str, None, None]) -> Generator[str, None, None]:
+        """Format text chunks into W3C compliant Server-Sent Events (SSE)."""
+        # Initiales Event mit generierter conversation_id & user_message_id senden
+        meta_payload = {
+            "conversation_id": resolved_conversation_id,
+            "user_message_id": saved_message.id,
+        }
+        yield f"data: {json.dumps({'type': 'meta', 'data': meta_payload})}\n\n"
+
+        try:
+            while True:
+                chunk = next(generator)
+                if not chunk:
+                    continue
+                lines = chunk.split("\n")
+                for line in lines:
+                    yield f"data: {line}\n"
+                yield "\n"
+        except StopIteration:
+            pass
+
+    return Response(
+        stream_with_context(sse_formatter(raw_stream)),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
