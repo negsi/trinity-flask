@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+## [0.1.6] - 2026-08-22
+
+### Added
 * **Dynamic Agent Awareness Context:** Injected full system agent directory (IDs and names) into system prompts to establish foundations for Agent-to-Agent (A2A) orchestration.
 * **Internal API & Network Settings Configuration:** Added `API_BASE_URL` and `LOG_LEVEL` configuration options to `.env.template` and `BaseConfig`.
 
@@ -230,7 +236,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.5...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.6...develop
+[0.1.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.6
 [0.1.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.5
 [0.1.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.4
 [0.1.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.3
