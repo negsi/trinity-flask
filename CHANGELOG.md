@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Support for dynamic placeholder replacements (`{conversation.id}` and `{conversation.directory}`) in `AgentContextBuilder`.
+- Injected `conversations_folder` configuration into `AgentContextBuilder` via the DI container (`Container`).
+- Introduced system identity properties (`{conversation.id}`, `{conversation.directory}`) and updated layout sections in `base_agent.prompt.md`.
+
 ### Changed
+
+- Updated `ReActLoopRunner` to pass `conversation_id` down through all turn execution layers to `AgentContextBuilder`.
+- Streamlined and restructured the base agent system prompt (`base_agent.prompt.md`) to improve instructions for tools, task chains, and conversation context.
 
 ## [0.1.6] - 2026-08-22
 
