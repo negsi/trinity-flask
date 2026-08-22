@@ -97,3 +97,37 @@ def write_file(
     except Exception as exc:
         logger.error("Error executing write_file tool: %s", exc, exc_info=True)
         return f"Error executing write_file: {exc}"
+
+
+def read_file(
+    file_storage_service: FileStorageService,
+    file_path: str,
+    conversation_id: str | None = None,
+    base_dir: str | Path | None = None,
+    encoding: str = "utf-8",
+    **kwargs: Any,
+) -> str:
+    """
+    Reads text content from a sandboxed file.
+
+    Args:
+        file_storage_service: Storage service instance.
+        file_path: Relative path of the file to read.
+        conversation_id: Optional conversation sandbox ID.
+        base_dir: Target base directory.
+        encoding: File character encoding (defaults to 'utf-8').
+
+    Returns:
+        str: Raw text content of the file or an error message.
+    """
+    target_base = str(base_dir) if base_dir else "."
+    try:
+        return file_storage_service.read_sandboxed_file(
+            file_path=file_path,
+            base_dir=target_base,
+            sandbox_id=conversation_id,
+            encoding=encoding,
+        )
+    except Exception as exc:
+        logger.error("Error executing read_file tool: %s", exc, exc_info=True)
+        return f"Error executing read_file: {exc}"

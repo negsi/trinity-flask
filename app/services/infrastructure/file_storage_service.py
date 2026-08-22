@@ -194,6 +194,50 @@ class FileStorageService:
             logger.error("Failed writing sandboxed file '%s': %s", resolved_path, exc, exc_info=True)
             raise StorageError(f"Error writing to file '{file_path}': {exc}") from exc
 
+    def read_sandboxed_file(
+        self,
+        file_path: str | Path,
+        base_dir: str | Path,
+        sandbox_id: str | None = None,
+        encoding: str = "utf-8",
+    ) -> str:
+        """
+        Safely reads text content from disk, guarding strictly against directory traversal.
+
+        Args:
+            file_path: Relative or absolute target path.
+            base_dir: Base root directory for workspaces.
+            sandbox_id: Optional workspace subfolder identifier.
+            encoding: Text character encoding (defaults to 'utf-8').
+
+        Returns:
+            str: Raw text content of the file.
+
+        Raises:
+            StorageError: If security boundaries are violated, file does not exist, or read fails.
+        """
+        base_root = Path(base_dir).resolve()
+        target_dir = (base_root / sandbox_id).resolve() if sandbox_id else base_root
+
+        raw_path = Path(file_path)
+        resolved_path = (target_dir / raw_path).resolve() if not raw_path.is_absolute() else raw_path.resolve()
+
+        if not resolved_path.is_relative_to(target_dir):
+            error_msg = f"Security Violation: Path '{resolved_path}' escapes sandbox '{target_dir}'."
+            logger.error(error_msg)
+            raise StorageError(error_msg)
+
+        if not resolved_path.is_file():
+            raise StorageError(f"File '{file_path}' does not exist inside sandbox.")
+
+        try:
+            content = resolved_path.read_text(encoding=encoding)
+            logger.info("Successfully read file '%s' (%d characters)", resolved_path, len(content))
+            return content
+        except OSError as exc:
+            logger.error("Failed reading sandboxed file '%s': %s", resolved_path, exc, exc_info=True)
+            raise StorageError(f"Error reading file '{file_path}': {exc}") from exc
+
     def _extract_pdf_text(self, path: Path) -> str | None:
         """Helper extracting pages from a PDF document safely."""
         try:

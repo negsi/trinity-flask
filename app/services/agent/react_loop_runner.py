@@ -98,6 +98,7 @@ class ReActLoopRunner:
                 agent_id=agent_id,
                 attachments=attachments,
                 conversation_history=conversation_history,
+                conversation_id=conversation_id
             )
 
             current_text = "".join(state.accumulated_all_text).strip()
@@ -161,6 +162,8 @@ class ReActLoopRunner:
         agent_id: str,
         attachments: list[MessageAttachment],
         conversation_history: list[Any],
+        conversation_id: str | None = None,
+        
     ) -> Generator[str, None, dict[str, Any] | None]:
         """Streams a single turn, isolating embedded JSON blocks."""
         llm_messages = self.context_builder.build_llm_messages(
@@ -168,6 +171,7 @@ class ReActLoopRunner:
             agent_id=agent_id,
             attachments=attachments,
             conversation_history=conversation_history,
+            conversation_id=conversation_id,
         )
 
         parser = StreamResponseParser()

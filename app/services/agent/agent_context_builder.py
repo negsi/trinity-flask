@@ -6,6 +6,7 @@ instructions, dynamic timestamps, knowledge base files, message attachments, mem
 and available system agents.
 """
 
+import os
 from datetime import datetime, timezone
 import logging
 from pathlib import Path
@@ -31,10 +32,12 @@ class AgentContextBuilder:
         agent_service: AgentService,
         file_storage_service: FileStorageService,
         message_repository: Any | None = None,
+        conversation_directory: str | None = None,
     ) -> None:
         self.agent_service = agent_service
         self.file_storage_service = file_storage_service
         self.message_repository = message_repository
+        self.conversation_directory = conversation_directory
 
     def build_llm_messages(
         self,
@@ -83,6 +86,16 @@ class AgentContextBuilder:
         if agent:
             combined_system = combined_system.replace("{agent.name}", agent.name)
             combined_system = combined_system.replace("{agent.id}", str(agent.id))
+
+        conv_id_str = str(conversation_id) if conversation_id else ""
+        combined_system = combined_system.replace("{conversation.id}", conv_id_str)
+
+        if self.conversation_directory and conv_id_str:
+            conv_dir = os.path.join(self.conversation_directory, conv_id_str)
+        else:
+            conv_dir = ""
+
+        combined_system = combined_system.replace("{conversation.directory}", conv_dir)
 
         agents_summary = self._build_available_agents_context()
         combined_system = combined_system.replace("{available_agents_list}", agents_summary)

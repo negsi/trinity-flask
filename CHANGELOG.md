@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+## [0.1.7] - 2026-08-22
+
+### Added
+
+- Added `read_sandboxed_file` method to `FileStorageService` for secure, sandboxed file reading with directory traversal guards.
+- Introduced `read_file` tool to allow agents to read sandboxed text files within the active conversation directory.
+- Exposed `read_file` in `file_tools.py`, `ToolRegistry`, and package exports (`app.services.tools`).
+- Added documentation for `read_file` to system agent prompt (`base_agent.prompt.md`) and global `README.md`.
+- Support for dynamic placeholder replacements (`{conversation.id}` and `{conversation.directory}`) in `AgentContextBuilder`.
+- Injected `conversations_folder` configuration into `AgentContextBuilder` via the DI container (`Container`).
+- Introduced system identity properties (`{conversation.id}`, `{conversation.directory}`) and updated layout sections in `base_agent.prompt.md`.
+
+### Changed
+
+- Updated `ReActLoopRunner` to pass `conversation_id` down through all turn execution layers to `AgentContextBuilder`.
+- Streamlined and restructured the base agent system prompt (`base_agent.prompt.md`) to improve instructions for tools, task chains, and conversation context.
+
 ## [0.1.6] - 2026-08-22
 
 ### Added
