@@ -14,7 +14,7 @@ from app.services.infrastructure.email_service import EmailService
 from app.services.infrastructure.file_storage_service import FileStorageService
 from app.services.tools.api_tools import call_api, fetch_url
 from app.services.tools.communication_tools import message_llm, send_email
-from app.services.tools.file_tools import write_file
+from app.services.tools.file_tools import write_file, read_file
 from app.services.tools.media_tools import generate_image
 from app.services.tools.search_tools import web_search
 
@@ -56,6 +56,22 @@ class ToolRegistry:
             file_path=file_path,
             content=content,
             mode=mode,
+            conversation_id=conversation_id,
+            base_dir=base_dir or self.conversations_folder,
+            **kwargs,
+        )
+
+    def read_file(
+        self,
+        file_path: str,
+        conversation_id: str | None = None,
+        base_dir: str | Path | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """Reads content from a sandboxed file."""
+        return read_file(
+            file_storage_service=self.file_storage_service,
+            file_path=file_path,
             conversation_id=conversation_id,
             base_dir=base_dir or self.conversations_folder,
             **kwargs,
@@ -118,6 +134,7 @@ class ToolRegistry:
             "message_llm": message_llm,
             "call_api": call_api,
             "write_file": self.write_file,
+            "read_file": self.read_file,
             "send_email": self.send_email,
             "generate_image": self.generate_image,
         }

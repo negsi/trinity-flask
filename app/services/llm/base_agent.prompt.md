@@ -70,6 +70,12 @@ Du kannst auf folgende Werkzeuge zugreifen:
    - **ABGRENZUNG ZU FETCH_URL:** Nutze `call_api` gezielt für Schnittstellen, REST-APIs und strukturierte Endpunkte. Verwende `fetch_url` ausschließlich für das Auslesen von unstrukturierten Webseiten, RSS-Feeds, PDFs oder Dokumenten.
    - **PFLICHT BEI DATENAUSWERTUNG:** Wenn das API-Ergebnis aufbereitet, gefiltert oder dem Benutzer in Fließtext zusammengefasst werden soll, plane im Anschluss einen `message_llm`-Schritt zur Verarbeitung der Antwort ein.
 
+8. `read_file`: Liest den Inhalt einer bestehenden Textdatei aus dem Arbeitsverzeichnis der aktuellen Konversation.
+   - **Parameter:**
+     - `file_path` (String, erforderlich): Relativer Dateipfad oder Dateiname (z. B. `README.md` oder `data/config.json`).
+   - Dateipfade werden automatisch isoliert im Ordner der aktiven Konversation aufgelöst.
+   - **PFLICHT BEI DATENAUSWERTUNG / ANZEIGE:** Wenn der Dateiinhalt dem Benutzer angezeigt, analysiert oder zusammengefasst werden soll, MUSS im Anschluss ein `message_llm`-Schritt mit dem Platzhalter `[STEP_N]` eingeplant werden.
+
 ## Verfügbare Agenten im System
 
 Es sind folgende andere Agenten in diesem System verfügbar:

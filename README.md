@@ -203,7 +203,15 @@ Trinity agents execute complex web gathering, data processing, and analysis task
      - **`headers`** (object, optional): Custom HTTP request headers (e.g., `{"Authorization": "Bearer ..."}`).
      - **`timeout`** (integer, optional): Request timeout duration in seconds. Defaults to `30`.
    - **Usage Context:** Designed specifically for structured endpoints and REST APIs. For unstructured web pages, documents, or RSS feeds, use `fetch_url` instead.
-   
+
+8. **`read_file`**
+   - **Purpose:** Reads and retrieves the raw text content of an existing file from the active conversation workspace.
+   - **Rules & Syntax:**
+     - **`file_path`** (string, required): Relative path or filename of the target file (e.g., `README.md` or `exports/data.json`).
+     - **`encoding`** (string, optional): Text encoding used to read the file (defaults to `"utf-8"`).
+     - File paths are automatically isolated and resolved inside the active conversation directory.
+     - Ideal for context hydration, parsing local repository artifacts, or retrieving outputs generated in prior execution steps before passing them to downstream tools like `message_llm`.
+
 ### Task Execution Workflow
 
 - **Internal Knowledge / Datasources:** For queries answerable directly via model knowledge or uploaded files (Knowledge Base), the agent responds immediately without triggering external tools.
