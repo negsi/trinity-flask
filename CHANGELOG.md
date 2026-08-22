@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+### Changed
+
+## [0.1.7] - 2026-08-22
+
+### Added
+
 - Added `read_sandboxed_file` method to `FileStorageService` for secure, sandboxed file reading with directory traversal guards.
 - Introduced `read_file` tool to allow agents to read sandboxed text files within the active conversation directory.
 - Exposed `read_file` in `file_tools.py`, `ToolRegistry`, and package exports (`app.services.tools`).
