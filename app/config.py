@@ -6,6 +6,7 @@ LLM providers, image generator providers, upload paths, and application executio
 """
 
 import os
+import logging
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -14,6 +15,12 @@ load_dotenv()
 
 class BaseConfig:
     """Base configuration class containing shared settings across environments."""
+
+    # Internal API & Network Settings
+    # API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5000")
+
+    # Debugging
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
 
     # Database Configuration
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL_APP")
@@ -76,6 +83,16 @@ class DevelopmentConfig(BaseConfig):
         """Attach rich debugging utilities to the development Flask instance."""
         from app.debug import debug
         app.d = debug
+
+        log_level_str = app.config.get("LOG_LEVEL", "DEBUG")
+        log_level = getattr(logging, log_level_str, logging.DEBUG)
+
+        logging.basicConfig(
+            level=log_level,
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            force=True
+        )
+        app.logger.setLevel(log_level)
 
 
 class ProductionConfig(BaseConfig):

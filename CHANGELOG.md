@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+## [0.1.6] - 2026-08-22
+
+### Added
+* **Dynamic Agent Awareness Context:** Injected full system agent directory (IDs and names) into system prompts to establish foundations for Agent-to-Agent (A2A) orchestration.
+* **Internal API & Network Settings Configuration:** Added `API_BASE_URL` and `LOG_LEVEL` configuration options to `.env.template` and `BaseConfig`.
+
+### Changed
+* **Base Prompt Configuration Header:** Updated system prompt templates to expose current `agent.id` alongside dynamic agent network availability.
+* **Agent Context Builder Extensions:** Enhanced `AgentContextBuilder` to resolve available system agents at prompt composition time.
+* **Development Environment Logging:** Refactored `DevelopmentConfig` in `app/config.py` to dynamically configure system-wide `logging.basicConfig` and application logger based on `LOG_LEVEL`.
+
 ## [0.1.5] - 2026-08-20
 
 ### Added
@@ -31,9 +42,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refactored monolithic `app/services/tools.py` into a structured, modular `app/services/tools/` package.
 - Refactored `ToolRegistry` in `app/services/tools/registry.py` to act as a lightweight dependency injection binding layer, delegating execution logic to individual tool modules.
 - Updated Dependency Injection container bindings (`app/containers.py`) and API route blueprints (`app/routes/agents.py`, `app/routes/chat.py`) to align with the new modular service namespaces.
-- Updated infrastructure service imports across tool modules (`file_tools.py`, `media_tools.py`, `communication_tools.py`, `registry.py`) to reference `app.services.infrastructure`[cite: 6].
-- Refactored `send_email` in `communication_tools.py` to remove the unrequested latest-image fallback, preventing unexpected attachments in text-only dispatches[cite: 6].
-- Safely stripped `email_service` from `kwargs` in `ToolRegistry.send_email` to prevent `TypeError` duplicate keyword argument conflicts when invoked via runner/agent context[cite: 6].
+- Updated infrastructure service imports across tool modules (`file_tools.py`, `media_tools.py`, `communication_tools.py`, `registry.py`) to reference `app.services.infrastructure`.
+- Refactored `send_email` in `communication_tools.py` to remove the unrequested latest-image fallback, preventing unexpected attachments in text-only dispatches.
+- Safely stripped `email_service` from `kwargs` in `ToolRegistry.send_email` to prevent `TypeError` duplicate keyword argument conflicts when invoked via runner/agent context.
 - Modernized type hints across tool modules using standard Python 3.10+ annotations (`dict[str, Any]`, `Path | None`).
 - Standardized file path resolution using `pathlib.Path` across sandbox operations.
 
@@ -225,7 +236,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.5...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.6...develop
+[0.1.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.6
 [0.1.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.5
 [0.1.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.4
 [0.1.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.3

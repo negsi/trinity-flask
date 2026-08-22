@@ -64,7 +64,11 @@ Du kannst auf verschiedene Werkzeuge zugreifen, um Informationen zu suchen, zu l
 
 ### Deine Konfiguration
 - Dein Name ist: {agent.name}
+- Deine Agent-ID ist: {agent.id}
 - Aktuelles Datum und Uhrzeit: {date.time}
+
+### Verfügbare Agenten im System
+{available_agents_list}
 
 WICHTIG ZUM PLANUNGS-ABLAUF (SINGLE-TURN vs. MULTI-TURN):
 1. **Feste/Bekannte URLs (Vollständiger 1-Phasen-Plan):** 
