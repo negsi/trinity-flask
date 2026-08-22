@@ -506,162 +506,46 @@ Deletes a specific data source from an agent and removes the physical file from 
 ### Chat & Execution Endpoints (`/api/v1/chat`)
 
 <details>
-<summary><code>POST</code> <strong>/api/v1/chat/messages</strong> — Send a chat message</summary>
+<summary><code>POST</code> <strong>/api/v1/agents/&lt;agent_id&gt;/stream</strong> — Stream agent response (SSE)</summary>
 
 <br>
 
 **Description:**  
-Persists a message in a conversation. If `conversation_id` is omitted or `null`, a new conversation instance is created automatically.
+Persists an incoming user message (with optional file attachments) and streams response tokens in real-time back to the caller using Server-Sent Events (SSE). Handles multi-turn ReAct loops and task-chain tool executions automatically. Supports both `application/json` and `multipart/form-data` payloads.
 
 **Headers:**
-- `Content-Type: application/json`
+- `Content-Type: application/json` or `multipart/form-data`
 
-**Request Body:**
+**Request Body (JSON Example):**
 ```json
 {
-  "conversation_id": "conv-1234-5678",
-  "text": "Can you summarize the attached manual?",
-  "recipient_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab"
+  "text": "Fetch the RSS feed from [https://news.ycombinator.com/rss](https://news.ycombinator.com/rss) and summarize the top 3 stories.",
+  "conversation_id": "conv-1234-5678"
 }
-```
 
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `conversation_id` | `string` | No | ID of existing conversation (new one created if null) |
-| `text` | `string` | **Yes** | Message payload text |
-| `recipient_id` | `string` | No | Target recipient ID (e.g., Agent ID) |
-| `files` | `file` (array) | No | Optional file attachments |
-
-**Responses:**
-
-- **`201 Created`**
-  ```json
-  {
-    "id": "msg-99887766",
-    "conversation_id": "conv-1234-5678",
-    "sender_id": "usr-001",
-    "sender_type": "user",
-    "sender_name": "Alice",
-    "text": "Can you summarize the attached manual?",
-    "recipient_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-    "attachments": [
-      {
-        "id": "att-10293847",
-        "name": "manual.pdf",
-        "filename": "f83a12cd-89ab-4c3d_manual.pdf",
-        "file_path": "uploads/f83a12cd-89ab-4c3d_manual.pdf",
-        "mime_type": "application/pdf",
-        "file_size": 1048576,
-        "message_id": "msg-99887766"
-      }
-    ],
-    "timestamp": "2025-02-23T14:30:00.000000+00:00"
-  }
-  ```
-
-- **`400 Bad Request`**
-  ```json
-  {
-    "error": "INVALID_SENDER_TYPE"
-  }
-  ```
-
-</details>
-
-<details>
-<summary><code>GET</code> <strong>/api/v1/chat/conversations/{conversation_id}/messages</strong> — Get conversation history</summary>
-
-<br>
-
-**Description:**  
-Retrieves chronological message history for a specific conversation ID, including associated file attachments.
-
-**Path Parameters:**
-- `conversation_id` (`string`): The conversation ID.
-
-**Responses:**
-
-- **`200 OK`**
-  ```json
-  [
-    {
-      "id": "msg-001",
-      "conversation_id": "conv-1234-5678",
-      "sender_id": "usr-001",
-      "sender_type": "user",
-      "sender_name": "Alice",
-      "text": "Hello Agent, here is the document.",
-      "recipient_id": "agent-123",
-      "attachments": [
-        {
-          "id": "att-10293847",
-          "name": "document.pdf",
-          "filename": "uuid_document.pdf",
-          "file_path": "uploads/uuid_document.pdf",
-          "mime_type": "application/pdf",
-          "file_size": 512000,
-          "message_id": "msg-001"
-        }
-      ],
-      "timestamp": "2026-08-07T14:28:00+00:00"
-    },
-    {
-      "id": "msg-002",
-      "conversation_id": "conv-1234-5678",
-      "sender_id": "agent-123",
-      "sender_type": "agent",
-      "sender_name": "Trinity Assistant",
-      "text": "Hello Alice! I have analyzed your document. How can I help you with it?",
-      "recipient_id": "usr-001",
-      "attachments": [],
-      "timestamp": "2026-08-07T14:28:02+00:00"
-    }
-  ]
-  ```
-
-</details>
-
-<details>
-<summary><code>POST</code> <strong>/api/v1/chat/stream</strong> — Stream agent response (SSE)</summary>
-
-<br>
-
-**Description:**  
-Streams response tokens in real-time from the agent back to the caller using Server-Sent Events (SSE) / Event Streams. Handles multi-turn ReAct loops and task-chain tool executions automatically.
-
-**Headers:**
-- `Content-Type: application/json`
-
-**Request Body:**
-```json
-{
-  "message": "Fetch the RSS feed from https://news.ycombinator.com/rss and summarize the top 3 stories.",
-  "conversation_id": "conv-1234-5678",
-  "agent_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-  "agent_name": "Research Assistant",
-  "user_id": "usr-001"
-}
 ```
 
 | Field | Type | Required | Default | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `message` | `string` | No | `"Hallo!"` | User prompt / message |
-| `conversation_id` | `string` | No | `null` | Associated conversation ID |
-| `agent_id` | `string` | No | `conversation_id` | ID of executing agent |
-| `agent_name` | `string` | No | `"Agent"` | Name of executing agent |
-| `user_id` | `string` | No | `"user-default"` | Author user ID |
+| --- | --- | --- | --- | --- |
+| `text` | `string` | Yes* | `""` | User prompt / message (or `message`). |
+| `conversation_id` | `string` | No | `null` | Associated conversation ID. If omitted, a new conversation ID is generated automatically. |
+| `files` | `file[]` | No | `[]` | Optional file attachments sent via `multipart/form-data` (`files`, `files[]`, or `file`). |
+
+**Either `text` or `files` must be provided.*
 
 **Responses:**
 
-- **`200 OK`**
-  - **Content-Type:** `text/event-stream`
-  - **Body Stream Example:**
-    ```text
-    I am retrieving the RSS feed for you...
-    • Story 1: Launches New Features
-    • Story 2: AI Breakthrough announced
-    ```
+* **`200 OK`**
+* **Content-Type:** `text/event-stream`
+* **Body Stream Example:**
+```text
+data: {"type": "meta", "data": {"conversation_id": "conv-1234-5678", "user_message_id": "msg-999"}}
 
+data: I am retrieving the RSS feed for you...
+data: • Story 1: Launches New Features
+data: • Story 2: AI Breakthrough announced
+
+```
 </details>
 
 ### Conversations

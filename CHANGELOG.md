@@ -8,7 +8,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Introduced `POST /api/v1/agents/<agent_id>/stream` endpoint to consolidate user message persistence (including file uploads via `multipart/form-data`) and real-time LLM execution streaming into a single SSE request.
+- Added an initial metadata event (`{"type": "meta", ...}`) at the start of the SSE stream to immediately send the assigned `conversation_id` and `user_message_id` back to the client.
+
 ### Changed
+
+- Refactored the SSE chat streaming workflow from `/api/v1/chat/stream` to the agent-centric endpoint `/api/v1/agents/<agent_id>/stream`.
+- Updated frontend chat services (`ApiChatService` and `ChatWorkspaceComponent`) to stream messages and file attachments directly without executing a prior separate REST persistence call.
+
+### Removed
+
+- Deprecated and removed obsolete `POST /api/v1/chat/messages` and `POST /api/v1/chat/stream` endpoints.
 
 ## [0.1.7] - 2026-08-22
 
