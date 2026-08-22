@@ -114,7 +114,6 @@ def stream_chat(
     agent = agent_service.get_agent(agent_id)
     agent_name = agent.name
 
-    print("=== [1] ROUTE stream_chat HIT! ===", flush=True)
     raw_stream = orchestrator.stream_agent_response(
         user_text=user_text,
         conversation_id=conversation_id,
@@ -122,7 +121,6 @@ def stream_chat(
         agent_name=agent_name,
         user_id=user_id,
     )
-    print("=== [2] ORCHESTRATOR GENERATOR CREATED ===", flush=True)
 
     return Response(
         stream_with_context(sse_formatter(raw_stream)),
