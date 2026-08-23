@@ -8,6 +8,7 @@ sub-step stream parsing, and conversational follow-up prompt compilation.
 from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
 import logging
+from pathlib import Path
 from typing import Any
 
 from app.domain.models.llm_execution import LLMExecution
@@ -53,11 +54,13 @@ class ReActLoopRunner:
         context_builder: AgentContextBuilder,
         tool_registry: ToolRegistry,
         email_service: Any | None = None,
+        conversations_folder: Path | str | None = None,
     ) -> None:
         self.llm_service = llm_service
         self.context_builder = context_builder
         self.tool_registry = tool_registry
         self.email_service = email_service
+        self.conversations_folder = conversations_folder
 
     def run_react_loop(
         self,
@@ -224,6 +227,7 @@ class ReActLoopRunner:
             tools=self.tool_registry.get_tools(),
             llm_stream_func=llm_stream_adapter,
             email_service=self.email_service,
+            conversations_folder=self.conversations_folder,
         )
 
         initial_context = {"conversation_id": conversation_id}

@@ -4,11 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+# Changelog
 
-### Added
+## Added
+- Introduced signature inspection via `inspect.signature` in `TaskExecutor` to verify whether candidate context parameters (`conversation_id`, `base_dir`, `email_service`) or `**kwargs` are accepted before injecting them into standard tool executions.
+- Added optional `conversations_folder` dependency injection parameter to `TaskExecutor` and `ReActLoopRunner` constructors to decouple file path resolution from global configuration.
 
-### Changed
+## Changed
+- Updated `AgentContextBuilder` to lazily evaluate and populate the `{available_agents_list}` system prompt template placeholder only when explicitly present in the prompt string.
+- Replaced hardcoded file extension checks (`.png`, `.jpg`, etc.) in `AgentOrchestrator` with dynamic MIME type detection using `mimetypes.guess_type`.
+- Refactored `AgentContextBuilder` message history filtering to rely strictly on `ActorType.USER` enum comparisons instead of string conversion fallbacks.
+- Updated file path construction in `TaskExecutor._collect_created_files` to utilize the injected `conversations_folder` base path instead of referencing global `BaseConfig`.
+
+## Fixed
+- Added exception handling wrappers around `FileStorageService.extract_text_content` calls in both message attachment and datasource contexts to prevent failed text extractions from disrupting prompt generation.
 
 ## [0.1.9] - 2026-08-23
 

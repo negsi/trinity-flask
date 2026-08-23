@@ -8,6 +8,7 @@ task chain persistence, and file URL formatting.
 from collections.abc import Callable, Generator
 import json
 import logging
+import mimetypes
 from pathlib import Path
 from typing import Any
 
@@ -141,7 +142,9 @@ class AgentOrchestrator:
                     "filename": fname,
                     "url": file_url,
                 })
-                if fname.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+
+                mime_type, _ = mimetypes.guess_type(fname)
+                if mime_type and mime_type.startswith("image/"):
                     if fname not in final_text and file_url not in final_text:
                         image_snippets.append(f"![Generiertes Bild]({file_url})")
 

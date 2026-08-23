@@ -6,13 +6,13 @@ Executes sequential steps of a structured LLM task chain and resolves dynamic co
 
 from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
+import inspect
 import json
 import logging
 from pathlib import Path
 from typing import Any
 
-from app.config import BaseConfig
-from app.domain.models.llm_execution import LLMExecution, ExecutionStep
+from app.domain.models.llm_execution import ExecutionStep, LLMExecution
 from app.services.agent.constants import PROTOCOL_TASK_CHAIN
 
 logger = logging.getLogger(__name__)
@@ -36,10 +36,12 @@ class TaskExecutor:
         tools: dict[str, Callable[..., Any]],
         llm_stream_func: Callable[[str], Generator[str, None, None]] | None = None,
         email_service: Any | None = None,
+        conversations_folder: Path | str | None = None,
     ) -> None:
         self.tools = tools
         self.llm_stream_func = llm_stream_func
         self.email_service = email_service
+        self.conversations_folder = str(conversations_folder) if conversations_folder is not None else None
 
     def execute_chain_stream(
         self,
@@ -158,12 +160,29 @@ class TaskExecutor:
             tool_func = self.tools[tool_name]
             exec_params = dict(params)
 
-            if "conversation_id" in context and "conversation_id" not in exec_params:
-                exec_params["conversation_id"] = context["conversation_id"]
-            if "base_dir" in context and "base_dir" not in exec_params:
-                exec_params["base_dir"] = context["base_dir"]
-            if self.email_service and "email_service" not in exec_params:
-                exec_params["email_service"] = self.email_service
+            # Inspect signature to verify accepted parameters before injecting context kwargs
+            candidate_context_kwargs: dict[str, Any] = {}
+            if "conversation_id" in context:
+                candidate_context_kwargs["conversation_id"] = context["conversation_id"]
+            if "base_dir" in context:
+                candidate_context_kwargs["base_dir"] = context["base_dir"]
+            if self.email_service is not None:
+                candidate_context_kwargs["email_service"] = self.email_service
+
+            try:
+                sig = inspect.signature(tool_func)
+                has_var_keyword = any(
+                    param.kind == inspect.Parameter.VAR_KEYWORD
+                    for param in sig.parameters.values()
+                )
+                accepted_param_names = set(sig.parameters.keys())
+            except (ValueError, TypeError):
+                has_var_keyword = False
+                accepted_param_names = set()
+
+            for key, val in candidate_context_kwargs.items():
+                if key not in exec_params and (has_var_keyword or key in accepted_param_names):
+                    exec_params[key] = val
 
             tool_raw_result = tool_func(**exec_params)
             output = str(tool_raw_result)
@@ -189,21 +208,27 @@ class TaskExecutor:
     ) -> None:
         """Registers newly created or generated files in the execution context."""
         conversation_id = exec_params.get("conversation_id") or context.get("conversation_id")
-        base_dir = exec_params.get("base_dir")
+        base_dir = (
+            exec_params.get("base_dir")
+            or context.get("base_dir")
+            or self.conversations_folder
+        )
 
         if tool_name == "generate_image" and isinstance(raw_result, dict) and raw_result.get("status") == "success":
             filename = raw_result.get("filename")
             if filename:
-                clean_path = (
-                    str(Path(BaseConfig.CONVERSATIONS_FOLDER) / str(conversation_id) / filename)
-                    if conversation_id
-                    else filename
-                )
+                if base_dir and conversation_id:
+                    clean_path = str(Path(base_dir) / str(conversation_id) / filename)
+                elif conversation_id:
+                    clean_path = str(Path(conversation_id) / filename)
+                else:
+                    clean_path = filename
+
                 context["created_files"].append({
                     "filename": filename,
                     "file_path": clean_path,
                     "conversation_id": conversation_id,
-                    "base_dir": base_dir,
+                    "base_dir": str(base_dir) if base_dir else None,
                 })
         elif tool_name == "write_file" and not output_str.startswith("Error"):
             file_path = exec_params.get("file_path")
@@ -212,7 +237,7 @@ class TaskExecutor:
                     "filename": Path(file_path).name,
                     "file_path": file_path,
                     "conversation_id": conversation_id,
-                    "base_dir": base_dir,
+                    "base_dir": str(base_dir) if base_dir else None,
                 })
 
     def _resolve_parameters(self, params: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
