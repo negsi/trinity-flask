@@ -12,12 +12,13 @@ from pathlib import Path
 from typing import Any
 
 from app.config import BaseConfig
+from app.domain.models.llm_execution import LLMExecution, ExecutionStep
 from app.services.agent.constants import PROTOCOL_TASK_CHAIN
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(slots=True)
 class ChainExecutionResult:
     """Result data structure returned after task chain execution completes."""
 
@@ -42,7 +43,7 @@ class TaskExecutor:
 
     def execute_chain_stream(
         self,
-        execution: Any,
+        execution: LLMExecution,
         initial_context: dict[str, Any] | None = None,
     ) -> Generator[str, None, ChainExecutionResult]:
         """
@@ -59,27 +60,27 @@ class TaskExecutor:
             ChainExecutionResult: Execution completion summary.
         """
         context: dict[str, Any] = dict(initial_context or {})
-        steps = getattr(execution, "steps", []) or []
+        steps: list[ExecutionStep] = execution.steps or []
 
         if steps:
             chain_init_payload = {
                 "type": "task_chain_init",
                 "steps": [
                     {
-                        "step_number": getattr(s, "step_number", idx + 1),
-                        "description": getattr(s, "description", ""),
-                        "tool_name": getattr(s, "tool_name", ""),
+                        "step_number": step.step_number,
+                        "description": step.description,
+                        "tool_name": step.tool_name,
                         "status": "pending",
                     }
-                    for idx, s in enumerate(steps)
+                    for step in steps
                 ],
             }
             yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps(chain_init_payload)}\n"
 
         for step in steps:
-            step_num = getattr(step, "step_number", 0)
-            tool_name = getattr(step, "tool_name", "")
-            raw_params = getattr(step, "parameters", {}) or {}
+            step_num = step.step_number
+            tool_name = step.tool_name
+            raw_params = step.parameters or {}
 
             yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps({'type': 'task_step_update', 'step_number': step_num, 'status': 'running'})}\n"
             logger.info("[TaskExecutor] Step %d (%s) Raw Params: %s", step_num, tool_name, raw_params)
@@ -93,9 +94,8 @@ class TaskExecutor:
 
             yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps({'type': 'task_step_update', 'step_number': step_num, 'status': 'completed'})}\n"
 
-        is_complete = getattr(execution, "is_complete", True)
         return ChainExecutionResult(
-            is_complete=is_complete,
+            is_complete=execution.is_complete,
             context=context,
             last_result=context.get("last_result", ""),
             created_files=context.get("created_files", []),
@@ -187,29 +187,32 @@ class TaskExecutor:
         context: dict[str, Any],
         output_str: str,
     ) -> None:
-        """Helper to register created files in execution context."""
+        """Registers newly created or generated files in the execution context."""
+        conversation_id = exec_params.get("conversation_id") or context.get("conversation_id")
+        base_dir = exec_params.get("base_dir")
+
         if tool_name == "generate_image" and isinstance(raw_result, dict) and raw_result.get("status") == "success":
             filename = raw_result.get("filename")
-            conversation_id = exec_params.get("conversation_id") or context.get("conversation_id")
-            clean_path = (
-                str(Path(BaseConfig.CONVERSATIONS_FOLDER) / conversation_id / filename)
-                if conversation_id and filename
-                else filename
-            )
-            context["created_files"].append({
-                "filename": filename,
-                "file_path": clean_path,
-                "conversation_id": conversation_id,
-                "base_dir": exec_params.get("base_dir"),
-            })
+            if filename:
+                clean_path = (
+                    str(Path(BaseConfig.CONVERSATIONS_FOLDER) / str(conversation_id) / filename)
+                    if conversation_id
+                    else filename
+                )
+                context["created_files"].append({
+                    "filename": filename,
+                    "file_path": clean_path,
+                    "conversation_id": conversation_id,
+                    "base_dir": base_dir,
+                })
         elif tool_name == "write_file" and not output_str.startswith("Error"):
             file_path = exec_params.get("file_path")
             if file_path:
                 context["created_files"].append({
                     "filename": Path(file_path).name,
                     "file_path": file_path,
-                    "conversation_id": exec_params.get("conversation_id"),
-                    "base_dir": exec_params.get("base_dir"),
+                    "conversation_id": conversation_id,
+                    "base_dir": base_dir,
                 })
 
     def _resolve_parameters(self, params: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
@@ -217,7 +220,7 @@ class TaskExecutor:
         return {k: self._resolve_value(v, context) for k, v in params.items()}
 
     def _resolve_value(self, val: Any, context: dict[str, Any]) -> Any:
-        """Resolves placeholder tokens in values."""
+        """Resolves placeholder tokens in parameter values."""
         if isinstance(val, str):
             stripped = val.strip()
             for ctx_key, ctx_val in context.items():
@@ -233,8 +236,11 @@ class TaskExecutor:
                 if token_lower in val:
                     val = val.replace(token_lower, val_str)
             return val
+
         if isinstance(val, dict):
             return {k: self._resolve_value(v, context) for k, v in val.items()}
+
         if isinstance(val, list):
             return [self._resolve_value(item, context) for item in val]
+
         return val

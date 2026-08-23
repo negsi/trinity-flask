@@ -11,10 +11,10 @@ import logging
 from typing import Any
 
 from app.domain.models.llm_execution import LLMExecution
-from app.domain.models.message import MessageAttachment
+from app.domain.models.message import Message, MessageAttachment
 from app.services.agent.agent_context_builder import AgentContextBuilder
 from app.services.agent.constants import PROTOCOL_TASK_CHAIN
-from app.services.agent.task_executor import TaskExecutor
+from app.services.agent.task_executor import ChainExecutionResult, TaskExecutor
 from app.services.infrastructure.llm_service import LLMService
 from app.services.llm.stream_parser import StreamResponseParser
 from app.services.tools.registry import ToolRegistry
@@ -22,7 +22,7 @@ from app.services.tools.registry import ToolRegistry
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(slots=True)
 class ReActTurnState:
     """State container for multi-turn ReAct workflow execution."""
 
@@ -34,7 +34,7 @@ class ReActTurnState:
     max_turns: int = 5
 
 
-@dataclass
+@dataclass(slots=True)
 class ReActExecutionSummary:
     """Final output summary of a multi-turn ReAct execution cycle."""
 
@@ -65,7 +65,7 @@ class ReActLoopRunner:
         conversation_id: str,
         agent_id: str,
         attachments: list[MessageAttachment],
-        conversation_history: list[Any],
+        conversation_history: list[Message],
         on_turn_completed: Callable[[str, LLMExecution | None], None] | None = None,
     ) -> Generator[str, None, ReActExecutionSummary]:
         """
@@ -98,7 +98,7 @@ class ReActLoopRunner:
                 agent_id=agent_id,
                 attachments=attachments,
                 conversation_history=conversation_history,
-                conversation_id=conversation_id
+                conversation_id=conversation_id,
             )
 
             current_text = "".join(state.accumulated_all_text).strip()
@@ -140,7 +140,7 @@ class ReActLoopRunner:
             state.user_prompt = (
                 f"Original User Query: {user_text}\n\n"
                 f"Result from previous task step execution:\n{last_result}\n\n"
-                f"Please formulate the next sub-plan step or final response using these actual result data."
+                "Please formulate the next sub-plan step or final response using these actual result data."
             )
 
         final_text = (
@@ -161,9 +161,8 @@ class ReActLoopRunner:
         state: ReActTurnState,
         agent_id: str,
         attachments: list[MessageAttachment],
-        conversation_history: list[Any],
+        conversation_history: list[Message],
         conversation_id: str | None = None,
-        
     ) -> Generator[str, None, dict[str, Any] | None]:
         """Streams a single turn, isolating embedded JSON blocks."""
         llm_messages = self.context_builder.build_llm_messages(
@@ -200,7 +199,7 @@ class ReActLoopRunner:
         conversation_id: str,
         agent_id: str,
         attachments: list[MessageAttachment],
-        conversation_history: list[Any],
+        conversation_history: list[Message],
         state: ReActTurnState,
     ) -> Generator[str, None, tuple[str, list[dict[str, Any]]]]:
         """Executes tools specified in the task chain plan."""
@@ -217,6 +216,7 @@ class ReActLoopRunner:
                 agent_id=agent_id,
                 attachments=attachments,
                 conversation_history=conversation_history,
+                conversation_id=conversation_id,
             )
             yield from self.llm_service.stream(messages)
 
@@ -248,10 +248,11 @@ class ReActLoopRunner:
                         state.accumulated_all_text.append(display_text)
                         yield display_text
         except StopIteration as stop_err:
-            if exec_result := stop_err.value:
-                state.is_complete = getattr(exec_result, "is_complete", False)
-                last_result = getattr(exec_result, "last_result", "") or ""
-                created_files = getattr(exec_result, "created_files", []) or []
+            exec_result: ChainExecutionResult | None = stop_err.value
+            if exec_result:
+                state.is_complete = exec_result.is_complete
+                last_result = exec_result.last_result
+                created_files = exec_result.created_files
 
         rem_chain_text, _ = chain_parser.finalize()
         if rem_chain_text:

@@ -6,7 +6,7 @@ metadata within the request execution context.
 """
 
 from typing import TypedDict
-
+from flask import request, g
 from app.domain.enums import ActorType
 
 
@@ -28,6 +28,27 @@ class SecurityContextService:
         Returns:
             ActorIdentity: Structured actor details including ID, type, and display name.
         """
+        # 1. Auf explicit gesetzten Context in flask.g prüfen (z. B. durch Middleware/Service)
+        if hasattr(g, "actor") and g.actor:
+            return g.actor
+
+        # 2. Prüfen, ob der HTTP-Request ein Sender-Payload für Agent-to-Agent Kommunikation enthält
+        if request and request.is_json:
+            try:
+                data = request.get_json(silent=True) or {}
+                sender_id = data.get("sender_id")
+                sender_type = data.get("sender_type")
+
+                if sender_type == "agent" or (sender_type == ActorType.AGENT.value):
+                    return {
+                        "id": sender_id or "agent-system",
+                        "type": ActorType.AGENT,
+                        "name": data.get("sender_name", f"Agent ({sender_id})"),
+                    }
+            except Exception:
+                pass
+
+        # 3. Standard Fallback: Christian (User)
         return {
             "id": "user-christian",
             "type": ActorType.USER,
