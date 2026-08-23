@@ -10,10 +10,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added context inspection for `flask.g.actor` in `SecurityContextService.get_current_actor()` to support explicitly set execution contexts[cite: 3].
 - Added JSON request payload parsing in `SecurityContextService` to dynamically resolve agent identity (`sender_id`, `sender_type`, `sender_name`) for incoming agent-to-agent HTTP communication[cite: 3].
+- Introduced `FileUrlResolver` callable type and `default_file_url_resolver` in `agent_orchestrator` to decouple file URL generation[cite: 4].
+- Added structured system prompt placeholder rendering via `_render_system_prompt_placeholders()` in `AgentContextBuilder`[cite: 4].
 
 ### Changed
 
 - Refactored `SecurityContextService.get_current_actor()` fallback logic to return the static user identity (`user-christian`) only when no explicit context or agent payload is present[cite: 3].
+- Refactored model interactions in `AgentContextBuilder`, `ReActLoopRunner`, and `TaskExecutor` to use direct attribute access and strong typing instead of dynamic `getattr` fallbacks[cite: 4].
+- Applied `@dataclass(slots=True)` optimization to `ReActTurnState`, `ReActExecutionSummary`, and `ChainExecutionResult` for improved memory usage and attribute lookup speed[cite: 4].
+- Marked agent lifecycle constants (`PROTOCOL_TASK_CHAIN`, `PROTOCOL_ATTACHMENTS`) as `Final`[cite: 4].
+- Updated file attachment handling and URL resolution in `AgentOrchestrator` to utilize the injected `FileUrlResolver`[cite: 4].
 
 ## [0.1.8] - 2026-08-22
 

@@ -2,13 +2,14 @@
 Agent Orchestrator Service Module.
 
 Coordinates AI agent response streaming, database message lifecycle,
-and task chain persistence.
+task chain persistence, and file URL formatting.
 """
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 from app.domain.enums import ActorType
 from app.domain.models.llm_execution import LLMExecution
@@ -20,6 +21,13 @@ from app.services.messaging.messaging_service import MessagingService
 
 logger = logging.getLogger(__name__)
 
+FileUrlResolver = Callable[[str, str], str]
+
+
+def default_file_url_resolver(conversation_id: str, filename: str) -> str:
+    """Default fallback URI builder for conversation file attachments."""
+    return f"/api/v1/chat/conversations/{conversation_id}/files/{filename}"
+
 
 class AgentOrchestrator:
     """Orchestrates streaming agent responses, database persistence, and ReAct loop execution."""
@@ -29,10 +37,12 @@ class AgentOrchestrator:
         messaging_service: MessagingService,
         llm_execution_repo: LLMExecutionRepository,
         react_loop_runner: ReActLoopRunner,
+        file_url_resolver: FileUrlResolver | None = None,
     ) -> None:
         self.messaging_service = messaging_service
         self.llm_execution_repo = llm_execution_repo
         self.react_loop_runner = react_loop_runner
+        self.file_url_resolver = file_url_resolver or default_file_url_resolver
 
     def stream_agent_response(
         self,
@@ -57,7 +67,8 @@ class AgentOrchestrator:
         """
         fetched_attachments = self.messaging_service.get_latest_user_attachments(conversation_id)
         conversation_history = self.messaging_service.get_conversation_history(
-            conversation_id=conversation_id, limit=100
+            conversation_id=conversation_id,
+            limit=100,
         )
 
         saved_message: Message | None = None
@@ -114,26 +125,25 @@ class AgentOrchestrator:
     ) -> Generator[str, None, None]:
         """Handles final message persistence, image markdown formatting, and attachment protocols."""
         final_text = summary.final_text or summary.accumulated_text or ""
-        created_files = summary.created_files or []
+        created_files = summary.created_files
 
         image_snippets: list[str] = []
         formatted_files: list[dict[str, str]] = []
 
         for item in created_files:
-            if isinstance(item, dict):
-                fpath = item.get("file_path") or item.get("filename") or ""
-                fname = Path(fpath).name
-                if fname:
-                    file_url = f"/api/v1/chat/conversations/{conversation_id}/files/{fname}"
-                    formatted_files.append({
-                        "id": fpath,
-                        "name": fname,
-                        "filename": fname,
-                        "url": file_url,
-                    })
-                    if fname.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
-                        if fname not in final_text and file_url not in final_text:
-                            image_snippets.append(f"![Generiertes Bild]({file_url})")
+            fpath = item.get("file_path") or item.get("filename") or ""
+            fname = Path(fpath).name
+            if fname:
+                file_url = self.file_url_resolver(conversation_id, fname)
+                formatted_files.append({
+                    "id": fpath,
+                    "name": fname,
+                    "filename": fname,
+                    "url": file_url,
+                })
+                if fname.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                    if fname not in final_text and file_url not in final_text:
+                        image_snippets.append(f"![Generiertes Bild]({file_url})")
 
         if image_snippets:
             img_block = "\n\n" + "\n\n".join(image_snippets)
