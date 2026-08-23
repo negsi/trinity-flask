@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Added context inspection for `flask.g.actor` in `SecurityContextService.get_current_actor()` to support explicitly set execution contexts[cite: 3].
+- Added JSON request payload parsing in `SecurityContextService` to dynamically resolve agent identity (`sender_id`, `sender_type`, `sender_name`) for incoming agent-to-agent HTTP communication[cite: 3].
+
 ### Changed
+
+- Refactored `SecurityContextService.get_current_actor()` fallback logic to return the static user identity (`user-christian`) only when no explicit context or agent payload is present[cite: 3].
 
 ## [0.1.8] - 2026-08-22
 
