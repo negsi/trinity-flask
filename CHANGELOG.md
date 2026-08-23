@@ -7,16 +7,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 # Changelog
 
 ## Added
+
+## Changed
+
+## [0.1.10] - 2026-08-23
+
+## Added
+
 - Introduced signature inspection via `inspect.signature` in `TaskExecutor` to verify whether candidate context parameters (`conversation_id`, `base_dir`, `email_service`) or `**kwargs` are accepted before injecting them into standard tool executions.
 - Added optional `conversations_folder` dependency injection parameter to `TaskExecutor` and `ReActLoopRunner` constructors to decouple file path resolution from global configuration.
 
 ## Changed
+
 - Updated `AgentContextBuilder` to lazily evaluate and populate the `{available_agents_list}` system prompt template placeholder only when explicitly present in the prompt string.
 - Replaced hardcoded file extension checks (`.png`, `.jpg`, etc.) in `AgentOrchestrator` with dynamic MIME type detection using `mimetypes.guess_type`.
 - Refactored `AgentContextBuilder` message history filtering to rely strictly on `ActorType.USER` enum comparisons instead of string conversion fallbacks.
 - Updated file path construction in `TaskExecutor._collect_created_files` to utilize the injected `conversations_folder` base path instead of referencing global `BaseConfig`.
 
 ## Fixed
+
 - Added exception handling wrappers around `FileStorageService.extract_text_content` calls in both message attachment and datasource contexts to prevent failed text extractions from disrupting prompt generation.
 
 ## [0.1.9] - 2026-08-23
@@ -295,7 +304,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.9...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.10...develop
+[0.1.10]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.10
 [0.1.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.9
 [0.1.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.8
 [0.1.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.7
