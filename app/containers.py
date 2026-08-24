@@ -98,6 +98,13 @@ class Container(containers.DeclarativeContainer):
     )
 
     # -------------------------------------------------------------------------
+    # Builders, Runners & Orchestrators (Forward Declarations / Singletons)
+    # -------------------------------------------------------------------------
+    agent_orchestrator = providers.Singleton(
+        AgentOrchestrator,
+    )
+
+    # -------------------------------------------------------------------------
     # Tools & Tool Registry
     # -------------------------------------------------------------------------
     tool_registry = providers.Singleton(
@@ -106,6 +113,7 @@ class Container(containers.DeclarativeContainer):
         email_service=email_service,
         image_generator_provider=image_generator_provider,
         conversations_folder=config.CONVERSATIONS_FOLDER,
+        agent_orchestrator_provider=agent_orchestrator.provider,
     )
 
     # -------------------------------------------------------------------------
@@ -143,9 +151,6 @@ class Container(containers.DeclarativeContainer):
         model_name=config.LLM_MODEL,
     )
 
-    # -------------------------------------------------------------------------
-    # Builders, Runners & Orchestrators
-    # -------------------------------------------------------------------------
     agent_context_builder = providers.Factory(
         AgentContextBuilder,
         agent_service=agent_service,
@@ -163,9 +168,10 @@ class Container(containers.DeclarativeContainer):
         conversations_folder=config.CONVERSATIONS_FOLDER,
     )
 
-    agent_orchestrator = providers.Singleton(
-        AgentOrchestrator,
+    # Configure AgentOrchestrator dependencies
+    agent_orchestrator.add_kwargs(
         messaging_service=messaging_service,
         llm_execution_repo=llm_execution_repository,
         react_loop_runner=react_loop_runner,
+        agent_repository=agent_repository,
     )

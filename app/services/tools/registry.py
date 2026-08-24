@@ -13,8 +13,8 @@ from app.domain.image_generator import ImageGeneratorProvider
 from app.services.infrastructure.email_service import EmailService
 from app.services.infrastructure.file_storage_service import FileStorageService
 from app.services.tools.api_tools import call_api, fetch_url
-from app.services.tools.communication_tools import message_llm, send_email
-from app.services.tools.file_tools import write_file, read_file
+from app.services.tools.communication_tools import message_agent, message_llm, send_email
+from app.services.tools.file_tools import read_file, write_file
 from app.services.tools.media_tools import generate_image
 from app.services.tools.search_tools import web_search
 
@@ -24,17 +24,19 @@ logger = logging.getLogger(__name__)
 class ToolRegistry:
     """Registry providing decoupled tool execution bindings."""
 
-    def __init__(
+    def __init__(    
         self,
         file_storage_service: FileStorageService,
         email_service: EmailService | None = None,
         image_generator_provider: ImageGeneratorProvider | None = None,
         conversations_folder: str | Path | None = None,
+        agent_orchestrator_provider: Callable[[], Any] | None = None,
     ) -> None:
         self.file_storage_service = file_storage_service
         self.email_service = email_service
         self.image_generator_provider = image_generator_provider
         self.conversations_folder = Path(conversations_folder) if conversations_folder else None
+        self.agent_orchestrator_provider = agent_orchestrator_provider
         self._custom_tools: dict[str, Callable[..., Any]] = {}
 
     def register_tool(self, name: str, func: Callable[..., Any]) -> None:
@@ -89,8 +91,6 @@ class ToolRegistry:
         **kwargs: Any,
     ) -> str:
         """Dispatches an email and resolves body-referenced local files."""
-
-        # Remove email_service from kwargs if passed by agent/runner
         kwargs.pop("email_service", None)
 
         return send_email(
@@ -102,6 +102,26 @@ class ToolRegistry:
             attachments=attachments,
             conversation_id=conversation_id,
             base_dir=base_dir or self.conversations_folder,
+            **kwargs,
+        )
+
+    def message_agent(
+        self,
+        target_agent_id: str,
+        message: str,
+        conversation_id: str | None = None,
+        current_agent_id: str | None = None,
+        call_depth: int = 1,
+        **kwargs: Any,
+    ) -> str:
+        """Delegates sub-task or communication to another agent."""
+        return message_agent(
+            target_agent_id=target_agent_id,
+            message=message,
+            agent_orchestrator=self.agent_orchestrator_provider,
+            conversation_id=conversation_id,
+            current_agent_id=current_agent_id,
+            call_depth=call_depth,
             **kwargs,
         )
 
@@ -132,6 +152,7 @@ class ToolRegistry:
             "fetch_url": fetch_url,
             "web_search": web_search,
             "message_llm": message_llm,
+            "message_agent": self.message_agent,
             "call_api": call_api,
             "write_file": self.write_file,
             "read_file": self.read_file,

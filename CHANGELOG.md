@@ -8,9 +8,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Added
 
+- Add `message_agent` tool enabling inter-agent delegation, prompt passing, and real-time generator event streaming.
+- Implement recursion safety limits (`MAX_SUBAGENT_CALL_DEPTH = 3`) within `AgentOrchestrator` to prevent sub-agent call loops.
+- Pass caller context (`agent_id`, `call_depth`, `conversation_id`) across ReAct execution steps and sub-task generators.
+- Add instructions and strict interaction guidelines for `message_agent` in `base_agent.prompt.md`.
+
 ## Changed
 
-- Move developer utility scripts (`code_tree.py`, `concat_code.py`) into dedicated `scripts/` directory
+- Move developer utility scripts (`code_tree.py`, `concat_code.py`) into dedicated `scripts/` directory.
+- Update `ToolRegistry` and dependency injection containers to support dynamic `AgentOrchestrator` binding.
+- Enforce file retention in primary conversation directories during sub-task execution.
+- Refactor `ReActLoopRunner` to suppress intermediate LLM step yields during nested execution chains.
 
 ## [0.1.10] - 2026-08-23
 

@@ -6,6 +6,7 @@ task chain persistence, and file URL formatting.
 """
 
 from collections.abc import Callable, Generator
+import uuid
 import json
 import logging
 import mimetypes
@@ -15,8 +16,9 @@ from typing import Any
 from app.domain.enums import ActorType
 from app.domain.models.llm_execution import LLMExecution
 from app.domain.models.message import Message
+from app.domain.repositories.agent_repository import AgentRepository
 from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
-from app.services.agent.constants import PROTOCOL_ATTACHMENTS
+from app.services.agent.constants import PROTOCOL_TASK_CHAIN, PROTOCOL_ATTACHMENTS
 from app.services.agent.react_loop_runner import ReActExecutionSummary, ReActLoopRunner
 from app.services.messaging.messaging_service import MessagingService
 
@@ -29,21 +31,127 @@ def default_file_url_resolver(conversation_id: str, filename: str) -> str:
     """Default fallback URI builder for conversation file attachments."""
     return f"/api/v1/chat/conversations/{conversation_id}/files/{filename}"
 
+MAX_SUBAGENT_CALL_DEPTH = 3
+
 
 class AgentOrchestrator:
     """Orchestrates streaming agent responses, database persistence, and ReAct loop execution."""
 
-    def __init__(
+    def __init__(    
         self,
         messaging_service: MessagingService,
         llm_execution_repo: LLMExecutionRepository,
         react_loop_runner: ReActLoopRunner,
+        agent_repository: AgentRepository | None = None,
         file_url_resolver: FileUrlResolver | None = None,
     ) -> None:
         self.messaging_service = messaging_service
         self.llm_execution_repo = llm_execution_repo
         self.react_loop_runner = react_loop_runner
+        self.agent_repository = agent_repository
         self.file_url_resolver = file_url_resolver or default_file_url_resolver
+
+    def run_subagent_task_stream(
+        self,
+        target_agent_id: str,
+        message: str,
+        conversation_id: str | None = None,
+        caller_agent_id: str | None = None,
+        call_depth: int = 1,
+        context: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> Generator[str, None, str]:
+        """Streams sub-agent events and text tokens in real-time using generator delegation."""
+        if call_depth > MAX_SUBAGENT_CALL_DEPTH:
+            logger.warning("Sub-agent execution aborted: call depth limit (%d) reached for agent %s.", MAX_SUBAGENT_CALL_DEPTH, target_agent_id)
+            return f"Error: Maximum sub-agent delegation depth ({MAX_SUBAGENT_CALL_DEPTH}) exceeded."
+
+        target_agent = None
+        if self.agent_repository:
+            target_agent = self.agent_repository.get_by_id(target_agent_id)
+
+        target_name = target_agent.name if target_agent else f"Agent_{target_agent_id[:8]}"
+        
+        sub_context = context or {}
+        target_conv_id = (
+            conversation_id 
+            or sub_context.get("conversation_id") 
+            or "root"
+        )
+
+        try:
+            stream_gen = self.stream_agent_response(
+                user_text=message,
+                conversation_id=target_conv_id,
+                agent_id=target_agent_id,
+                agent_name=target_name,
+                user_id=caller_agent_id or "system",
+                call_depth=call_depth,
+            )
+
+            collected_chunks: list[str] = []
+
+            for chunk in stream_gen:
+                if not chunk:
+                    continue
+
+                # Stream task chain protocol events immediately
+                if PROTOCOL_TASK_CHAIN in chunk:
+                    yield chunk
+                    continue
+
+                if (
+                    PROTOCOL_ATTACHMENTS in chunk 
+                    or chunk.strip() == "[DONE]"
+                    or (chunk.strip().startswith("{") and '"type":"meta"' in chunk)
+                ):
+                    continue
+
+                clean_chunk = chunk
+                if clean_chunk.startswith("data: "):
+                    clean_chunk = clean_chunk[6:]
+                elif clean_chunk.startswith("data:"):
+                    clean_chunk = clean_chunk[5:]
+
+                collected_chunks.append(clean_chunk)
+                # Stream text chunks in real-time as they arrive from sub-agent
+                yield clean_chunk
+
+            result_text = "".join(collected_chunks).strip()
+            return result_text or "Task executed by sub-agent with no output."
+
+        except Exception as exc:
+            logger.error("Error executing sub-agent %s: %s", target_agent_id, exc, exc_info=True)
+            return f"Error executing sub-agent '{target_agent_id}': {exc}"
+
+    def run_subagent_task(
+        self,
+        target_agent_id: str,
+        message: str,
+        conversation_id: str | None = None,
+        caller_agent_id: str | None = None,
+        call_depth: int = 1,
+        on_event: Callable[[str], None] | None = None,
+        context: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """Synchronous wrapper around stream runner for backwards compatibility."""
+        gen = self.run_subagent_task_stream(
+            target_agent_id=target_agent_id,
+            message=message,
+            conversation_id=conversation_id,
+            caller_agent_id=caller_agent_id,
+            call_depth=call_depth,
+            context=context,
+            **kwargs,
+        )
+        try:
+            while True:
+                chunk = next(gen)
+                if PROTOCOL_TASK_CHAIN in chunk and on_event:
+                    on_event(chunk)
+        except StopIteration as stop_err:
+            return stop_err.value
 
     def stream_agent_response(
         self,
@@ -52,20 +160,8 @@ class AgentOrchestrator:
         agent_id: str,
         agent_name: str,
         user_id: str,
+        call_depth: int = 0,
     ) -> Generator[str, None, None]:
-        """
-        Streams response tokens to the client while orchestrating ReAct loop cycles and persistence.
-
-        Args:
-            user_text: User input prompt.
-            conversation_id: Conversation identifier.
-            agent_id: Agent identifier.
-            agent_name: Display name of the agent.
-            user_id: Caller identity ID.
-
-        Yields:
-            str: Stream text tokens and protocol chunks.
-        """
         fetched_attachments = self.messaging_service.get_latest_user_attachments(conversation_id)
         conversation_history = self.messaging_service.get_conversation_history(
             conversation_id=conversation_id,
@@ -76,7 +172,7 @@ class AgentOrchestrator:
 
         def on_turn_completed(accumulated_text: str, execution: LLMExecution | None) -> None:
             nonlocal saved_message
-            if not saved_message and conversation_id:
+            if call_depth == 0 and not saved_message and conversation_id:
                 try:
                     saved_message = self.messaging_service.send_message(
                         conversation_id=conversation_id,
@@ -101,6 +197,7 @@ class AgentOrchestrator:
             attachments=fetched_attachments,
             conversation_history=conversation_history,
             on_turn_completed=on_turn_completed,
+            call_depth=call_depth,
         )
 
         summary: ReActExecutionSummary = yield from loop_gen
@@ -113,6 +210,7 @@ class AgentOrchestrator:
                 agent_name=agent_name,
                 user_id=user_id,
                 saved_message=saved_message,
+                call_depth=call_depth,
             )
 
     def _finalize_agent_turn(
@@ -123,6 +221,7 @@ class AgentOrchestrator:
         agent_name: str,
         user_id: str,
         saved_message: Message | None,
+        call_depth: int = 0,
     ) -> Generator[str, None, None]:
         """Handles final message persistence, image markdown formatting, and attachment protocols."""
         final_text = summary.final_text or summary.accumulated_text or ""
@@ -160,52 +259,49 @@ class AgentOrchestrator:
             final_text = "Aufgabe ausgeführt."
             yield final_text
 
-        # Persist final message state
-        if not saved_message and conversation_id:
-            try:
-                saved_message = self.messaging_service.send_message(
-                    conversation_id=conversation_id,
-                    sender_id=agent_id,
-                    sender_type=ActorType.AGENT,
-                    sender_name=agent_name,
-                    text=final_text,
-                    recipient_id=user_id,
-                )
-            except Exception as exc:
-                logger.error("Error creating fallback agent message: %s", exc, exc_info=True)
-        elif saved_message and final_text:
-            try:
-                self.messaging_service.update_message_text(
-                    message_id=saved_message.id,
-                    text=final_text,
-                )
-            except Exception as exc:
-                logger.error("Error updating final message text: %s", exc, exc_info=True)
+        if call_depth == 0:
+            if not saved_message and conversation_id:
+                try:
+                    saved_message = self.messaging_service.send_message(
+                        conversation_id=conversation_id,
+                        sender_id=agent_id,
+                        sender_type=ActorType.AGENT,
+                        sender_name=agent_name,
+                        text=final_text,
+                        recipient_id=user_id,
+                    )
+                except Exception as exc:
+                    logger.error("Error creating fallback agent message: %s", exc, exc_info=True)
+            elif saved_message and final_text:
+                try:
+                    self.messaging_service.update_message_text(
+                        message_id=saved_message.id,
+                        text=final_text,
+                    )
+                except Exception as exc:
+                    logger.error("Error updating final message text: %s", exc, exc_info=True)
 
-        # Attach generated files and send protocol marker
-        if saved_message and formatted_files:
-            try:
-                self.messaging_service.add_attachments_to_message(
-                    message_id=saved_message.id,
-                    file_info_list=created_files,
-                )
+            if saved_message and formatted_files:
+                try:
+                    self.messaging_service.add_attachments_to_message(
+                        message_id=saved_message.id,
+                        file_info_list=created_files,
+                    )
 
-                attachments_payload = {
-                    "type": "attachments",
-                    "files": formatted_files,
-                }
-                yield f"\n{PROTOCOL_ATTACHMENTS}{json.dumps(attachments_payload)}"
-            except Exception as exc:
-                logger.error("Error adding generated attachments to message: %s", exc, exc_info=True)
+                    attachments_payload = {
+                        "type": "attachments",
+                        "files": formatted_files,
+                    }
+                    yield f"\n{PROTOCOL_ATTACHMENTS}{json.dumps(attachments_payload)}"
+                except Exception as exc:
+                    logger.error("Error adding generated attachments to message: %s", exc, exc_info=True)
 
     def _save_execution_safe(self, execution: LLMExecution) -> None:
-        """Safely persists LLM execution metadata to the repository."""
         try:
             self.llm_execution_repo.save(execution)
         except Exception as exc:
             logger.error("Error persisting LLMExecution metadata: %s", exc, exc_info=True)
 
     def handle_incoming_message(self, message: Message) -> None:
-        """Callback handler subscribed to incoming message events."""
         if message.sender_type == ActorType.AGENT or not message.recipient_id:
             return

@@ -31,7 +31,7 @@ class ChainExecutionResult:
 class TaskExecutor:
     """Executes structured tool steps and handles dynamic parameter replacements."""
 
-    def __init__(
+    def __init__(    
         self,
         tools: dict[str, Callable[..., Any]],
         llm_stream_func: Callable[[str], Generator[str, None, None]] | None = None,
@@ -67,11 +67,14 @@ class TaskExecutor:
         if steps:
             chain_init_payload = {
                 "type": "task_chain_init",
+                "call_depth": context.get("call_depth", 0),
+                "agent_id": context.get("agent_id"),
                 "steps": [
                     {
                         "step_number": step.step_number,
                         "description": step.description,
                         "tool_name": step.tool_name,
+                        "parameters": step.parameters or {},
                         "status": "pending",
                     }
                     for step in steps
@@ -149,7 +152,6 @@ class TaskExecutor:
         params: dict[str, Any],
         context: dict[str, Any],
     ) -> Generator[str, None, None]:
-        """Executes standard callable tool functions."""
         if tool_name not in self.tools:
             err = f"\n[Error: Tool '{tool_name}' is not registered.]"
             logger.error(err)
@@ -160,14 +162,24 @@ class TaskExecutor:
             tool_func = self.tools[tool_name]
             exec_params = dict(params)
 
-            # Inspect signature to verify accepted parameters before injecting context kwargs
+            queued_events: list[str] = []
+
+            def handle_sub_event(event_chunk: str) -> None:
+                queued_events.append(event_chunk)
+
             candidate_context_kwargs: dict[str, Any] = {}
             if "conversation_id" in context:
                 candidate_context_kwargs["conversation_id"] = context["conversation_id"]
+            if "agent_id" in context:
+                candidate_context_kwargs["current_agent_id"] = context["agent_id"]
+            if "call_depth" in context:
+                candidate_context_kwargs["call_depth"] = context["call_depth"]
             if "base_dir" in context:
                 candidate_context_kwargs["base_dir"] = context["base_dir"]
             if self.email_service is not None:
                 candidate_context_kwargs["email_service"] = self.email_service
+            
+            candidate_context_kwargs["on_event"] = handle_sub_event
 
             try:
                 sig = inspect.signature(tool_func)
@@ -185,9 +197,28 @@ class TaskExecutor:
                     exec_params[key] = val
 
             tool_raw_result = tool_func(**exec_params)
+
+            # Consume generator tools (like streaming message_agent) in real-time
+            was_generator = inspect.isgenerator(tool_raw_result)
+            if was_generator:
+                try:
+                    while True:
+                        event_chunk = next(tool_raw_result)
+                        if event_chunk:
+                            yield event_chunk
+                except StopIteration as stop_err:
+                    tool_raw_result = stop_err.value
+
+            for event in queued_events:
+                yield event
+
             output = str(tool_raw_result)
             context[f"step_{step_num}"] = output
             context["last_result"] = output
+
+            # Fallback yield only for non-generator sub-agent calls
+            if tool_name == "message_agent" and output and not was_generator:
+                yield output
 
             if "created_files" not in context:
                 context["created_files"] = []
@@ -233,9 +264,17 @@ class TaskExecutor:
         elif tool_name == "write_file" and not output_str.startswith("Error"):
             file_path = exec_params.get("file_path")
             if file_path:
+                filename = Path(file_path).name
+                
+                # Erzwinge Speicherung im Konversations-Hauptordner statt in Subtask-Unterordnern
+                if base_dir and conversation_id:
+                    clean_path = str(Path(base_dir) / str(conversation_id) / filename)
+                else:
+                    clean_path = str(Path(file_path))
+
                 context["created_files"].append({
-                    "filename": Path(file_path).name,
-                    "file_path": file_path,
+                    "filename": filename,
+                    "file_path": clean_path,
                     "conversation_id": conversation_id,
                     "base_dir": str(base_dir) if base_dir else None,
                 })

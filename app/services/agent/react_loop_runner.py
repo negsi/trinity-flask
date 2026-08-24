@@ -70,31 +70,15 @@ class ReActLoopRunner:
         attachments: list[MessageAttachment],
         conversation_history: list[Message],
         on_turn_completed: Callable[[str, LLMExecution | None], None] | None = None,
+        call_depth: int = 0,
     ) -> Generator[str, None, ReActExecutionSummary]:
-        """
-        Executes the ReAct loop iteratively, yielding stream chunks to the caller.
-
-        Args:
-            user_text: Initial user prompt.
-            conversation_id: Active conversation UUID.
-            agent_id: Target Agent UUID.
-            attachments: Message attachments.
-            conversation_history: Past conversation messages.
-            on_turn_completed: Turn-end callback for intermediate persistence.
-
-        Yields:
-            str: Streamed text tokens for user output.
-
-        Returns:
-            ReActExecutionSummary: The aggregated execution result summary.
-        """
         state = ReActTurnState(user_prompt=user_text)
         last_execution: LLMExecution | None = None
         all_created_files: list[dict[str, Any]] = []
 
         while not state.is_complete and state.turn_count < state.max_turns:
             state.turn_count += 1
-            logger.info("[ReActLoopRunner] Starting Turn %d/%d...", state.turn_count, state.max_turns)
+            logger.info("[ReActLoopRunner] Starting Turn %d/%d (depth %d)...", state.turn_count, state.max_turns, call_depth)
 
             extracted_json = yield from self._run_stream_turn(
                 state=state,
@@ -132,7 +116,16 @@ class ReActLoopRunner:
                 attachments=attachments,
                 conversation_history=conversation_history,
                 state=state,
+                call_depth=call_depth,
             )
+
+            if last_result and not state.last_chain_chunks:
+                if execution and execution.is_complete and not self._has_llm_step_in_chain(execution):
+                    state.accumulated_all_text.append(last_result)
+                    state.last_chain_chunks.append(last_result)
+                    yield last_result
+                else:
+                    logger.info("[ReActLoopRunner] Suppressing raw tool result yield; passing to next LLM turn.")
 
             if step_files:
                 all_created_files.extend(step_files)
@@ -167,7 +160,6 @@ class ReActLoopRunner:
         conversation_history: list[Message],
         conversation_id: str | None = None,
     ) -> Generator[str, None, dict[str, Any] | None]:
-        """Streams a single turn, isolating embedded JSON blocks."""
         llm_messages = self.context_builder.build_llm_messages(
             user_text=state.user_prompt,
             agent_id=agent_id,
@@ -204,9 +196,8 @@ class ReActLoopRunner:
         attachments: list[MessageAttachment],
         conversation_history: list[Message],
         state: ReActTurnState,
+        call_depth: int = 0,
     ) -> Generator[str, None, tuple[str, list[dict[str, Any]]]]:
-        """Executes tools specified in the task chain plan."""
-
         def llm_stream_adapter(prompt_text: str) -> Generator[str, None, None]:
             system_instruction = (
                 "System Notice: You are executing a sub-step execution task. "
@@ -230,7 +221,11 @@ class ReActLoopRunner:
             conversations_folder=self.conversations_folder,
         )
 
-        initial_context = {"conversation_id": conversation_id}
+        initial_context = {
+            "conversation_id": conversation_id,
+            "agent_id": agent_id,
+            "call_depth": call_depth,
+        }
         chain_parser = StreamResponseParser()
         chain_text_chunks: list[str] = []
         last_result = ""
