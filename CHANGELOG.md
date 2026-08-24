@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Changed
 
+- Move developer utility scripts (`code_tree.py`, `concat_code.py`) into dedicated `scripts/` directory
+
 ## [0.1.10] - 2026-08-23
 
 ## Added

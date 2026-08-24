@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Codebase Aggregation Utility Script.
 
