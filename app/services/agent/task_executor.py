@@ -6,13 +6,13 @@ Executes sequential steps of a structured LLM task chain and resolves dynamic co
 
 from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
+import inspect
 import json
 import logging
 from pathlib import Path
 from typing import Any
 
-from app.config import BaseConfig
-from app.domain.models.llm_execution import LLMExecution, ExecutionStep
+from app.domain.models.llm_execution import ExecutionStep, LLMExecution
 from app.services.agent.constants import PROTOCOL_TASK_CHAIN
 
 logger = logging.getLogger(__name__)
@@ -31,15 +31,17 @@ class ChainExecutionResult:
 class TaskExecutor:
     """Executes structured tool steps and handles dynamic parameter replacements."""
 
-    def __init__(
+    def __init__(    
         self,
         tools: dict[str, Callable[..., Any]],
         llm_stream_func: Callable[[str], Generator[str, None, None]] | None = None,
         email_service: Any | None = None,
+        conversations_folder: Path | str | None = None,
     ) -> None:
         self.tools = tools
         self.llm_stream_func = llm_stream_func
         self.email_service = email_service
+        self.conversations_folder = str(conversations_folder) if conversations_folder is not None else None
 
     def execute_chain_stream(
         self,
@@ -65,11 +67,14 @@ class TaskExecutor:
         if steps:
             chain_init_payload = {
                 "type": "task_chain_init",
+                "call_depth": context.get("call_depth", 0),
+                "agent_id": context.get("agent_id"),
                 "steps": [
                     {
                         "step_number": step.step_number,
                         "description": step.description,
                         "tool_name": step.tool_name,
+                        "parameters": step.parameters or {},
                         "status": "pending",
                     }
                     for step in steps
@@ -147,7 +152,6 @@ class TaskExecutor:
         params: dict[str, Any],
         context: dict[str, Any],
     ) -> Generator[str, None, None]:
-        """Executes standard callable tool functions."""
         if tool_name not in self.tools:
             err = f"\n[Error: Tool '{tool_name}' is not registered.]"
             logger.error(err)
@@ -158,17 +162,63 @@ class TaskExecutor:
             tool_func = self.tools[tool_name]
             exec_params = dict(params)
 
-            if "conversation_id" in context and "conversation_id" not in exec_params:
-                exec_params["conversation_id"] = context["conversation_id"]
-            if "base_dir" in context and "base_dir" not in exec_params:
-                exec_params["base_dir"] = context["base_dir"]
-            if self.email_service and "email_service" not in exec_params:
-                exec_params["email_service"] = self.email_service
+            queued_events: list[str] = []
+
+            def handle_sub_event(event_chunk: str) -> None:
+                queued_events.append(event_chunk)
+
+            candidate_context_kwargs: dict[str, Any] = {}
+            if "conversation_id" in context:
+                candidate_context_kwargs["conversation_id"] = context["conversation_id"]
+            if "agent_id" in context:
+                candidate_context_kwargs["current_agent_id"] = context["agent_id"]
+            if "call_depth" in context:
+                candidate_context_kwargs["call_depth"] = context["call_depth"]
+            if "base_dir" in context:
+                candidate_context_kwargs["base_dir"] = context["base_dir"]
+            if self.email_service is not None:
+                candidate_context_kwargs["email_service"] = self.email_service
+            
+            candidate_context_kwargs["on_event"] = handle_sub_event
+
+            try:
+                sig = inspect.signature(tool_func)
+                has_var_keyword = any(
+                    param.kind == inspect.Parameter.VAR_KEYWORD
+                    for param in sig.parameters.values()
+                )
+                accepted_param_names = set(sig.parameters.keys())
+            except (ValueError, TypeError):
+                has_var_keyword = False
+                accepted_param_names = set()
+
+            for key, val in candidate_context_kwargs.items():
+                if key not in exec_params and (has_var_keyword or key in accepted_param_names):
+                    exec_params[key] = val
 
             tool_raw_result = tool_func(**exec_params)
+
+            # Consume generator tools (like streaming message_agent) in real-time
+            was_generator = inspect.isgenerator(tool_raw_result)
+            if was_generator:
+                try:
+                    while True:
+                        event_chunk = next(tool_raw_result)
+                        if event_chunk:
+                            yield event_chunk
+                except StopIteration as stop_err:
+                    tool_raw_result = stop_err.value
+
+            for event in queued_events:
+                yield event
+
             output = str(tool_raw_result)
             context[f"step_{step_num}"] = output
             context["last_result"] = output
+
+            # Fallback yield only for non-generator sub-agent calls
+            if tool_name == "message_agent" and output and not was_generator:
+                yield output
 
             if "created_files" not in context:
                 context["created_files"] = []
@@ -189,30 +239,44 @@ class TaskExecutor:
     ) -> None:
         """Registers newly created or generated files in the execution context."""
         conversation_id = exec_params.get("conversation_id") or context.get("conversation_id")
-        base_dir = exec_params.get("base_dir")
+        base_dir = (
+            exec_params.get("base_dir")
+            or context.get("base_dir")
+            or self.conversations_folder
+        )
 
         if tool_name == "generate_image" and isinstance(raw_result, dict) and raw_result.get("status") == "success":
             filename = raw_result.get("filename")
             if filename:
-                clean_path = (
-                    str(Path(BaseConfig.CONVERSATIONS_FOLDER) / str(conversation_id) / filename)
-                    if conversation_id
-                    else filename
-                )
+                if base_dir and conversation_id:
+                    clean_path = str(Path(base_dir) / str(conversation_id) / filename)
+                elif conversation_id:
+                    clean_path = str(Path(conversation_id) / filename)
+                else:
+                    clean_path = filename
+
                 context["created_files"].append({
                     "filename": filename,
                     "file_path": clean_path,
                     "conversation_id": conversation_id,
-                    "base_dir": base_dir,
+                    "base_dir": str(base_dir) if base_dir else None,
                 })
         elif tool_name == "write_file" and not output_str.startswith("Error"):
             file_path = exec_params.get("file_path")
             if file_path:
+                filename = Path(file_path).name
+                
+                # Erzwinge Speicherung im Konversations-Hauptordner statt in Subtask-Unterordnern
+                if base_dir and conversation_id:
+                    clean_path = str(Path(base_dir) / str(conversation_id) / filename)
+                else:
+                    clean_path = str(Path(file_path))
+
                 context["created_files"].append({
-                    "filename": Path(file_path).name,
-                    "file_path": file_path,
+                    "filename": filename,
+                    "file_path": clean_path,
                     "conversation_id": conversation_id,
-                    "base_dir": base_dir,
+                    "base_dir": str(base_dir) if base_dir else None,
                 })
 
     def _resolve_parameters(self, params: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:

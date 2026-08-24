@@ -131,12 +131,18 @@ class AgentContextBuilder:
             "{agent.id}": str(agent.id) if agent else "",
             "{conversation.id}": conv_id_str,
             "{conversation.directory}": conv_dir,
-            "{available_agents_list}": self._build_available_agents_context(),
         }
 
         rendered = template
         for placeholder, replacement in placeholders.items():
             rendered = rendered.replace(placeholder, replacement)
+
+        # Lazy execution: Only query the database if the placeholder is present
+        if "{available_agents_list}" in rendered:
+            rendered = rendered.replace(
+                "{available_agents_list}",
+                self._build_available_agents_context(),
+            )
 
         return rendered
 
@@ -184,10 +190,19 @@ class AgentContextBuilder:
                 except OSError as exc:
                     logger.error("Failed to read image attachment '%s': %s", file_path, exc)
             else:
-                content = self.file_storage_service.extract_text_content(file_path, mime_type)
-                if content:
-                    text_attachment_blocks.append(
-                        f"--- START ATTACHMENT: {filename} ---\n{content}\n--- END ATTACHMENT: {filename} ---"
+                try:
+                    content = self.file_storage_service.extract_text_content(file_path, mime_type)
+                    if content:
+                        text_attachment_blocks.append(
+                            f"--- START ATTACHMENT: {filename} ---\n{content}\n--- END ATTACHMENT: {filename} ---"
+                        )
+                except Exception as exc:
+                    logger.error(
+                        "Failed to extract text content from attachment '%s' (%s): %s",
+                        filename,
+                        file_path,
+                        exc,
+                        exc_info=True,
                     )
 
         final_text = user_text or ""
@@ -211,10 +226,7 @@ class AgentContextBuilder:
         history = list(conversation_messages)
 
         if agent.memory_mode == "user_only":
-            history = [
-                msg for msg in history
-                if msg.sender_type == ActorType.USER or str(msg.sender_type).lower() == "user"
-            ]
+            history = [msg for msg in history if msg.sender_type == ActorType.USER]
 
         if agent.memory_limit_type == "message_count":
             limit = agent.memory_message_count
@@ -223,8 +235,7 @@ class AgentContextBuilder:
 
         llm_history: list[LLMMessage] = []
         for msg in history:
-            is_user = msg.sender_type == ActorType.USER or str(msg.sender_type).lower() == "user"
-            role = "user" if is_user else "assistant"
+            role = "user" if msg.sender_type == ActorType.USER else "assistant"
             content = msg.text or ""
 
             if content.strip():
@@ -270,10 +281,19 @@ class AgentContextBuilder:
             if not file_path:
                 continue
 
-            content = self.file_storage_service.extract_text_content(file_path, mime_type)
-            if content:
-                context_blocks.append(
-                    f"--- START FILE: {filename} ---\n{content}\n--- END FILE: {filename} ---"
+            try:
+                content = self.file_storage_service.extract_text_content(file_path, mime_type)
+                if content:
+                    context_blocks.append(
+                        f"--- START FILE: {filename} ---\n{content}\n--- END FILE: {filename} ---"
+                    )
+            except Exception as exc:
+                logger.error(
+                    "Failed to extract text content from datasource '%s' (%s): %s",
+                    filename,
+                    file_path,
+                    exc,
+                    exc_info=True,
                 )
 
         if len(context_blocks) <= 1:

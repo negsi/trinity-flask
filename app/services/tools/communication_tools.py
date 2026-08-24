@@ -1,13 +1,14 @@
 """
 Communication Tools Module.
 
-Provides email dispatching and messaging communication helper routines.
+Provides email dispatching, LLM delegation, and agent-to-agent messaging routines.
 """
 
+from collections.abc import Callable
 import logging
 from pathlib import Path
 import re
-from typing import Any
+from typing import Any, Generator
 
 from app.services.infrastructure.email_service import EmailService
 from app.services.tools.file_tools import get_latest_image_in_dir, locate_file
@@ -26,6 +27,56 @@ def message_llm(message: str, **kwargs: Any) -> str:
         str: Echoed message.
     """
     return message
+
+
+def message_agent(
+    target_agent_id: str,
+    message: str,
+    agent_orchestrator: Any | None = None,
+    conversation_id: str | None = None,
+    current_agent_id: str | None = None,
+    call_depth: int = 1,
+    on_event: Callable[[str], None] | None = None,
+    base_dir: str | Path | None = None,
+    **kwargs: Any,
+) -> Generator[str, None, str]:
+    if not target_agent_id:
+        return "Error: target_agent_id is required."
+
+    if not message or not str(message).strip():
+        return "Error: message content cannot be empty."
+
+    if current_agent_id and target_agent_id == current_agent_id:
+        return f"Error: Agent '{current_agent_id}' cannot send a message to itself."
+
+    orchestrator = agent_orchestrator() if isinstance(agent_orchestrator, Callable) else agent_orchestrator
+    if not orchestrator:
+        return "Error: AgentOrchestrator is not configured or available for message_agent."
+
+    resolved_workspace = None
+    if base_dir and conversation_id:
+        resolved_workspace = str(Path(base_dir).resolve() / str(conversation_id))
+
+    sub_context = {
+        "conversation_id": conversation_id,
+        "base_dir": base_dir,
+        "directory": resolved_workspace,
+    }
+
+    try:
+        # Delegate live generator stream directly to orchestrator
+        res = yield from orchestrator.run_subagent_task_stream(
+            target_agent_id=target_agent_id,
+            message=message,
+            conversation_id=conversation_id,
+            caller_agent_id=current_agent_id,
+            call_depth=call_depth + 1,
+            context=sub_context,
+        )
+        return res
+    except Exception as exc:
+        logger.error("Error executing message_agent to %s: %s", target_agent_id, exc, exc_info=True)
+        return f"Error executing message_agent to target '{target_agent_id}': {exc}"
 
 
 def send_email(

@@ -148,69 +148,79 @@ Trinity agents execute complex web gathering, data processing, and analysis task
 ### Built-in Agent Tools
 
 1. **`fetch_url`**
-   - **Purpose:** Fetches the raw text content of a specified web page or online document.
-   - **Rules & Behavior:**
-     - Processes exactly **one URL per execution step**.
-     - Requires separate sequential steps when dealing with multiple URLs.
-     - Does not invent placeholder URLs. To discover links on a page, the agent must first visit the target URL in step 1 to extract valid links.
+  - **Purpose:** Fetches the raw text content of a specified web page or online document.
+  - **Rules & Behavior:**
+    - Processes exactly **one URL per execution step**.
+    - Requires separate sequential steps when dealing with multiple URLs.
+    - Does not invent placeholder URLs. To discover links on a page, the agent must first visit the target URL in step 1 to extract valid links.
 
 2. **`message_llm`**
-   - **Purpose:** Processes, summarizes, evaluates, translates, or structurally transforms retrieved data.
-   - **Rules & Syntax:**
-     - Uses step references to chain inputs from prior steps (e.g., using `[STEP_1]` as input for processing results obtained during step 1).
-     - Strict placeholder syntax enforcement ensures reliable data flow between task steps.
+  - **Purpose:** Processes, summarizes, evaluates, translates, or structurally transforms retrieved data.
+  - **Rules & Syntax:**
+    - Uses step references to chain inputs from prior steps (e.g., using `[STEP_1]` as input for processing results obtained during step 1).
+    - Strict placeholder syntax enforcement ensures reliable data flow between task steps.
 
 3. **`write_file`**
-   - **Purpose:** Writes or appends text content to a specified file within the active conversation workspace.
-   - **Rules & Syntax:**
-     - **`file_path`** (string, required): Relative path or filename (e.g., `summary.md` or `exports/data.json`).
-     - **`content`** (string, required): The text payload to write. Supports step reference placeholders (e.g., `[STEP_2]`).
-     - **`mode`** (string, optional): File write mode. Use `"w"` to overwrite or create a new file (default), or `"a"` to append to an existing file.
-     - Files are automatically isolated and saved inside the active conversation directory.
+  - **Purpose:** Writes or appends text content to a specified file within the active conversation workspace.
+  - **Rules & Syntax:**
+    - **`file_path`** (string, required): Relative path or filename (e.g., `summary.md` or `exports/data.json`).
+    - **`content`** (string, required): The text payload to write. Supports step reference placeholders (e.g., `[STEP_2]`).
+    - **`mode`** (string, optional): File write mode. Use `"w"` to overwrite or create a new file (default), or `"a"` to append to an existing file.
+    - Files are automatically isolated and saved inside the active conversation directory.
 
 4. **`send_email`**
-   - **Purpose:** Sends an email message via local mail transfer agents (e.g., Postfix/Sendmail) or remote SMTP servers.
-   - **Rules & Syntax:**
-     - **`to_email`** (string, required): Target recipient email address.
-     - **`subject`** (string, required): Subject line of the email.
-     - **`body`** (string, required): The text or HTML body content. Supports step reference placeholders (e.g., `[STEP_3]`).
-     - **`is_html`** (boolean, optional): Set to `true` if the body contains HTML markup. Defaults to `false`.
-     - Automatically routes through local unauthenticated delivery or configured SMTP credentials via the application's `EmailService`.
+  - **Purpose:** Sends an email message via local mail transfer agents (e.g., Postfix/Sendmail) or remote SMTP servers.
+  - **Rules & Syntax:**
+    - **`to_email`** (string, required): Target recipient email address.
+    - **`subject`** (string, required): Subject line of the email.
+    - **`body`** (string, required): The text or HTML body content. Supports step reference placeholders (e.g., `[STEP_3]`).
+    - **`is_html`** (boolean, optional): Set to `true` if the body contains HTML markup. Defaults to `false`.
+    - Automatically routes through local unauthenticated delivery or configured SMTP credentials via the application's `EmailService`.
 
 5. **`generate_image`**
-   - **Purpose:** Generates an image based on a detailed text prompt and saves it as a file inside the active conversation workspace.
-   - **Rules & Syntax:**
-     - **`prompt`** (string, required): A detailed and descriptive image prompt (preferably in English for optimal image generation quality).
-     - **`filename`** (string, optional): Target filename (e.g., `scene.png` or `illustration.jpg`).
-     - **`aspect_ratio`** (string, optional): Aspect ratio of the generated image. Supported values: `"1:1"` (default), `"16:9"`, `"9:16"`.
+  - **Purpose:** Generates an image based on a detailed text prompt and saves it as a file inside the active conversation workspace.
+  - **Rules & Syntax:**
+    - **`prompt`** (string, required): A detailed and descriptive image prompt (preferably in English for optimal image generation quality).
+    - **`filename`** (string, optional): Target filename (e.g., `scene.png` or `illustration.jpg`).
+    - **`aspect_ratio`** (string, optional): Aspect ratio of the generated image. Supported values: `"1:1"` (default), `"16:9"`, `"9:16"`.
 
 6. **`web_search`**
-   - **Purpose:** Executes live web search queries to discover current information, links, and real-time market or news updates.
-   - **Rules & Behavior:**
-     - **`query`** (string, required): The search terms or research prompt to execute.
-     - **Hybrid Provider Resolution:** Automatically selects the search backend based on environmental configuration:
-       - **Tavily Search API:** Utilized when `TAVILY_API_KEY` is configured in `.env`. Provides LLM-optimized, structured search results and deep factual content.
-       - **DuckDuckGo Search:** Functions as a zero-config, privacy-focused fallback provider when no API key is present.
-     - Designed for initial discovery phases in multi-step task chains, providing actionable target URLs for subsequent `fetch_url` analysis.
+  - **Purpose:** Executes live web search queries to discover current information, links, and real-time market or news updates.
+  - **Rules & Behavior:**
+    - **`query`** (string, required): The search terms or research prompt to execute.
+    - **Hybrid Provider Resolution:** Automatically selects the search backend based on environmental configuration:
+      - **Tavily Search API:** Utilized when `TAVILY_API_KEY` is configured in `.env`. Provides LLM-optimized, structured search results and deep factual content.
+      - **DuckDuckGo Search:** Functions as a zero-config, privacy-focused fallback provider when no API key is present.
+    - Designed for initial discovery phases in multi-step task chains, providing actionable target URLs for subsequent `fetch_url` analysis.
 
 7. **`call_api`**
-   - **Purpose:** Executes structured HTTP API requests (GET, POST, PUT, PATCH, DELETE) against local or remote REST endpoints.
-   - **Rules & Syntax:**
-     - **`url`** (string, required): Full target URL including scheme and host (e.g., `http://127.0.0.1:5000/api/v1/customers`).
-     - **`method`** (string, optional): HTTP request method. Supported values: `"GET"` (default), `"POST"`, `"PUT"`, `"PATCH"`, `"DELETE"`.
-     - **`params`** (object, optional): Key-value pairs for query string parameters. Supports step reference placeholders (e.g., `[STEP_1]`).
-     - **`json_data`** (object, optional): JSON payload body for write operations (`POST`, `PUT`, `PATCH`). Supports step reference placeholders.
-     - **`headers`** (object, optional): Custom HTTP request headers (e.g., `{"Authorization": "Bearer ..."}`).
-     - **`timeout`** (integer, optional): Request timeout duration in seconds. Defaults to `30`.
-   - **Usage Context:** Designed specifically for structured endpoints and REST APIs. For unstructured web pages, documents, or RSS feeds, use `fetch_url` instead.
+  - **Purpose:** Executes structured HTTP API requests (GET, POST, PUT, PATCH, DELETE) against local or remote REST endpoints.
+  - **Rules & Syntax:**
+    - **`url`** (string, required): Full target URL including scheme and host (e.g., `http://127.0.0.1:5000/api/v1/customers`).
+    - **`method`** (string, optional): HTTP request method. Supported values: `"GET"` (default), `"POST"`, `"PUT"`, `"PATCH"`, `"DELETE"`.
+    - **`params`** (object, optional): Key-value pairs for query string parameters. Supports step reference placeholders (e.g., `[STEP_1]`).
+    - **`json_data`** (object, optional): JSON payload body for write operations (`POST`, `PUT`, `PATCH`). Supports step reference placeholders.
+    - **`headers`** (object, optional): Custom HTTP request headers (e.g., `{"Authorization": "Bearer ..."}`).
+    - **`timeout`** (integer, optional): Request timeout duration in seconds. Defaults to `30`.
+  - **Usage Context:** Designed specifically for structured endpoints and REST APIs. For unstructured web pages, documents, or RSS feeds, use `fetch_url` instead.
 
 8. **`read_file`**
-   - **Purpose:** Reads and retrieves the raw text content of an existing file from the active conversation workspace.
-   - **Rules & Syntax:**
-     - **`file_path`** (string, required): Relative path or filename of the target file (e.g., `README.md` or `exports/data.json`).
-     - **`encoding`** (string, optional): Text encoding used to read the file (defaults to `"utf-8"`).
-     - File paths are automatically isolated and resolved inside the active conversation directory.
-     - Ideal for context hydration, parsing local repository artifacts, or retrieving outputs generated in prior execution steps before passing them to downstream tools like `message_llm`.
+  - **Purpose:** Reads and retrieves the raw text content of an existing file from the active conversation workspace.
+  - **Rules & Syntax:**
+    - **`file_path`** (string, required): Relative path or filename of the target file (e.g., `README.md` or `exports/data.json`).
+    - **`encoding`** (string, optional): Text encoding used to read the file (defaults to `"utf-8"`).
+    - File paths are automatically isolated and resolved inside the active conversation directory.
+    - Ideal for context hydration, parsing local repository artifacts, or retrieving outputs generated in prior execution steps before passing them to downstream tools like `message_llm`.
+
+9. **`message_agent`**
+  - **Purpose:** Delegates a sub-task or question to another specialized agent in the system and waits for its execution output.
+  - **Rules & Syntax:**
+    - **`target_agent_id`** (string, required): The unique UUID of the target agent to invoke. Must be a valid ID listed in the system prompt. Self-invocation is strictly prohibited.
+    - **`message`** (string, required): The prompt, instruction, or task payload passed to the target agent. Supports step reference placeholders (e.g., `[STEP_1]`).
+  - **Rules & Behavior:**
+    - Supports real-time streaming of sub-agent task events, text output, and execution steps via generator delegation.
+    - Automatically enforces nested execution depth safety limits (up to `MAX_SUBAGENT_CALL_DEPTH = 3`) to prevent infinite recursive agent loops.
+    - Results returned by `message_agent` are treated as final for that sub-task; parent agents are instructed to consume the returned payload directly without executing redundant fallback steps.
 
 ### Task Execution Workflow
 
