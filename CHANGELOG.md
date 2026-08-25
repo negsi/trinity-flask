@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Added
 
+- New `_has_llm_step_in_chain` helper method in `ReActLoopRunner` to check for `message_llm` execution steps in task chains.
+
 ## Changed
+
+- Refactored `base_agent.prompt.md` system prompt for better readability, token efficiency, and clearer tool execution rules. (!)
 
 ## [0.1.11] - 2026-08-24
 

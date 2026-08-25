@@ -152,6 +152,12 @@ class ReActLoopRunner:
             created_files=all_created_files,
         )
 
+    def _has_llm_step_in_chain(self, execution: LLMExecution | None) -> bool:
+        """Checks whether the execution chain contains a message_llm step."""
+        if not execution or not hasattr(execution, "steps"):
+            return False
+        return any(getattr(step, "tool", None) == "message_llm" for step in execution.steps)
+
     def _run_stream_turn(
         self,
         state: ReActTurnState,
