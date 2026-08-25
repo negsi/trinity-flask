@@ -31,7 +31,7 @@ def default_file_url_resolver(conversation_id: str, filename: str) -> str:
     """Default fallback URI builder for conversation file attachments."""
     return f"/api/v1/chat/conversations/{conversation_id}/files/{filename}"
 
-MAX_SUBAGENT_CALL_DEPTH = 3
+MAX_SUBAGENT_CALL_DEPTH = 7
 
 
 class AgentOrchestrator:

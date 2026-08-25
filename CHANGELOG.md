@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Changed
 
 - Refactored `base_agent.prompt.md` system prompt for better readability, token efficiency, and clearer tool execution rules. (!)
+- Increased `MAX_SUBAGENT_CALL_DEPTH` to `7` in AgentOrchestrator.
 
 ## [0.1.11] - 2026-08-24
 
