@@ -10,6 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ## Added
 
+## Changed
+
+## [0.1.13] - 2026-08-26
+
+## Added
+
 - **Modular Route Structure**: Split the monolithic `app/routes/agents.py` into feature-dedicated domain blueprints (`datasources.py`, `conversations.py`, `streaming.py`).
 
 - **Dynamic Blueprint Registration**: Added automated route discovery and blueprint registration in `app/routes/__init__.py` using `importlib`.
@@ -344,7 +350,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.12...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.13...develop
+[0.1.13]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.13
 [0.1.12]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.12
 [0.1.11]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.11
 [0.1.10]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.10
