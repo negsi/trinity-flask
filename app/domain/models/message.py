@@ -1,6 +1,6 @@
 """Message and MessageAttachment Domain Models Module.
 
-Defines chat messages, sender identities, and associated binary attachments.
+Defines chat messages, sender identities, associated binary attachments, and task execution phases.
 """
 
 from dataclasses import dataclass, field
@@ -82,6 +82,7 @@ class Message:
         id (str): Unique UUID message identifier.
         recipient_id (str | None): Optional identifier of the targeted recipient.
         attachments (list[MessageAttachment]): Associated file attachments.
+        task_phases (list[dict[str, Any]]): Executed task chains associated with this message.
         timestamp (datetime): UTC creation timestamp.
     """
 
@@ -93,6 +94,7 @@ class Message:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     recipient_id: str | None = None
     attachments: list[MessageAttachment] = field(default_factory=list)
+    task_phases: list[dict[str, Any]] = field(default_factory=list)
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def __post_init__(self) -> None:
@@ -118,7 +120,7 @@ class Message:
         """Serializes the message entity and its attachments into a dictionary.
 
         Returns:
-            dict[str, Any]: Serialized message dictionary.
+            dict[str, Any]: Serialized message dictionary matching frontend contract.
         """
         return {
             "id": self.id,
@@ -129,5 +131,6 @@ class Message:
             "text": self.text,
             "recipient_id": self.recipient_id,
             "attachments": [att.to_dict() for att in self.attachments],
+            "taskPhases": self.task_phases,
             "timestamp": self.timestamp.isoformat(),
         }

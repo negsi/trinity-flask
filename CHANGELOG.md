@@ -8,9 +8,16 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ## [Unreleased]
 
-## Added
+### Added
 
-## Changed
+- Integrated task execution chain persistence into the conversation history, allowing completed and pending `taskPhases` to be reloaded on page refresh.
+
+### Changed
+
+- Expanded `Message` domain model mapping (`_to_domain`) in `SQLAlchemyMessageRepository` to join and resolve associated `LLMExecution` step chains.
+- Updated `get_by_conversation` repository queries to utilize `joinedload` on `LLMExecutionModel.steps` for eager loading.
+- Added fallback execution-to-message mapping logic to correctly associate orphaned executions (with `NULL` `message_id`) to their respective agent messages.
+- Updated message response payloads to properly map internal `task_phases` attributes to camelCase `taskPhases` expected by the frontend.
 
 ## [0.2.0] - 2026-08-26
 
