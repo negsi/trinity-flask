@@ -10,6 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ## Added
 
+## Changed
+
+## [0.2.0] - 2026-08-26
+
+## Added
+
 - New relational `LLMExecutionStepModel` entity to track individual step progress in the database. (**flask db upgrade**)
 - Granular `update_step` method in `SQLAlchemyLLMExecutionRepository` to update single step states dynamically.
 
@@ -357,7 +363,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.13...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.0...develop
+[0.2.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.0
 [0.1.13]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.13
 [0.1.12]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.12
 [0.1.11]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.11
