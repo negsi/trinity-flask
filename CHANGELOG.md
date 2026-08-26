@@ -4,11 +4,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
+
 ## [Unreleased]
 
 ## Added
 
 ## Changed
+
+## [0.2.0] - 2026-08-26
+
+## Added
+
+- New relational `LLMExecutionStepModel` entity to track individual step progress in the database. (**flask db upgrade**)
+- Granular `update_step` method in `SQLAlchemyLLMExecutionRepository` to update single step states dynamically.
+
+## Changed
+
+- Migrated `LLMExecutionModel.steps` from a JSON column to a 1:N database relationship.
+- Refactored `TaskExecutor` and `ReActLoopRunner` to update execution step status (`RUNNING`, `COMPLETED`, `FAILED`) and step results in real-time.
+- Updated DI container to inject `LLMExecutionRepository` into `ReActLoopRunner`.
+
+## [0.1.13] - 2026-08-26
+
+## Added
+
+- **Modular Route Structure**: Split the monolithic `app/routes/agents.py` into feature-dedicated domain blueprints (`datasources.py`, `conversations.py`, `streaming.py`).
+
+- **Dynamic Blueprint Registration**: Added automated route discovery and blueprint registration in `app/routes/__init__.py` using `importlib`.
+
+## Changed
+
+- **Route Wiring**: Refactored `register_routes` to dynamically iterate over `ROUTE_MODULES` and wire dependencies across all domain blueprints.
+- **Blueprint Naming Convention**: Standardized Blueprint instance identifiers to `bp` across all route modules.
+- **Cleaned Up `agents.py` and `chat.py`**: Streamlined responsibilities by removing extracted route handlers and unused imports.
 
 ## [0.1.12] - 2026-08-26
 
@@ -334,7 +363,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.12...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.0...develop
+[0.2.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.0
+[0.1.13]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.13
 [0.1.12]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.12
 [0.1.11]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.11
 [0.1.10]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.10

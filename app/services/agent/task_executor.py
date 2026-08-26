@@ -12,7 +12,9 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from app.domain.enums import ExecutionStepStatus
 from app.domain.models.llm_execution import ExecutionStep, LLMExecution
+from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
 from app.services.agent.constants import PROTOCOL_TASK_CHAIN
 
 logger = logging.getLogger(__name__)
@@ -37,11 +39,13 @@ class TaskExecutor:
         llm_stream_func: Callable[[str], Generator[str, None, None]] | None = None,
         email_service: Any | None = None,
         conversations_folder: Path | str | None = None,
+        execution_repository: LLMExecutionRepository | None = None,
     ) -> None:
         self.tools = tools
         self.llm_stream_func = llm_stream_func
         self.email_service = email_service
         self.conversations_folder = str(conversations_folder) if conversations_folder is not None else None
+        self.execution_repository = execution_repository
 
     def execute_chain_stream(
         self,
@@ -87,21 +91,39 @@ class TaskExecutor:
             tool_name = step.tool_name
             raw_params = step.parameters or {}
 
+            # 1. Update DB: Step running
+            step.status = ExecutionStepStatus.RUNNING
+            self._update_step_in_db(execution.id, step_num, ExecutionStepStatus.RUNNING)
+
             yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps({'type': 'task_step_update', 'step_number': step_num, 'status': 'running'})}\n"
             logger.info("[TaskExecutor] Step %d (%s) Raw Params: %s", step_num, tool_name, raw_params)
 
             resolved_params = self._resolve_parameters(raw_params, context)
 
-            if tool_name == "message_llm":
-                yield from self._execute_llm_tool(step_num, resolved_params, context)
-            else:
-                yield from self._execute_standard_tool(step_num, tool_name, resolved_params, context)
-                
+            step_failed = False
+            try:
+                if tool_name == "message_llm":
+                    yield from self._execute_llm_tool(step_num, resolved_params, context)
+                else:
+                    yield from self._execute_standard_tool(step_num, tool_name, resolved_params, context)
+            except Exception as exc:
+                step_failed = True
+                logger.error("[TaskExecutor] Execution failed for Step %d: %s", step_num, exc, exc_info=True)
+
+            step_result = str(context.get(f"step_{step_num}", ""))
+            final_status = ExecutionStepStatus.FAILED if step_failed else ExecutionStepStatus.COMPLETED
+            
+            step.status = final_status
+            step.result = step_result
+
+            # 2. Update DB: Step completed / failed mit Resultat
+            self._update_step_in_db(execution.id, step_num, final_status, step_result)
+
             yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps({
                 'type': 'task_step_update',
                 'step_number': step_num,
-                'status': 'completed',
-                'result': context.get(f'step_{step_num}')
+                'status': final_status.value,
+                'result': step_result
             })}\n"
 
         return ChainExecutionResult(
@@ -110,6 +132,32 @@ class TaskExecutor:
             last_result=context.get("last_result", ""),
             created_files=context.get("created_files", []),
         )
+
+    def _update_step_in_db(
+        self,
+        execution_id: str,
+        step_number: int,
+        status: ExecutionStepStatus,
+        result: str | None = None,
+    ) -> None:
+        """Helper to safely trigger single step row updates in DB."""
+        if not self.execution_repository or not execution_id:
+            return
+
+        try:
+            self.execution_repository.update_step(
+                execution_id=execution_id,
+                step_number=step_number,
+                status=status,
+                result=result,
+            )
+        except Exception as exc:
+            logger.error(
+                "Failed to persist step update in DB (Execution: %s, Step: %d): %s",
+                execution_id,
+                step_number,
+                exc,
+            )
 
     def _execute_llm_tool(
         self,
@@ -160,6 +208,7 @@ class TaskExecutor:
         if tool_name not in self.tools:
             err = f"\n[Error: Tool '{tool_name}' is not registered.]"
             logger.error(err)
+            context[f"step_{step_num}"] = err
             yield err
             return
 
@@ -203,7 +252,6 @@ class TaskExecutor:
 
             tool_raw_result = tool_func(**exec_params)
 
-            # Consume generator tools (like streaming message_agent) in real-time
             was_generator = inspect.isgenerator(tool_raw_result)
             if was_generator:
                 try:
@@ -221,7 +269,6 @@ class TaskExecutor:
             context[f"step_{step_num}"] = output
             context["last_result"] = output
 
-            # Fallback yield only for non-generator sub-agent calls
             if tool_name == "message_agent" and output and not was_generator:
                 yield output
 
@@ -232,6 +279,7 @@ class TaskExecutor:
         except Exception as exc:
             err_msg = f"\n[Error executing tool '{tool_name}' in Step {step_num}: {exc}]"
             logger.error(err_msg, exc_info=True)
+            context[f"step_{step_num}"] = err_msg
             yield err_msg
 
     def _collect_created_files(
@@ -271,7 +319,6 @@ class TaskExecutor:
             if file_path:
                 filename = Path(file_path).name
                 
-                # Erzwinge Speicherung im Konversations-Hauptordner statt in Subtask-Unterordnern
                 if base_dir and conversation_id:
                     clean_path = str(Path(base_dir) / str(conversation_id) / filename)
                 else:

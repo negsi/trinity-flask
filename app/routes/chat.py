@@ -1,36 +1,16 @@
 """
-Chat and Execution HTTP API Routes.
+Chat and File Serving HTTP Endpoints.
 
-Exposes endpoints for messaging operations, conversation histories,
-and real-time streaming LLM agent responses via Server-Sent Events (SSE).
+Handles conversation sandbox file serving.
 """
 
 import os
-from typing import Generator
-from flask import (
-    Blueprint,
-    jsonify,
-    Response,
-    request,
-    stream_with_context,
-    send_from_directory,
-    current_app,
-    abort,
-)
-from dependency_injector.wiring import inject, Provide
+from flask import Blueprint, send_from_directory, current_app
 
-from app.containers import Container
-from app.services.messaging import MessagingService
-from app.services.agent import AgentOrchestrator
-from app.services.agent import AgentService
-from app.services.infrastructure import SecurityContextService
-from app.routes.schemas import SendMessageRequest
-from app.domain.errors import ValidationError
-
-chat_bp = Blueprint("chat", __name__, url_prefix="/api/v1/chat")
+bp = Blueprint("chat", __name__, url_prefix="/api/v1/chat")
 
 
-@chat_bp.route("/conversations/<conversation_id>/files/<path:filename>", methods=["GET"])
+@bp.route("/conversations/<conversation_id>/files/<path:filename>", methods=["GET"])
 def get_conversation_file(
     conversation_id: str,
     filename: str,

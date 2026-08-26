@@ -13,6 +13,7 @@ from typing import Any
 
 from app.domain.models.llm_execution import LLMExecution
 from app.domain.models.message import Message, MessageAttachment
+from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
 from app.services.agent.agent_context_builder import AgentContextBuilder
 from app.services.agent.constants import PROTOCOL_TASK_CHAIN
 from app.services.agent.task_executor import ChainExecutionResult, TaskExecutor
@@ -55,12 +56,14 @@ class ReActLoopRunner:
         tool_registry: ToolRegistry,
         email_service: Any | None = None,
         conversations_folder: Path | str | None = None,
+        execution_repository: LLMExecutionRepository | None = None,
     ) -> None:
         self.llm_service = llm_service
         self.context_builder = context_builder
         self.tool_registry = tool_registry
         self.email_service = email_service
         self.conversations_folder = conversations_folder
+        self.execution_repository = execution_repository
 
     def run_react_loop(
         self,
@@ -219,6 +222,12 @@ class ReActLoopRunner:
                 conversation_id=conversation_id,
             )
             yield from self.llm_service.stream(messages)
+
+        if self.execution_repository:
+            try:
+                self.execution_repository.save(execution)
+            except Exception as exc:
+                logger.error("Failed to initial save execution '%s': %s", execution.id, exc)
 
         executor = TaskExecutor(
             tools=self.tool_registry.get_tools(),
