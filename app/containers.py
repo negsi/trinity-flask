@@ -166,6 +166,7 @@ class Container(containers.DeclarativeContainer):
         tool_registry=tool_registry,
         email_service=email_service,
         conversations_folder=config.CONVERSATIONS_FOLDER,
+        execution_repository=llm_execution_repository,
     )
 
     # Configure AgentOrchestrator dependencies

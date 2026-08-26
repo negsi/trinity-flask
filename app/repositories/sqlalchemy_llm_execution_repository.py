@@ -11,7 +11,7 @@ from app.domain.errors import StorageError
 from app.domain.models.llm_execution import ExecutionStep, LLMExecution
 from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
 from app.storage.sqlalchemy.db import db
-from app.storage.sqlalchemy.models import LLMExecutionModel
+from app.storage.sqlalchemy.models import LLMExecutionModel, LLMExecutionStepModel
 
 logger = logging.getLogger(__name__)
 
@@ -28,18 +28,28 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
         Returns:
             LLMExecution: Domain entity.
         """
-        steps = [
-            ExecutionStep(
-                step_number=s.get("step", 0),
-                description=s.get("description", ""),
-                tool_name=s.get("tool"),
-                parameters=s.get("parameters", {}),
-                status=ExecutionStepStatus(s.get("status", ExecutionStepStatus.PENDING.value)),
-                result=s.get("result"),
-            )
-            for s in (model.steps or [])
-            if isinstance(s, dict)
-        ]
+        steps = []
+        if model.steps:
+            for s in model.steps:
+                status_val = s.status
+                if isinstance(status_val, str):
+                    status_val = ExecutionStepStatus(status_val)
+
+                steps.append(
+                    ExecutionStep(
+                        id=s.id,
+                        execution_id=s.execution_id,
+                        step_number=s.step_number,
+                        description=s.description,
+                        tool_name=s.tool_name,
+                        parameters=s.parameters or {},
+                        status=status_val,
+                        result=s.result,
+                    )
+                )
+
+        # Sortiere Schritte nach step_number zur Sicherheit
+        steps.sort(key=lambda x: x.step_number)
 
         return LLMExecution(
             id=model.id,
@@ -53,7 +63,7 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
         )
 
     def save(self, execution: LLMExecution) -> LLMExecution:
-        """Persists or updates an LLMExecution state in the database.
+        """Persists or updates an LLMExecution state and its associated steps in the database.
 
         Args:
             execution (LLMExecution): Entity to persist.
@@ -69,8 +79,6 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
             if execution.id:
                 model = db.session.get(LLMExecutionModel, execution.id)
 
-            steps_json = [s.to_dict() for s in execution.steps]
-
             if not model:
                 model = LLMExecutionModel(
                     id=execution.id,
@@ -79,7 +87,6 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
                     response_type=execution.response_type,
                     summary_or_content=execution.summary_or_content,
                     is_complete=execution.is_complete,
-                    steps=steps_json,
                     created_at=execution.created_at,
                 )
                 db.session.add(model)
@@ -89,7 +96,32 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
                 model.response_type = execution.response_type
                 model.summary_or_content = execution.summary_or_content
                 model.is_complete = execution.is_complete
-                model.steps = steps_json
+
+            # Synchronisiere die verknüpften Execution Steps (Relational)
+            existing_steps = {step_model.step_number: step_model for step_model in model.steps}
+
+            for step in execution.steps:
+                status_val = step.status if isinstance(step.status, ExecutionStepStatus) else ExecutionStepStatus(step.status)
+
+                if step.step_number in existing_steps:
+                    step_model = existing_steps[step.step_number]
+                    step_model.description = step.description
+                    step_model.tool_name = step.tool_name
+                    step_model.parameters = step.parameters
+                    step_model.status = status_val
+                    step_model.result = step.result
+                else:
+                    new_step_model = LLMExecutionStepModel(
+                        id=step.id,
+                        execution_id=execution.id,
+                        step_number=step.step_number,
+                        description=step.description,
+                        tool_name=step.tool_name,
+                        parameters=step.parameters,
+                        status=status_val,
+                        result=step.result,
+                    )
+                    model.steps.append(new_step_model)
 
             db.session.commit()
             return self._to_domain(model)
@@ -98,6 +130,63 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
             db.session.rollback()
             logger.error("Failed to save LLMExecution '%s': %s", execution.id, exc, exc_info=True)
             raise StorageError(f"Database error while saving LLMExecution '{execution.id}': {exc}") from exc
+
+    def update_step(
+        self,
+        execution_id: str,
+        step_number: int,
+        status: ExecutionStepStatus | str,
+        result: str | None = None,
+    ) -> bool:
+        """Selectively updates the status and result of an individual execution step row.
+
+        Args:
+            execution_id (str): Target LLMExecution UUID.
+            step_number (int): Order index of the step.
+            status (ExecutionStepStatus | str): New step execution state.
+            result (str | None): Optional execution output string.
+
+        Returns:
+            bool: True if row updated, False if step not found.
+
+        Raises:
+            StorageError: If database update fails.
+        """
+        try:
+            status_enum = status if isinstance(status, ExecutionStepStatus) else ExecutionStepStatus(status)
+
+            step_model = (
+                LLMExecutionStepModel.query.filter(
+                    LLMExecutionStepModel.execution_id == execution_id,
+                    LLMExecutionStepModel.step_number == step_number,
+                ).first()
+            )
+
+            if not step_model:
+                logger.warning(
+                    "Attempted to update non-existent step %d for execution '%s'.",
+                    step_number,
+                    execution_id,
+                )
+                return False
+
+            step_model.status = status_enum
+            if result is not None:
+                step_model.result = result
+
+            db.session.commit()
+            return True
+
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            logger.error(
+                "Failed to update step %d for execution '%s': %s",
+                step_number,
+                execution_id,
+                exc,
+                exc_info=True,
+            )
+            raise StorageError(f"Database error updating step {step_number} for execution '{execution_id}': {exc}") from exc
 
     def get_by_id(self, execution_id: str) -> LLMExecution | None:
         """Retrieves an execution record by its unique ID.

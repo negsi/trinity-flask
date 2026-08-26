@@ -23,6 +23,8 @@ class ExecutionStep:
         parameters (dict[str, Any]): Arguments passed to the tool invocation.
         status (ExecutionStepStatus): Current execution state of this step.
         result (str | None): Output string generated upon tool execution.
+        id (str): Unique UUID identifier for the step record.
+        execution_id (str | None): Parent execution UUID reference.
     """
 
     step_number: int
@@ -31,6 +33,8 @@ class ExecutionStep:
     parameters: dict[str, Any] = field(default_factory=dict)
     status: ExecutionStepStatus = ExecutionStepStatus.PENDING
     result: str | None = None
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    execution_id: str | None = None
 
     def __post_init__(self) -> None:
         """Validates execution step constraints.
@@ -54,6 +58,8 @@ class ExecutionStep:
             dict[str, Any]: Serialized step data.
         """
         return {
+            "id": self.id,
+            "execution_id": self.execution_id,
             "step": self.step_number,
             "description": self.description,
             "tool": self.tool_name,
@@ -102,6 +108,11 @@ class LLMExecution:
             except ValueError:
                 raise ValidationError(f"Invalid response type '{self.response_type}'.")
 
+        # Verknüpfe Schritte automatisch mit der eigenen execution_id
+        for step in self.steps:
+            if not step.execution_id:
+                object.__setattr__(step, "execution_id", self.id)
+
     def to_dict(self) -> dict[str, Any]:
         """Serializes the execution lifecycle model into a dictionary.
 
@@ -126,16 +137,7 @@ class LLMExecution:
         conversation_id: str,
         message_id: str | None = None,
     ) -> Self | None:
-        """Parses structured JSON response from an LLM into an LLMExecution task chain entity.
-
-        Args:
-            payload (dict[str, Any]): Structured JSON dictionary returned by the LLM.
-            conversation_id (str): Associated conversation UUID.
-            message_id (str | None): Optional associated message UUID.
-
-        Returns:
-            Self | None: An instantiated LLMExecution entity if payload matches a task chain, else None.
-        """
+        """Parses structured JSON response from an LLM into an LLMExecution task chain entity."""
         if not isinstance(payload, dict):
             return None
 
@@ -149,6 +151,7 @@ class LLMExecution:
 
         is_complete = bool(response_data.get("is_complete", True))
         raw_steps = response_data.get("steps", [])
+        execution_id = str(uuid.uuid4())
 
         steps: list[ExecutionStep] = []
         if isinstance(raw_steps, list):
@@ -163,10 +166,12 @@ class LLMExecution:
                                 tool_name=s.get("tool") if s.get("tool") else None,
                                 parameters=s.get("parameters") if isinstance(s.get("parameters"), dict) else {},
                                 status=ExecutionStepStatus.PENDING,
+                                execution_id=execution_id,
                             )
                         )
 
         return cls(
+            id=execution_id,
             conversation_id=conversation_id,
             message_id=message_id,
             response_type=ResponseType.TASK_CHAIN,

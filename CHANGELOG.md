@@ -10,7 +10,14 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ## Added
 
+- New relational `LLMExecutionStepModel` entity to track individual step progress in the database. (**flask db upgrade**)
+- Granular `update_step` method in `SQLAlchemyLLMExecutionRepository` to update single step states dynamically.
+
 ## Changed
+
+- Migrated `LLMExecutionModel.steps` from a JSON column to a 1:N database relationship.
+- Refactored `TaskExecutor` and `ReActLoopRunner` to update execution step status (`RUNNING`, `COMPLETED`, `FAILED`) and step results in real-time.
+- Updated DI container to inject `LLMExecutionRepository` into `ReActLoopRunner`.
 
 ## [0.1.13] - 2026-08-26
 
