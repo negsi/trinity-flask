@@ -96,8 +96,13 @@ class TaskExecutor:
                 yield from self._execute_llm_tool(step_num, resolved_params, context)
             else:
                 yield from self._execute_standard_tool(step_num, tool_name, resolved_params, context)
-
-            yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps({'type': 'task_step_update', 'step_number': step_num, 'status': 'completed'})}\n"
+                
+            yield f"\n{PROTOCOL_TASK_CHAIN}{json.dumps({
+                'type': 'task_step_update',
+                'step_number': step_num,
+                'status': 'completed',
+                'result': context.get(f'step_{step_num}')
+            })}\n"
 
         return ChainExecutionResult(
             is_complete=execution.is_complete,

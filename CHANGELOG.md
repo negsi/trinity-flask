@@ -8,12 +8,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Added
 
+## Changed
+
+## [0.1.12] - 2026-08-26
+
+## Added
+
 - New `_has_llm_step_in_chain` helper method in `ReActLoopRunner` to check for `message_llm` execution steps in task chains.
 
 ## Changed
 
 - Refactored `base_agent.prompt.md` system prompt for better readability, token efficiency, and clearer tool execution rules. (!)
 - Increased `MAX_SUBAGENT_CALL_DEPTH` to `7` in AgentOrchestrator.
+- **Task Execution Pipeline (`TaskExecutor`):** Extended `task_step_update` protocol payloads to include execution results.
+  - Updated step completion SSE events to attach `result` fetched dynamically from the execution context (`context.get(f'step_{step_num}')`).
+  - Formatted protocol payload emission for improved readability during streaming execution.
 
 ## [0.1.11] - 2026-08-24
 
@@ -325,7 +334,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.11...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.1.12...develop
+[0.1.12]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.12
 [0.1.11]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.11
 [0.1.10]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.10
 [0.1.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.9
