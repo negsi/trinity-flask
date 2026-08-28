@@ -166,7 +166,13 @@ class TaskExecutor:
         context: dict[str, Any],
     ) -> Generator[str, None, None]:
         """Executes nested LLM streaming tool requests."""
-        prompt = str(params.get("message", "")).strip()
+        prompt = str(
+            params.get("prompt")
+            or params.get("message")
+            or params.get("text")
+            or ""
+        ).strip()
+        
         if not prompt:
             logger.warning("[TaskExecutor] Step %d: Empty prompt for message_llm.", step_num)
             return
@@ -298,7 +304,7 @@ class TaskExecutor:
             or self.conversations_folder
         )
 
-        if tool_name == "generate_image" and isinstance(raw_result, dict) and raw_result.get("status") == "success":
+        if tool_name in ("generate_image", "manage_odf") and isinstance(raw_result, dict) and raw_result.get("status") == "success":
             filename = raw_result.get("filename")
             if filename:
                 if base_dir and conversation_id:
@@ -314,6 +320,7 @@ class TaskExecutor:
                     "conversation_id": conversation_id,
                     "base_dir": str(base_dir) if base_dir else None,
                 })
+
         elif tool_name == "write_file" and not output_str.startswith("Error"):
             file_path = exec_params.get("file_path")
             if file_path:

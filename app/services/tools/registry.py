@@ -17,6 +17,7 @@ from app.services.tools.communication_tools import message_agent, message_llm, s
 from app.services.tools.file_tools import read_file, write_file
 from app.services.tools.media_tools import generate_image
 from app.services.tools.search_tools import web_search
+from app.services.tools.office_tools import manage_odf
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +159,31 @@ class ToolRegistry:
             "read_file": self.read_file,
             "send_email": self.send_email,
             "generate_image": self.generate_image,
+            "manage_odf": self.manage_odf,
         }
         base_tools.update(self._custom_tools)
         return base_tools
+
+    def manage_odf(
+        self,
+        action: str,
+        doc_type: str = "odt",
+        filename: str = "document.odt",
+        title: str = "",
+        content: list[dict[str, Any]] | None = None,
+        conversation_id: str | None = None,
+        base_dir: str | Path | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any] | str:
+        """Creates or reads OpenDocument files (.odt, .ods, .odp)."""
+        return manage_odf(
+            file_storage_service=self.file_storage_service,
+            action=action,
+            doc_type=doc_type,
+            filename=filename,
+            title=title,
+            content=content,
+            conversation_id=conversation_id,
+            base_dir=base_dir or self.conversations_folder,
+            **kwargs,
+        )

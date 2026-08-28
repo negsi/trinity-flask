@@ -10,6 +10,7 @@ from app.services.tools.file_tools import locate_file, write_file, read_file
 from app.services.tools.media_tools import generate_image
 from app.services.tools.registry import ToolRegistry
 from app.services.tools.search_tools import web_search
+from app.services.tools.office_tools import manage_odf
 
 __all__ = [
     "ToolRegistry",
@@ -23,4 +24,5 @@ __all__ = [
     "web_search",
     "write_file",
     "read_file",
+    "manage_odf",
 ]

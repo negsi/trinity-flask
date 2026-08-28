@@ -49,3 +49,4 @@ Werkzeug==3.1.8
 linkify-it-py==2.1.0
 ddgs>=0.1.0
 tavily-python>=0.5.0
+odfdo>=3.8.0

@@ -11,6 +11,10 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 ### Added
 
 - Integrated task execution chain persistence into the conversation history, allowing completed and pending `taskPhases` to be reloaded on page refresh.
+- Added `manage_odf` tool support for creating, reading, and updating OpenDocument Format files (`.odt`, `.ods`, `.odp`) powered by `odfdo`.
+- Registered `manage_odf` in `ToolRegistry` and exposed it in `app.services.tools`.
+- Added file artifact tracking in `TaskExecutor` for `manage_odf` execution outputs (attaching generated ODF documents to conversation context).
+- Added `odfdo>=3.8.0` dependency to `requirements.txt`. (**pip install -r requirements.txt**)
 
 ### Changed
 
@@ -18,6 +22,10 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - Updated `get_by_conversation` repository queries to utilize `joinedload` on `LLMExecutionModel.steps` for eager loading.
 - Added fallback execution-to-message mapping logic to correctly associate orphaned executions (with `NULL` `message_id`) to their respective agent messages.
 - Updated message response payloads to properly map internal `task_phases` attributes to camelCase `taskPhases` expected by the frontend.
+- Relaxed parameter extraction in `TaskExecutor` for `message_llm` execution to accept `prompt`, `message`, or `text` keys.
+- Updated base agent system prompts (`base_agent.prompt.md`):
+  - Documented `manage_odf` tool usage, capabilities, and rules (including ODF standard English formula syntax like `=AVERAGE(...)` for `.ods`).
+  - Refined `message_llm` guidelines to explicitly enforce unformatted text output (no Markdown formatting or code blocks) when generating content for Office documents.
 
 ## [0.2.0] - 2026-08-26
 
