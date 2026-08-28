@@ -10,6 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+### Changed
+
+## [0.2.1] - 2026-08-28
+
+### Added
+
 - Integrated task execution chain persistence into the conversation history, allowing completed and pending `taskPhases` to be reloaded on page refresh.
 - Added `manage_odf` tool support for creating, reading, and updating OpenDocument Format files (`.odt`, `.ods`, `.odp`) powered by `odfdo`.
 - Registered `manage_odf` in `ToolRegistry` and exposed it in `app.services.tools`.
@@ -378,7 +384,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.0...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.1...develop
+[0.2.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.1
 [0.2.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.0
 [0.1.13]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.13
 [0.1.12]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.12
