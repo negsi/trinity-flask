@@ -1,5 +1,4 @@
-"""
-ReAct Loop Runner Module.
+"""ReAct Loop Runner Module.
 
 Encapsulates multi-turn reasoning and tool execution loops, managing turn iterations,
 sub-step stream parsing, and conversational follow-up prompt compilation.
@@ -123,7 +122,7 @@ class ReActLoopRunner:
             )
 
             if last_result and not state.last_chain_chunks:
-                if execution and execution.is_complete and not self._has_llm_step_in_chain(execution):
+                if execution and execution.is_complete and self._has_llm_step_in_chain(execution):
                     state.accumulated_all_text.append(last_result)
                     state.last_chain_chunks.append(last_result)
                     yield last_result
@@ -136,11 +135,7 @@ class ReActLoopRunner:
             if state.is_complete:
                 break
 
-            state.user_prompt = (
-                f"Original User Query: {user_text}\n\n"
-                f"Result from previous task step execution:\n{last_result}\n\n"
-                "Please formulate the next sub-plan step or final response using these actual result data."
-            )
+            state.user_prompt = f"User Query: {user_text}\n\nTool Output:\n{last_result}"
 
         final_text = (
             "".join(state.last_chain_chunks).strip()
@@ -159,7 +154,7 @@ class ReActLoopRunner:
         """Checks whether the execution chain contains a message_llm step."""
         if not execution or not hasattr(execution, "steps"):
             return False
-        return any(getattr(step, "tool", None) == "message_llm" for step in execution.steps)
+        return any(getattr(step, "tool_name", None) == "message_llm" for step in execution.steps)
 
     def _run_stream_turn(
         self,
@@ -234,6 +229,7 @@ class ReActLoopRunner:
             llm_stream_func=llm_stream_adapter,
             email_service=self.email_service,
             conversations_folder=self.conversations_folder,
+            execution_repository=self.execution_repository,
         )
 
         initial_context = {
