@@ -5,11 +5,14 @@ for Message domain models.
 """
 
 import logging
+from typing import Any
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 
 from app.domain.enums import ActorType
 from app.domain.errors import StorageError
 from app.domain.models.message import Message, MessageAttachment
+from app.storage.sqlalchemy.models.llm_execution import LLMExecutionModel
 from app.domain.repositories.message_repository import MessageRepository
 from app.storage.sqlalchemy.db import db
 from app.storage.sqlalchemy.models import MessageAttachmentModel, MessageModel
@@ -20,15 +23,17 @@ logger = logging.getLogger(__name__)
 class SQLAlchemyMessageRepository(MessageRepository):
     """SQLAlchemy-backed implementation of the MessageRepository interface."""
 
-    def _to_domain(self, model: MessageModel) -> Message:
+    def _to_domain(self, model: MessageModel, execution: LLMExecutionModel | None = None) -> Message:
         """Maps an ORM MessageModel instance to a Message domain entity.
 
         Args:
             model (MessageModel): SQLAlchemy message model.
+            execution (LLMExecutionModel | None): Associated LLM execution containing step chains.
 
         Returns:
             Message: Clean domain entity.
         """
+        # 1. Attachments mappen
         attachments = [
             MessageAttachment(
                 id=att.id,
@@ -43,6 +48,29 @@ class SQLAlchemyMessageRepository(MessageRepository):
             for att in (model.attachments or [])
         ]
 
+        # 2. Task-Phases aus LLMExecution aufbereiten
+        task_phases: list[dict[str, Any]] = []
+        if execution and execution.steps:
+            sorted_steps = sorted(execution.steps, key=lambda s: s.step_number)
+            steps_payload = []
+            for step in sorted_steps:
+                status_str = step.status.value if hasattr(step.status, "value") else str(step.status)
+                steps_payload.append({
+                    "step_number": step.step_number,
+                    "description": step.description,
+                    "tool_name": step.tool_name,
+                    "parameters": step.parameters,
+                    "result": step.result,
+                    "status": status_str.lower(),
+                })
+            
+            if steps_payload:
+                task_phases.append({
+                    "phaseIndex": 1,
+                    "steps": steps_payload,
+                })
+
+        # 3. Message Domain-Objekt mit task_phases befüllen
         return Message(
             id=model.id,
             conversation_id=model.conversation_id,
@@ -52,6 +80,7 @@ class SQLAlchemyMessageRepository(MessageRepository):
             text=model.text,
             recipient_id=model.recipient_id,
             attachments=attachments,
+            task_phases=task_phases,  # <-- HIER FEHLTE ES!
             timestamp=model.timestamp,
         )
 
@@ -151,21 +180,6 @@ class SQLAlchemyMessageRepository(MessageRepository):
         limit: int = 50,
         offset: int = 0,
     ) -> list[Message]:
-        """Fetches messages for a conversation ordered chronologically ascending.
-
-        Calculates offset dynamically to retrieve the latest messages if offset is not specified.
-
-        Args:
-            conversation_id (str): Associated conversation UUID.
-            limit (int): Max number of messages to return.
-            offset (int): Starting record offset.
-
-        Returns:
-            list[Message]: List of domain messages.
-
-        Raises:
-            StorageError: If the query fails.
-        """
         try:
             total = self.count_by_conversation(conversation_id)
             calculated_offset = offset if offset > 0 else max(0, total - limit)
@@ -177,10 +191,49 @@ class SQLAlchemyMessageRepository(MessageRepository):
                 .limit(limit)
                 .all()
             )
-            return [self._to_domain(m) for m in models]
+
+            if not models:
+                return []
+
+            # 1. Alle Executions der Conversation inklusive Steps laden
+            executions = (
+                LLMExecutionModel.query.options(joinedload(LLMExecutionModel.steps))
+                .filter(LLMExecutionModel.conversation_id == conversation_id)
+                .all()
+            )
+
+            # 2. Keying: Primär über message_id, Fallback über conversation_id auf Agent-Nachrichten
+            execution_map: dict[str, LLMExecutionModel] = {}
+            unmapped_executions: list[LLMExecutionModel] = []
+
+            for ex in executions:
+                if ex.message_id:
+                    execution_map[ex.message_id] = ex
+                else:
+                    unmapped_executions.append(ex)
+
+            # Fallback für Executions, deren message_id NULL war
+            if unmapped_executions:
+                agent_models = [
+                    m for m in models 
+                    if getattr(m.sender_type, "value", str(m.sender_type)).lower() == "agent"
+                ]
+                for i, ex in enumerate(unmapped_executions):
+                    if i < len(agent_models) and agent_models[i].id not in execution_map:
+                        execution_map[agent_models[i].id] = ex
+
+            return [self._to_domain(m, execution_map.get(m.id)) for m in models]
+
         except SQLAlchemyError as exc:
-            logger.error("Error retrieving messages for Conversation '%s': %s", conversation_id, exc, exc_info=True)
-            raise StorageError(f"Database error fetching messages for Conversation '{conversation_id}': {exc}") from exc
+            logger.error(
+                "Error retrieving messages for Conversation '%s': %s",
+                conversation_id,
+                exc,
+                exc_info=True,
+            )
+            raise StorageError(
+                f"Database error fetching messages for Conversation '{conversation_id}': {exc}"
+            ) from exc
 
     def count_by_conversation(self, conversation_id: str) -> int:
         """Returns the total number of messages recorded for a conversation.

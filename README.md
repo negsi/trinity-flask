@@ -222,6 +222,17 @@ Trinity agents execute complex web gathering, data processing, and analysis task
     - Automatically enforces nested execution depth safety limits (up to `MAX_SUBAGENT_CALL_DEPTH = 3`) to prevent infinite recursive agent loops.
     - Results returned by `message_agent` are treated as final for that sub-task; parent agents are instructed to consume the returned payload directly without executing redundant fallback steps.
 
+10. **`manage_odf`**
+  - **Purpose:** Creates, reads, appends to, or updates OpenDocument Format files (`.odt` text documents, `.ods` spreadsheets, `.odp` presentations) using `odfdo`.
+  - **Rules & Syntax:**
+    - **`action`** (string, required): Operation to perform. Supported values: `"create"`, `"read"`, `"append"`, `"update"`.
+    - **`doc_type`** (string, optional): OpenDocument format type. Supported values: `"odt"` (default), `"ods"`, `"odp"`.
+    - **`filename`** (string, optional): Target output filename (e.g., `report.odt`, `grades.ods`, `presentation.odp`).
+    - **`title`** (string, optional): Document header or first spreadsheet table name.
+    - **`content`** (any, optional): Content payload to insert or append. Supports 2D arrays, lists of dictionaries, CSV strings, or step reference placeholders (e.g., `[STEP_2]`).
+  - **Rules & Behavior:**
+    - Automatically isolates and saves generated ODF files inside the active conversation workspace.
+
 ### Task Execution Workflow
 
 - **Internal Knowledge / Datasources:** For queries answerable directly via model knowledge or uploaded files (Knowledge Base), the agent responds immediately without triggering external tools.
