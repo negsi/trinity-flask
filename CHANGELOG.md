@@ -8,13 +8,19 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+## [0.2.2] - 2026-08-28
+
 ### Changed
 - Clarified multi-turn planning logic in `base_agent.response_format.md` to restrict Phase 1 plans (`is_complete: false`) strictly to a single fetching step, preventing speculative follow-up steps (fixes loop issues with Gemini 3.5 Flash-Lite).
 - Added explicit sequential step numbering rules starting at `1` to the task chain JSON response schema.
 - Refined conditions for setting `is_complete` to `true` when target URLs and execution context are fully available.
-- Streamlined inter-turn `user_prompt` in `ReActLoopRunner` to a concise input/tool-output format (`User Query: ... \n\nTool Output: ...`), eliminating unnecessary sub-plan instruction overhead[cite: 9].
-- Fixed step property inspection in `ReActLoopRunner._has_llm_step_in_chain` by switching from `step.tool` to `step.tool_name` and fixing condition logic to ensure proper `message_llm` text yielding[cite: 9].
-- Passed missing `execution_repository` instance down into `TaskExecutor` instantiation within `ReActLoopRunner._execute_task_chain`[cite: 9].
+- Streamlined inter-turn `user_prompt` in `ReActLoopRunner` to a concise input/tool-output format (`User Query: ... \n\nTool Output: ...`), eliminating unnecessary sub-plan instruction overhead.
+- Fixed step property inspection in `ReActLoopRunner._has_llm_step_in_chain` by switching from `step.tool` to `step.tool_name` and fixing condition logic to ensure proper `message_llm` text yielding.
+- Passed missing `execution_repository` instance down into `TaskExecutor` instantiation within `ReActLoopRunner._execute_task_chain`.
 
 ## [0.2.1] - 2026-08-28
 
@@ -388,7 +394,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.1...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.2...develop
+[0.2.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.2
 [0.2.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.1
 [0.2.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.0
 [0.1.13]: https://github.com/negsi/trinity-flask/releases/tag/v0.1.13
