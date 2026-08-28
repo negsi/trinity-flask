@@ -20,5 +20,8 @@ Schema zur Planung von Aufgaben:
 ###END_JSON_RESPONSE###
 
 Steuerung von "is_complete":
-- Setze "is_complete": true, wenn dieser Plan die ursprüngliche Anforderung des Benutzers volständig beantwortet.
-- Setze "is_complete": false, wenn du erst Daten beschaffen oder extrahieren musst (z. B. URLs aus einem RSS-Feed/einer HTML-Seite lesen), um im nächsten Durchlauf die eigentlichen Ziel-Schritte mit den echten Daten zu planen.
+- Setze "is_complete": false, wenn du erst Daten beschaffen oder extrahieren musst (z. B. URLs aus einem RSS-Feed/einer HTML-Seite lesen), um im nächsten Durchlauf die eigentlichen Ziel-Schritte mit den echten Daten zu planen. Plane in diesem Fall AUSSCHLIESSLICH den einen Abruf-Schritt (Step 1). Erstelle KEINE spekulativen Folgeschritte im selben Plan!
+- Setze "is_complete": true, wenn dieser Plan die ursprüngliche Anforderung des Benutzers vollständig beantwortet oder dir bereits alle konkreten Ziel-URLs vorliegen, um den Plan inklusive finaler Auswertung komplett durchzuplanen.
+
+Regeln für Schritte:
+- Die Schritt-Nummerierung ("step") innerhalb eines JSON-Plans MUSS zwingend fortlaufend bei 1 beginnen (1, 2, 3, 4...).

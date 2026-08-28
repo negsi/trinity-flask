@@ -11,6 +11,9 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 ### Added
 
 ### Changed
+- Clarified multi-turn planning logic in `base_agent.response_format.md` to restrict Phase 1 plans (`is_complete: false`) strictly to a single fetching step, preventing speculative follow-up steps (fixes loop issues with Gemini 3.5 Flash-Lite).
+- Added explicit sequential step numbering rules starting at `1` to the task chain JSON response schema.
+- Refined conditions for setting `is_complete` to `true` when target URLs and execution context are fully available.
 
 ## [0.2.1] - 2026-08-28
 
