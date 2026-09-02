@@ -1,0 +1,1710 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leman | Modern Jewelry Store HTML Template</title>
+    <link rel="stylesheet" href="./assets/css/bootstrap.css">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./assets/css/responsive.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="icon" href="assets/images/favicon.png" type="image/x-icon">
+    <link rel="shortcut icon" href="assets/images/favicon.png" type="image/x-icon">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js" defer></script>
+    <script src="assets/js/popper.js" defer></script>
+    <script src="assets/js/bootstrap.js" defer></script>
+    <script src="assets/js/custom.js" defer></script>
+</head>
+<body>
+    <div id="pageWrapper">
+        <header id="pageHeader">
+            <div class="phTopBar py-2 bg-dark">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12 col-lg-6">
+                            <ul class="list-unstyled d-flex flex-wrap gap-3 gap-xlwd-5 justify-content-center justify-content-lg-start mb-0 phtbListInline">
+                                <li class="fw-normal text-white">
+                                    Need help? Call us: <a href="javascript:void(0);">(+800) 1234 5678</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-6 d-none d-lg-block">
+                            <ul class="list-unstyled d-flex flex-wrap gap-4 gap-xlwd-6 gap-xxl-8 mb-0 phtbListInline justify-content-end fw-normal">
+                                <li>
+                                    <a href="javascript:void(0);">Special Offer</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Services</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Subscribe</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Gift Cards</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="phWrapper pt-2 pt-md-5 pt-xlwd-7 pb-2 pb-md-6">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-3 col-md-4 col-lg-4 col-xl-3 col-xlwd-3 position-relative">
+                           <ul class="list-unstyled d-flex flex-wrap justify-content-start mb-0 phActionsList gap-sm-4 gap-lg-6 pt-sm-1">
+                                <li class="navbar navbar-expand-md p-0 position-static d-md-none">
+                                    <button class="navbar-toggler border-0 p-0 mainNavigationToggle position-absolute" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                                        <span class="navbar-toggler-icon"></span>
+                                    </button>
+                                </li>
+                                <li class="d-none d-md-block">
+                                    <a href="store-locator-page.html" class="d-flex align-items-center">
+                                        <i class="fa-solid fa-location-dot mbr"></i>
+                                        <span class="txt">Store Locator</span>
+                                    </a>
+                                </li>
+                                <li class="d-none d-md-block" data-bs-toggle="offcanvas" data-bs-target="#searchCol" aria-controls="searchCol">
+                                    <a href="javascript:void(0);" class="d-flex align-items-center">
+                                        <i class="icomoon-search mbr"></i>
+                                        <span class="txt">Search</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-6 col-md-5 col-lg-3 col-xl-5 col-xlwd-6">
+                            <div class="logo text-center mx-auto">
+                                <a href="home.html">
+                                    <img src="assets/images/logo.png" class="img-fluid" alt="Leman">
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-3 col-md-3 col-lg-5 col-xl-4 col-xlwd-3">
+                            <ul class="list-unstyled d-flex flex-wrap justify-content-end mb-0 phActionsList gap-2 gap-md-4 gap-lg-6 pt-1">
+                                <li class="d-none d-sm-block">
+                                    <a href="wishlist-page.html" class="d-flex align-items-center">
+                                        <i class="icomoon-heart-o mbr"></i>
+                                        <span class="txt d-none d-lg-block">wishlist</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="my-account.html" class="d-flex align-items-center">
+                                        <i class="icomoon-user mbr"></i>
+                                        <span class="txt d-none d-lg-block">Sign in</span>
+                                    </a>
+                                </li>
+                                <li data-bs-toggle="offcanvas" data-bs-target="#filtersProduct" aria-controls="filtersProduct">
+                                    <a href="javascript:void(0);" class="d-flex align-items-center">
+                                        <i class="icomoon-cart mbr"></i>
+                                        <span class="txt mbr d-none d-lg-block">cart</span>
+                                        <strong class="phCartBubble phCBII fw-light  d-none d-lg-inline-block text-center rounded-circle">0</strong>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="phNavWrapper position-relative">
+                <div class="container">
+                    <nav class="navbar navbar-expand-md d-block position-static" id="mainNavigation">
+                        <div class="row align-items-center">
+                            <div class="col-12 mnCol d-none d-md-block">
+                                <div class="collapse navbar-collapse mainNavigationCollapse" id="mainNavigationCollapse">
+                                    <ul class="navbar-nav mx-auto gap-md-4 gap-xxl-7">
+                                        <li class="nav-item staf dropdown">
+                                            <a class="nav-link text-uppercase fw-medium active" href="javascript:void(0);">Home</a>
+                                            <ul class="dropdown-menu show rounded-0 pt-7 pb-5 px-5 ms-n6 mt-4" aria-labelledby="homeDropdown">
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="home.html">Home v1 - Default</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="home2.html">Home v2 - Classic</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="home3.html">Home v3 - Mega Shop</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Home v4 - Handmade ( Coming soon )</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Home v5 - Minimal ( Coming soon )</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Home v6 - Grid Showcase ( Coming soon )</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Home v7 - Simple ( Coming soon )</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Home v8 - Modern ( Coming soon )</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Home v9 - Collection ( Coming soon )</a></li>
+                                            </ul>
+                                        </li>
+                                        <li class="nav-item staf dropdown position-static">
+                                            <a class="nav-link text-uppercase fw-medium" href="javascript:void(0);">Shop</a>
+                                            <div class="dropdown-menu show rounded-0 pt-7 pb-5 px-5 mt-4 w-100" aria-labelledby="homeDropdown">
+                                                <div class="container">
+                                                    <div class="row">
+                                                        <div class="col-12 col-md-4 col-xl-3">
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Shop Layout</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-filter-sidebar.html">Left Sidebar</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-right-sidebar.html">Right Sidebar</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-standard.html">Standard</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-medium-page.html">Medium Product</a></li
+                                                                >
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Large Product ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">List Sidebar ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Small Product Sidebar ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Large Product Sidebar ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">List Fullwidth ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Categories On Top ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Small Categories Top ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Products Without Banner ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Products With Banner ( Coming soon )</a></li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-12 col-md-4 col-xl-3">
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Shop Catalog</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-standard.html">Catalog Style-1</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-style2.html">Catalog Style-2</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-style3.html">Catalog Style-3</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-style4.html">Catalog Style-4</a></li>
+                                                            </ul>
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Filter Types</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-filter-sidebar.html">Filter Sidebar</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Filter Top ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Hidden Filter ( Coming soon )</a></li>
+                                                            </ul>
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Page Loading</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-standard.html">Load More Scroll</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Infinity Scroll ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Pagination ( Coming soon )</a></li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-12 col-md-4 col-xl-3">
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Woo Pages</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="my-account.html">My Account</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-standard.html">My Account Popup</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Wishlist ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Order Tracking ( Coming soon )</a></li>
+                                                            </ul>
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Cart</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="cart-page.html">Shopping Cart</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-second-page.html">Cart Popup Light</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Cart Popup Dark ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Cart Popup Dropdown ( Coming soon )</a></li>
+                                                            </ul>
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Checkout</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="checkout-page.html">Checkout Modern</a></li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-12 col-xl-3">
+                                                            <article class="bannerColumn mcol position-relative w-100 h-100 d-flex flex-column overflow-hidden">
+                                                                <div class="py-2 py-lg-5 px-4 txt text-center position-absolute">
+                                                                    <h2 class="bcHeading fw-normal text-dark mb-2">
+                                                                        <span class="d-block">Sales & Special Offerr!</span>
+                                                                    </h2>
+                                                                    <span class="d-block ptxt fw-normal">Get upto 20% Off!</span>
+                                                                </div>
+                                                                <span class="bgCover bcImage position-absolute w-100 h-100" style="background-image: url('assets/images/img189.jpg');"></span>
+                                                            </article>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="nav-item staf dropdown position-static">
+                                            <a class="nav-link text-uppercase fw-medium" href="javascript:void(0);">Product</a>
+                                            <div class="dropdown-menu show rounded-0 pt-7 pb-5 px-5 mt-4 w-100" aria-labelledby="homeDropdown">
+                                                <div class="container">
+                                                    <div class="row">
+                                                        <div class="col-12 col-md-4 col-xl-3">
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Product Gallery</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-second-page.html">Left Thumbnail</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-right-thumbnail.html">Right Thumbnail</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-bottom-thumbnail.html">Bottom Thumbnail</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-single-column.html">Single Column</a></li
+                                                                >
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Gallery Grid ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Without Thumbnail ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Image Slider ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Image Zoom ( Coming soon )</a></li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-12 col-md-4 col-xl-3">
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Description Style</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="tab-default.html">Tab Default</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-accordion.html">Accordion</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Vertical Description ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Extended Description ( Coming soon )</a></li>
+                                                            </ul>
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Product Style</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-background-light-page.html">Background Light</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-background-dark-page.html">Background Dark</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Showcase Style ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Modern Style ( Coming soon )</a></li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-12 col-md-4 col-xl-3">
+                                                            <h2 class="mnHeadng fw-medium text-dark text-uppercase mb-4">Product Type</h2>
+                                                            <ul class="list-unstyled">
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-second-page.html">Simple Product</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-bottom-thumbnail.html">Variable Product</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-accordion.html">Grouped Product</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="shop-external-product.html">External Product</a></li
+                                                                >
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Out of Stock Product ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Count Down Timer ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Product Video ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Back In Stock Notifier ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">Sticky ATC ( Coming soon )</a></li>
+                                                                <li class="mb-3"><a class="dropdown-item p-0" href="javascript:void(0);">360 Product View ( Coming soon )</a></li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-12 col-xl-3">
+                                                            <article class="bannerColumn colII position-relative w-100 d-flex flex-column overflow-hidden">
+                                                                <div class="py-2 py-lg-5 py-xl-10 px-4 px-lg-8 txt position-absolute">
+                                                                    <h2 class="bcHeading fw-normal text-white mb-2">
+                                                                        <span class="d-block">New Earrings Arrival</span>
+                                                                    </h2>
+                                                                    <a href="shop-standard.html" class="btn-link btnLink text-white fw-normal d-inline-block align-end text-decoration-none">SHOP MORE</a>
+                                                                </div>
+                                                                <span class="bgCover bcImage position-absolute w-100 h-100" style="background-image: url('assets/images/img115.jpg');"></span>
+                                                            </article>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="nav-item staf dropdown">
+                                            <a class="nav-link text-uppercase fw-medium" href="javascript:void(0);">Pages</a>
+                                            <ul class="dropdown-menu show rounded-0 pt-7 pb-5 px-5 ms-n6 mt-4" aria-labelledby="homeDropdown">
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="about-us.html">About Us v1</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="about-us2.html">About Us v2</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="about-me.html">About me</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="contact-us.html">Contact</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="store-locator-page.html">Store Location</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="faq.html">FAQ</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="404-page.html">404 Error</a></li>
+                                            </ul>
+                                        </li>
+                                        <li class="nav-item staf dropdown">
+                                            <a class="nav-link text-uppercase fw-medium" href="javascript:void(0);">Blog</a>
+                                            <ul class="dropdown-menu show rounded-0 pt-7 pb-5 px-5 ms-n6 mt-4" aria-labelledby="homeDropdown">
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="blog-standard.html">Blog Standard</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="blog-grid.html">Blog Grid</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="blog-grid-sidebar.html">Blog Grid Sidebar</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="blog-list-sidebar.html">Blog List</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="blog-single.html">Blog Single v1</a></li>
+                                                <li class="mb-3"><a class="dropdown-item p-0" href="blog-single2.html">Blog Single v2</a></li>
+                                            </ul>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link text-uppercase fw-medium" href="#">Buy Theme!</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+        </header>
+        <main>
+            <section class="introBlock position-relative overflow-hidden w-100">
+                <div class="container-fluid px-lgwd-18">
+                    <div class="ibSliderII">
+                        <div>
+                            <article class="ibsColumn ibsColII d-md-flex justify-content-md-center bgclr">
+                                <div class="col-12 col-md-5 py-5 my-md-auto pddngS">
+                                    <div class="ahAlign">
+                                        <h1 class="hhHeadingI fw-normal mb-1">Limited Edition <br>Cage Rings</h1>
+                                        <span class="subHeading d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">World-class diamond</span>
+                                        <strong class="subTitle d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">Mother's Day Special</strong>
+                                        <a href="shop-standard.html" class="btn btnThemeOutlined py-2 py-lg-3 px-6 px-lg-9" data-hover="Shop Now">
+                                            <span class="btnText">Shop Now</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-7 imgHolder iMgII">
+                                    <img src="assets/images/img90.jpg" class="w-100" alt="image description">
+                                </div>
+                            </article>
+                        </div>
+                        <div>
+                            <article class="ibsColumn ibsColII d-md-flex justify-content-md-center bgclr2">
+                                <div class="col-12 col-md-5 py-5 my-md-auto pddngS">
+                                    <div class="ahAlign">
+                                        <h1 class="hhHeadingI fw-normal mb-1">Pearls Spring <br>Collections</h1>
+                                        <span class="subHeading d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">Revitalizing Supreme</span>
+                                        <strong class="subTitle d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">60% OFF Summer Sale</strong>
+                                        <a href="shop-standard.html" class="btn btnThemeOutlined py-2 py-lg-3 px-6 px-lg-9" data-hover="Shop Now">
+                                            <span class="btnText">Shop Now</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-7 imgHolder iMgII">
+                                    <img src="assets/images/img91.jpg" class="w-100" alt="image description">
+                                </div>
+                            </article>
+                        </div>
+                        <div>
+                            <article class="ibsColumn ibsColII d-md-flex justify-content-md-center bgclr3">
+                                <div class="col-12 col-md-5 py-5 my-md-auto pddngS">
+                                    <div class="ahAlign">
+                                        <h1 class="hhHeadingI fw-normal mb-1">Crown Brighter <br>Collections</h1>
+                                        <span class="subHeading d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">Pavé diamonds sets</span>
+                                        <strong class="subTitle d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">Buy with 30% Discount</strong>
+                                        <a href="shop-standard.html" class="btn btnThemeOutlined py-2 py-lg-3 px-6 px-lg-9" data-hover="Shop Now">
+                                            <span class="btnText">Shop Now</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-7 imgHolder iMgII">
+                                    <img src="assets/images/img92.jpg" class="w-100" alt="image description">
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="categoriesBlock position-relative w-100 overflow-hidden pt-4 pt-xl-14">
+                <div class="container">
+                    <header class="headingHead text-center mb-8">
+                        <h2 class="hhHeading fw-normal">Popular Categories</h2>
+                    </header>
+                    <div class="colsHolder d-flex flex-wrap justify-content-center">
+                        <div class="chCol d-flex">
+                            <a href="shop-standard.html" class="catColumn d-block w-100 text-center">
+                                <div class="imgHolder mx-auto mb-5">
+                                    <img src="assets/images/img07.jpg" class="w-100 h-100 object-fit-cover" alt="image description">
+                                </div>
+                                <h3 class="ctHeading d-inline-block text-uppercase align-top">NECKLaCES</h3>
+                            </a>
+                        </div>
+                        <div class="chCol d-flex">
+                            <a href="shop-standard.html" class="catColumn d-block w-100 text-center">
+                                <div class="imgHolder mx-auto mb-5">
+                                    <img src="assets/images/img08.jpg" class="w-100 h-100 object-fit-cover" alt="image description">
+                                </div>
+                                <h3 class="ctHeading d-inline-block text-uppercase align-top">RINGS</h3>
+                            </a>
+                        </div>
+                        <div class="chCol d-flex">
+                            <a href="shop-standard.html" class="catColumn d-block w-100 text-center">
+                                <div class="imgHolder mx-auto mb-5">
+                                    <img src="assets/images/img09.jpg" class="w-100 h-100 object-fit-cover" alt="image description">
+                                </div>
+                                <h3 class="ctHeading d-inline-block text-uppercase align-top">BRACELETS</h3>
+                            </a>
+                        </div>
+                        <div class="chCol d-flex">
+                            <a href="shop-standard.html" class="catColumn d-block w-100 text-center">
+                                <div class="imgHolder mx-auto mb-5">
+                                    <img src="assets/images/img10.jpg" class="w-100 h-100 object-fit-cover" alt="image description">
+                                </div>
+                                <h3 class="ctHeading d-inline-block text-uppercase align-top">EARRINGS</h3>
+                            </a>
+                        </div>
+                        <div class="chCol d-flex">
+                            <a href="shop-standard.html" class="catColumn d-block w-100 text-center">
+                                <div class="imgHolder mx-auto mb-5">
+                                    <img src="assets/images/img11.jpg" class="w-100 h-100 object-fit-cover" alt="image description">
+                                </div>
+                                <h3 class="ctHeading d-inline-block text-uppercase align-top">CHARMS &amp; DANGLES</h3>
+                            </a>
+                        </div>
+                        <div class="chCol d-flex">
+                            <a href="shop-standard.html" class="catColumn d-block w-100 text-center">
+                                <div class="imgHolder mx-auto mb-5">
+                                    <img src="assets/images/img12.jpg" class="w-100 h-100 object-fit-cover" alt="image description">
+                                </div>
+                                <h3 class="ctHeading d-inline-block text-uppercase align-top">GIFT IDEAS</h3>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <aside class="badgerIIAsideBlock text-center pt-3">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="babWrapper d-flex align-items-center flex-wrap justify-content-center py-3 px-2">
+                                <i class="fa-solid fa-tag fa-flip-horizontal babIcn mb-2 mb-md-0 me-md-3"></i>
+                                <h3 class="mb-0 babHeading fw-light mb-2 mb-md-0 me-md-3">Super discount for your first purchase</h3>
+                                <a href="javascript:void(0);" class="btn text-uppercase fw-normal mb-2 mb-md-0 me-md-3 py-2">FREE15FIRST</a>
+                                <p class="mb-0">Use discount code in checkout!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            <section class="collectionBlock position-relative w-100 overflow-hidden py-6 py-md-10 py-lg-15">
+                <div class="container">
+                    <header class="headingHead text-center mb-9">
+                        <h2 class="position-relative fw-normal hhHeading patternActive d-flex justify-content-center align-items-center gap-4 mb-4">Featured Products
+                        </h2>
+                        <ul class="list-unstyled cbFiltersList gap-2 gap-md-5 d-flex isoFiltersList flex-wrap justify-content-center">
+                            <li class="active">
+                                <a href="javascript:void(0);">New Arrivals</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-filter=".popular">Most Popular</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-filter=".bestSeller">Best Seller</a>
+                            </li>
+                        </ul>
+                    </header>
+                    <div class="row d-block isoContentHolder">
+                        <div class="col-12 col-sm-6 col-xl-3 isoCol bestSeller popular mb-5">
+                            <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                <div class="imgHolder mb-2">
+                                    <a href="shop-standard.html">
+                                        <img src="assets/images/img17.jpg" class="w-100 img-fluid" alt="image description">
+                                    </a>
+                                    <ul class="list-unstyled d-flex flex-column gap-1 pcActionsList">
+                                        <li>
+                                            <a href="#" class="rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="icomoon-heart-o">
+                                                    <span class="visually-hidden">favourite</span>
+                                                </i>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="icomoon-search">
+                                                    <span class="visually-hidden">explore</span>
+                                                </i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <strong class="d-block mb-1 fw-normal pcTitle">BRACELETS</strong>
+                                <h3 class="fw-light pcHeading mb-1">
+                                    <a href="shop-standard.html" class="text-decoration-none">Cross Stripes &amp; Stone Bracelet</a>
+                                </h3>
+                                <h4 class="fw-normal pcPrice mb-0">
+                                    <span class="regPrice">£169.00</span>
+                                </h4>
+                                <button class="pcBtnSubmit position-absolute fw-medium p-0 border-0">ADD TO CART</button>
+                            </article>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3 isoCol bestSeller mb-5">
+                            <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                <div class="imgHolder mb-2">
+                                    <a href="shop-standard.html">
+                                        <img src="assets/images/img18.jpg" class="w-100 img-fluid" alt="image description">
+                                    </a>
+                                    <ul class="list-unstyled d-flex flex-column gap-1 pcActionsList">
+                                        <li>
+                                            <a href="#" class="rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="icomoon-heart-o">
+                                                    <span class="visually-hidden">favourite</span>
+                                                </i>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="icomoon-search">
+                                                    <span class="visually-hidden">explore</span>
+                                                </i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <strong class="d-block mb-1 fw-normal pcTitle">CHARM AND DANGLES</strong>
+                                <h3 class="fw-light pcHeading mb-1">
+                                    <a href="shop-standard.html" class="text-decoration-none">Echoes Necklace Extension Piece</a>
+                                </h3>
+                                <h4 class="fw-normal pcPrice mb-0">
+                                    <span class="regPrice">£199.00</span>
+                                </h4>
+                                <button class="pcBtnSubmit position-absolute fw-medium p-0 border-0">ADD TO CART</button>
+                            </article>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3 isoCol bestSeller mb-5">
+                            <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                <div class="imgHolder mb-2">
+                                    <a href="shop-standard.html">
+                                        <img src="assets/images/img19.jpg" class="w-100 img-fluid" alt="image description">
+                                    </a>
+                                    <strong class="position-absolute text-uppercase bg-danger fw-semibold text-white pcTag">-30%</strong>
+                                    <ul class="list-unstyled d-flex flex-column gap-1 pcActionsList">
+                                        <li>
+                                            <a href="#" class="rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="icomoon-heart-o">
+                                                    <span class="visually-hidden">favourite</span>
+                                                </i>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="icomoon-search">
+                                                    <span class="visually-hidden">explore</span>
+                                                </i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <strong class="d-block mb-1 fw-normal pcTitle">RINGS</strong>
+                                <h3 class="fw-light pcHeading mb-1">
+                                    <a href="shop-standard.html" class="text-decoration-none">Four-Leaf Clover Rings</a>
+                                </h3>
+                                <h4 class="fw-normal pcPrice mb-0">
+                                    <span class="salePrice">£99.00</span>
+                                    <span class="regPrice">£129.00</span>
+                                </h4>
+                                <button class="pcBtnSubmit position-absolute fw-medium p-0 border-0">ADD TO CART</button>
+                            </article>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3 isoCol popular mb-5">
+                            <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                <div class="imgHolder mb-2">
+                                    <a href="shop-standard.html">
+                                        <img src="assets/images/img20.jpg" class="w-100 img-fluid" alt="image description">
+                                    </a>
+                                    <ul class="list-unstyled d-flex flex-column gap-1 pcActionsList">
+                                        <li>
+                                            <a href="#" class="rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="icomoon-heart-o">
+                                                    <span class="visually-hidden">favourite</span>
+                                                </i>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="icomoon-search">
+                                                    <span class="visually-hidden">explore</span>
+                                                </i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <strong class="d-block mb-1 fw-normal pcTitle">NECKLACES</strong>
+                                <h3 class="fw-light pcHeading mb-1">
+                                    <a href="shop-standard.html" class="text-decoration-none">Cross of Light Pendant</a>
+                                </h3>
+                                <h4 class="fw-normal pcPrice mb-0">
+                                    <span class="regPrice">£79.00</span>
+                                </h4>
+                                <button class="pcBtnSubmit position-absolute fw-medium p-0 border-0">ADD TO CART</button>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="adBlock w-100 overflow-hidden pb-6 py-xl-8">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="contentblock position-relative">
+                                <div class="txtblock text-center">
+                                    <h2 class="adHeading text-uppercase fw-normal text-white mb-1">Ready, Set, <br class="d-none d-xl-block"> Summer!</h2>
+                                    <span class="adSub d-block fw-light text-white mb-4">Avon Flourish Honey Blossom Set</span>
+                                    <strong class="adtxt d-block text-white mb-3 mb-lg-7">Buy 1 Get 1 Free</strong>
+                                    <a href="#" class="btn btnTheme fw-normal px-5 px-lg-9">Shop Now</a>
+                                </div>
+                                <span class="position-absolute w-100 h-100 bgCover ibBgImage" style="background-image: url('assets/images/img114.jpg');"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="collectionBlock position-relative w-100 overflow-hidden py-6 py-md-7">
+                <div class="container">
+                    <header class="headingHead text-center mb-8">
+                        <h2 class="hhHeading fw-normal mb-2">Necklaces</h2>
+                        <a href="shop-standard.html" class="btnHeader fw-normal text-decoration-none">Show All Products</a>
+                    </header>
+                    <div class="row">
+                        <div class="col-lg-4 col-xl-3 pe-6 d-none d-lg-block">
+                            <article class="bannerColumn colII position-relative w-100 d-flex flex-column overflow-hidden">
+                                <div class="py-2 py-lg-5 py-xl-10 px-4 px-lg-8 txt position-absolute">
+                                    <h2 class="bcHeading fw-normal text-white mb-2">
+                                        <span class="d-block">New Earrings Arrival</span>
+                                    </h2>
+                                    <a href="shop-standard.html" class="btn-link btnLink fw-normal d-inline-block align-end text-decoration-none">SHOP MORE</a>
+                                </div>
+                                <span class="bgCover bcImage position-absolute w-100 h-100" style="background-image: url('assets/images/img115.jpg');"></span>
+                            </article>
+                        </div>
+                        <div class="col-12 col-lg-8 col-xl-9">
+                            <div class="slidersColsHolder">
+                                <div class="nlSlider">
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img116.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">BRACELETS</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Cross Stripes &amp; Stone Bracelet</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="regPrice">£169.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img117.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">CHARM AND DANGLES</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Echoes Necklace Extension Piece</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="regPrice">£199.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img118.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">RINGS</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Four-Leaf Clover Rings</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="salePrice">£99.00</span>
+                                                <span class="regPrice">£129.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img116.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">NECKLACES</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Cross of Light Pendant</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="regPrice">£79.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="collectionBlock position-relative w-100 overflow-hidden py-6 py-md-8">
+                <div class="container">
+                    <header class="headingHead text-center mb-8">
+                        <h2 class="hhHeading fw-normal mb-2">Charm & Dangles</h2>
+                        <a href="shop-standard.html" class="btnHeader fw-normal text-decoration-none">Show All Products</a>
+                    </header>
+                    <div class="row">
+                        <div class="col-lg-4 col-xl-3 pe-6 d-none d-lg-block">
+                            <article class="bannerColumn colII position-relative w-100 d-flex flex-column overflow-hidden">
+                                <div class="py-2 py-lg-5 py-xl-10 px-4 px-lg-8 txt position-absolute">
+                                    <h2 class="bcHeading fw-normal text-white mb-2">
+                                        <span class="d-block">Best Diamond Sets 2020</span>
+                                    </h2>
+                                    <a href="shop-standard.html" class="btn-link btnLink fw-normal d-inline-block align-end text-decoration-none">SHOP MORE</a>
+                                </div>
+                                <span class="bgCover bcImage position-absolute w-100 h-100" style="background-image: url('assets/images/img119.jpg');"></span>
+                            </article>
+                        </div>
+                        <div class="col-12 col-lg-8 col-xl-9">
+                            <div class="slidersColsHolder">
+                                <div class="nlSlider">
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img120.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">BRACELETS</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Cross Stripes &amp; Stone Bracelet</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="regPrice">£169.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img121.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">CHARM AND DANGLES</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Echoes Necklace Extension Piece</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="regPrice">£199.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img122.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">RINGS</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Four-Leaf Clover Rings</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="salePrice">£99.00</span>
+                                                <span class="regPrice">£129.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="collectionBlock position-relative w-100 overflow-hidden py-6 py-md-7">
+                <div class="container">
+                    <header class="headingHead text-center mb-8">
+                        <h2 class="hhHeading fw-normal mb-2">Bracelets & Rings</h2>
+                        <a href="shop-standard.html" class="btnHeader fw-normal text-decoration-none">Show All Products</a>
+                    </header>
+                    <div class="row">
+                        <div class="col-lg-4 col-xl-3 pe-6 d-none d-lg-block">
+                            <article class="bannerColumn colII position-relative w-100 d-flex flex-column overflow-hidden">
+                                <div class="py-2 py-lg-5 py-xl-10 px-4 px-lg-8 txt position-absolute">
+                                    <h2 class="bcHeading fw-normal text-white mb-2">
+                                        <span class="d-block">Diamond Bow Bracelets</span>
+                                    </h2>
+                                    <a href="shop-standard.html" class="btn-link btnLink fw-normal d-inline-block align-end text-decoration-none">SHOP MORE</a>
+                                </div>
+                                <span class="bgCover bcImage position-absolute w-100 h-100" style="background-image: url('assets/images/img123.jpg');"></span>
+                            </article>
+                        </div>
+                        <div class="col-12 col-lg-8 col-xl-9">
+                            <div class="slidersColsHolder">
+                                <div class="nlSlider">
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img124.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">BRACELETS</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Cross Stripes &amp; Stone Bracelet</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="regPrice">£169.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img125.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">CHARM AND DANGLES</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Echoes Necklace Extension Piece</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="regPrice">£199.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                    <div class="schCol">
+                                        <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
+                                            <div class="imgHolder mb-2">
+                                                <a href="shop-standard.html">
+                                                    <img src="assets/images/img126.jpg" class="w-100 img-fluid" alt="image description">
+                                                </a>
+                                                <ul class="list-unstyled d-flex flex-row pcActionsListII">
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-cart"></i>
+                                                            <span class="tool-tip fw-medium d-block">Add to Cart</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-heart-o"></i>
+                                                            <span class="tool-tip fw-medium d-block">Wishlist</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="d-flex align-items-center justify-content-center">
+                                                            <i class="icomoon-search"></i>
+                                                            <span class="tool-tip fw-medium d-block">Search</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <strong class="d-block mb-1 fw-normal pcTitle">RINGS</strong>
+                                            <h3 class="fw-light pcHeading mb-1">
+                                                <a href="shop-standard.html" class="text-decoration-none">Four-Leaf Clover Rings</a>
+                                            </h3>
+                                            <h4 class="fw-normal pcprice mb-0">
+                                                <span class="salePrice">£99.00</span>
+                                                <span class="regPrice">£129.00</span>
+                                            </h4>
+                                        </article>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="container pt-md-6"><hr></div>
+            <aside class="sponsorsBlock w-100 position-relative overflow-hidden py-8 text-center">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <header class="headingHead text-center mb-8">
+                                <h2 class="hhHeading fw-normal mb-0">Only best brands</h2>
+                            </header>
+                        </div>
+                    </div>
+                    <div class="logosSlider">
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-01.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-02.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-03.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-04.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-05.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-06.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-01.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-02.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-03.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-04.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-05.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="logoWrap d-flex align-items-center justify-content-center">
+                                <span class="w-100">
+                                    <img src="assets/images/img-logo-06.png" class="img-fluid" alt="image description">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            <aside class="signupAsideBlock overflow-hidden w-100 position-relative">
+                <div class="newsCol">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12">
+                                <h3 class="sabHeading fw-normal mb-6">End of Summer! <br>Up to 40% off on all items.</h3>
+                                <form action="#" class="subscribeForm mb-3">
+                                    <div class="d-flex flex-column flex-sm-row gap-2">
+                                        <input id="signup-email" type="email" class="form-control border-0 bg-light" placeholder="Email address">
+                                        <button type="submit" class="btn btnTheme text-uppercase fw-medium">SUBSCRIBE</button>
+                                    </div>
+                                </form>
+                                <p class="d-block">Sign up to our Newsletter and get the discount code!</p>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="position-absolute w-100 h-100 bgCover ibBgImage" style="background-image: url('assets/images/img127.jpg');"></span>
+                </div>
+            </aside>
+            <section class="blogsBlock position-relative w-100 overflow-hidden py-6 py-lg-9 py-xl-17">
+                <div class="container">
+                    <header class="headingHead text-center mb-8">
+                        <h2 class="hhHeading fw-normal">Read Journal</h2>
+                        <p>Latest trends and inspirations in fashion design.</p>
+                    </header>
+                    <div class="row row-gap-6 ">
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <a href="blog-single.html" class="blogColumn overflow-hidden d-block text-decoration-none">
+                                <div class="imgHolder mb-5 position-relative">
+                                    <img src="assets/images/img27.jpg" class="img-fluid w-100" alt="image description">
+                                    <strong class="position-absolute fw-medium text-uppercase blgTag py-1 px-2">Accessories</strong>
+                                </div>
+                                <div class="blgTitle mb-2">
+                                    <strong class="blgAuthor fw-normal">NECKERT</strong>
+                                    -
+                                    <time class="fw-normal" datetime="2008-02-14">AUGEST 25, 2016</time>
+                                </div>
+                                <h3 class="fw-medium blgHeading mb-4">Christmas Gift Guide</h3>
+                                <span class="btnLink">Continue Reading</span>
+                            </a>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <a href="blog-single.html" class="blogColumn overflow-hidden d-block text-decoration-none">
+                                <div class="imgHolder mb-5 position-relative">
+                                    <img src="assets/images/img28.jpg" class="img-fluid w-100" alt="image description">
+                                    <strong class="position-absolute fw-medium text-uppercase blgTag py-1 px-2">Fashion</strong>
+                                </div>
+                                <div class="blgTitle mb-2">
+                                    <strong class="blgAuthor fw-normal">SANCER</strong>
+                                    -
+                                    <time class="fw-normal" datetime="2008-02-14">AUGEST 25, 2016</time>
+                                </div>
+                                <h3 class="fw-medium blgHeading mb-4">How to Style a Quiff</h3>
+                                <span class="btnLink">Continue Reading</span>
+                            </a>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <a href="blog-single.html" class="blogColumn overflow-hidden d-block text-decoration-none">
+                                <div class="imgHolder mb-5 position-relative">
+                                    <img src="assets/images/img29.jpg" class="img-fluid w-100" alt="image description">
+                                    <strong class="position-absolute fw-medium text-uppercase blgTag py-1 px-2">Collection</strong>
+                                </div>
+                                <div class="blgTitle mb-2">
+                                    <strong class="blgAuthor fw-normal">MONCK</strong>
+                                    -
+                                    <time class="fw-normal" datetime="2008-02-14">AUGEST 25, 2016</time>
+                                </div>
+                                <h3 class="fw-medium blgHeading mb-4">Selective Styles Help your look</h3>
+                                <span class="btnLink">Continue Reading</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <aside class="feedAsideBlock position-relative bgclr w-100 overflow-hidden py-6 py-lg-9 py-xl-15">
+                <div class="container">
+                    <header class="headingHead text-center mb-8">
+                        <h2 class="hhHeading fw-normal">Follow Us on Instagram</h2>
+                        <p>@theaarunthemes</p>
+                    </header>
+                    <div class="row row-gap-4">
+                        <div class="col-6 col-sm-4 col-lg-2">
+                            <a href="javascript:void(0);" class="figColumn d-block text-decoration-none overflow-hidden">
+                                <img src="assets/images/img30.jpg" class="img-fluid object-fit-cover w-100 h-100" alt="image description">
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-4 col-lg-2">
+                            <a href="javascript:void(0);" class="figColumn d-block text-decoration-none overflow-hidden">
+                                <img src="assets/images/img31.jpg" class="img-fluid object-fit-cover w-100 h-100" alt="image description">
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-4 col-lg-2">
+                            <a href="javascript:void(0);" class="figColumn d-block text-decoration-none overflow-hidden">
+                                <img src="assets/images/img32.jpg" class="img-fluid object-fit-cover w-100 h-100" alt="image description">
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-4 col-lg-2">
+                            <a href="javascript:void(0);" class="figColumn d-block text-decoration-none overflow-hidden">
+                                <img src="assets/images/img33.jpg" class="img-fluid object-fit-cover w-100 h-100" alt="image description">
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-4 col-lg-2">
+                            <a href="javascript:void(0);" class="figColumn d-block text-decoration-none overflow-hidden">
+                                <img src="assets/images/img34.jpg" class="img-fluid object-fit-cover w-100 h-100" alt="image description">
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-4 col-lg-2">
+                            <a href="javascript:void(0);" class="figColumn d-block text-decoration-none overflow-hidden">
+                                <img src="assets/images/img35.jpg" class="img-fluid object-fit-cover w-100 h-100" alt="image description">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            <aside class="featuresBlock text-center w-100 position-relative py-9">
+                <div class="container">
+                    <ul class="list-unstyled d-flex flex-wrap justify-content-around gap-1 mb-0">
+                        <li>
+                            <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
+                                <img src="assets/images/ico-01.svg" width="37" height="30" alt="icon">
+                            </i>
+                            <h3 class="fbbHeading fw-normal mb-0">Free Shipping</h3>
+                            <h4 class="fbbSubheading fw-light mb-0">For all orders over $100</h4>
+                        </li>
+                        <li>
+                            <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
+                                <img src="assets/images/ico-02.svg" width="37" height="33" alt="icon">
+                            </i>
+                            <h3 class="fbbHeading fw-normal mb-0">30 Days Return</h3>
+                            <h4 class="fbbSubheading fw-light mb-0">For an Exchange Product</h4>
+                        </li>
+                        <li>
+                            <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
+                                <img src="assets/images/ico-03.svg" width="37" height="29" alt="icon">
+                            </i>
+                            <h3 class="fbbHeading fw-normal mb-0">Secured Payment</h3>
+                            <h4 class="fbbSubheading fw-light mb-0">Payment Cards Accepted</h4>
+                        </li>
+                        <li>
+                            <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
+                                <img src="assets/images/ico-04.svg" width="37" height="37" alt="icon">
+                            </i>
+                            <h3 class="fbbHeading fw-normal mb-0">Support 24/7</h3>
+                            <h4 class="fbbSubheading fw-light mb-0">Contact us Anytime.</h4>
+                        </li>
+                    </ul>
+                </div>
+            </aside>
+        </main>
+        <div class="footerAreaWrap">
+            <aside class="footerAside pt-7 pb-4 pt-md-10 pb-md-6 pt-xl-14 pb-xl-6">
+                <div class="container">
+                    <div class="ftColsWrap d-flex flex-wrap row-gap-3 px-3 px-md-0">
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <h3 class="ftHeading mb-5 fw-normal">Shop Highlights</h3>
+                            <ul class="list-unstyled ftLinksList">
+                                <li>
+                                    <a href="javascript:void(0);">Necklaces</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Bracelets</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Earings</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Rings</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Charms</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Gold Jewelry</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <h3 class="ftHeading mb-5 fw-normal">About Leman</h3>
+                            <ul class="list-unstyled ftLinksList">
+                                <li>
+                                    <a href="javascript:void(0);">About Us</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Core Values</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Careers</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Press Releases</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Blog</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Sitemap</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <h3 class="ftHeading mb-5 fw-normal">Our Company</h3>
+                            <ul class="list-unstyled ftLinksList">
+                                <li>
+                                    <a href="javascript:void(0);">Shopping App</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Be an Affiliate</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Advertise your Product</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Media Enquiries</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);">Media Enquiries</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <h3 class="ftHeading mb-5 fw-normal">Contact Info</h3>
+                            <address class="ftLocation">
+                                <a href="javascript:void(0);" class="d-flex align-items-center text-decoration-none gap-2 ftPhone fw-normal mb-3">
+                                    <i class="icnWrap flex-shrink-0 d-flex align-items-center justify-content-center icomoon-headphone rounded-circle"><span class="visually-hidden">icon</span></i>
+                                    <div>
+                                        <strong class="d-block fw-light ftTitle">Need Any Help?</strong>
+                                        Call us: (+800) 1234 5678 90
+                                    </div>
+                                </a>
+                                <span class="d-block mb-1"><strong class="fw-normal">Address:</strong> 502 New Design Str, <br> Melbourne, Australia</span>
+                                <span class="d-block mb-1"><strong class="fw-normal">Email:</strong> <a href="mailto:contact@Leman.com" class="text-decoration-none">contact@Leman.com</a></span>
+                            </address>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            <footer id="pageFooter" class="border-0 py-5">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12 col-md-4">
+                            <div class="payment-gateway mb-4 mb-md-0">
+                                <img src="assets/images/payment-gateway.png" class="img-fluid" alt="payment gateway">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-8 text-end">
+                            <ul class="navbar-nav footerNav d-flex flex-md-row justify-content-end align-items-center mb-3">
+                                <li class="me-2 me-lg-7 mb-3 mb-md-0">
+                                    <a class="fw-light" href="javascript:void(0);">Payment</a>
+                                </li>
+                                <li class="me-2 me-lg-7 mb-3 mb-md-0">
+                                    <a class="fw-light" href="javascript:void(0);">Shipping & Returns</a>
+                                </li>
+                                <li class="me-2 me-lg-7 mb-3 mb-md-0">
+                                    <a class="fw-light" href="javascript:void(0);">Gift Cards</a>
+                                </li>
+                                <li class="me-2 me-lg-7 mb-3 mb-md-0">
+                                    <a class="fw-light" href="javascript:void(0);">Privacy Policy</a>
+                                </li>
+                                <li>
+                                    <a class="fw-light" href="contact-us.html">Stockists</a>
+                                </li>
+                            </ul>
+                            <p class="mb-0">&copy; Copyright 2025 - <a href="home.html" class="text-decoration-none">Leman</a> template by <a href="javascript:void(0);" class="text-decoration-none">Mad-UX</a></p>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+        <div id="pageHeader">
+            <!-- Search Menu Wrapper -->
+            <div class="searchrow offcanvas offcanvas-top" tabindex="-1" id="searchCol" aria-labelledby="searchcol" style="height: 100vh;">
+                <div class="offcanvas-header justify-content-end">
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body d-flex flex-column align-items-start justify-content-md-start px-4 pt-2">
+                    <h5 class="srchHD fw-light mb-3">What are you looking for?</h5>
+                    <form class="w-100" role="search">
+                        <div class="input-group">
+                            <input type="search" class="form-control border-0" placeholder="Search for products" aria-label="Search">
+                            <button class="btn" type="submit">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- cart Menu Wrapper -->
+            <div class="cartsection offcanvas offcanvas-end d-flex flex-column border-0" tabindex="-1" id="filtersProduct" aria-labelledby="filtersProductLabel">
+                <div class="offcanvas-header px-3 py-3 px-sm-8 py-sm-3">
+                    <h6 class="cartHD mb-1 fw-normal">Your Cart (2)</h6>
+                    <a class="btn-close fw-light text-decoration-none" data-bs-dismiss="offcanvas" aria-label="Close">Close</a>
+                </div>
+                <div class="offcanvas-body flex-grow-1 d-flex flex-column justify-content-between px-3 py-5 px-sm-8 py-sm-8">
+                    <div>
+                        <div class="d-flex align-items-start justify-content-between mb-4">
+                            <div class="imgholder me-2">
+                                <img src="assets/images/img85.jpg" alt="Ring" class="w-100 img-fluid">
+                            </div>
+                            <div class="flex-grow-1">
+                                <h4 class="cartHding fw-light mb-1">Four-Leaf Clover Rings</h4>
+                                <small class="subheading fw-normal">1 × <strong class="fw-normal">£38.00</strong></small>
+                            </div>
+                            <button class="btn btn-sm p-0 ms-2 btnclose border-0 bg-transparent">&times;</button>
+                        </div>
+                        <hr class="mb-4">
+                        <div class="d-flex align-items-start justify-content-between mb-3">
+                            <div class="imgholder me-2">
+                                <img src="assets/images/img86.jpg" alt="Ring" class="w-100 img-fluid">
+                            </div>
+                            <div class="flex-grow-1">
+                                <h4 class="cartHding fw-light mb-1">Circle of Chain Necklace</h4>
+                                <small class="subheading fw-normal">1 × <strong class="fw-normal">£199.00</strong></small>
+                            </div>
+                            <button class="btn btn-sm p-0 ms-2 btnclose border-0 bg-transparent">&times;</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between fw-semibold mb-3">
+                            <span class="HDtotal fw-normal">Total</span>
+                            <span class="HDprice fw-medium">£48.00</span>
+                        </div>
+                        <div class="d-grid gap-2 mb-4">
+                            <button class="btn btns btn-outline-dark fw-medium">View Cart</button>
+                            <button class="btn btns btn-dark fw-medium">Checkout</button>
+                        </div>
+
+                        <!-- Free Shipping Message -->
+                        <p class="spTxt fw-light text-center mb-0">Free Shipping on All <a href="javascript:void(0);" class="fw-normal">Orders Over $75</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Sidebar Menu Wrapper -->
+        <div class="sidebarMenu offcanvas offcanvas-start d-md-none" tabindex="-1" id="sidebarMenu">
+            <div class="offcanvas-header justify-content-between py-3 px-4">
+                <h5 class="offcanvas-title mb-0">Leman & CO</h5>
+                <a class="btn-close fw-light text-decoration-none" data-bs-dismiss="offcanvas" aria-label="Close"></a>
+            </div>
+            <div class="offcanvas-body p-0">
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-3 pt-4 px-4 text-uppercase" id="menuTab" role="tablist">
+                    <li class="nav-item me-6 mb-3">
+                        <a class="text-decoration-none active" href="javascript:void(0);" id="menu-tab" data-bs-toggle="tab" data-bs-target="#menu" role="tab" aria-controls="menu" aria-selected="true">Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="text-decoration-none" href="javascript:void(0);" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categories" role="tab" aria-controls="categories" aria-selected="false">Categories</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="menuTabContent">
+                    <div class="tab-pane fade show active" id="menu" role="tabpanel" aria-labelledby="menu-tab">
+                        <ul class="list-unstyled mainmenu">
+                            <li class="py-2 px-4">
+                                <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#homeMenu" role="button" aria-expanded="false">Home  <i class="fa-solid fa-angle-down"></i></a>
+                                <ul class="collapse list-unstyled submenu pt-3" id="homeMenu">
+                                    <li class="py-2 px-2"><a href="home.html" class="nav-link fw-normal">Homepage 1</a></li>
+                                    <li class="py-2 px-2"><a href="home2.html" class="nav-link fw-normal">Homepage 2</a></li>
+                                    <li class="py-2 px-2"><a href="home3.html" class="nav-link fw-normal">Homepage 3</a></li>
+                                </ul>
+                            </li>
+                            <li class="py-2 px-4">
+                                <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#shopMenu" role="button" aria-expanded="false">Shop  <i class="fa-solid fa-angle-down"></i></a>
+                                <ul class="collapse list-unstyled submenu pt-3" id="shopMenu">
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#shopLayout" role="button" aria-expanded="false">Shop Layout <i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="shopLayout">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-filter-sidebar.html">Left Sidebar</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-right-sidebar.html">Right Sidebar</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-standard.html">Standard</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-medium-page.html">Medium Product</a></li
+                                            >
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-large-page.html">Large Product</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-list-sidebar-page.html">List Sidebar</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-small-sidebar.html">Small Product Sidebar</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-large-sidebar.html">Large Product Sidebar</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-list-fullwidth-page.html">List Fullwidth</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-categoties-page.html">Categories On Top</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-small-categories-page.html">Small Categories Top</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-product-without-banner-page.html">Products Without Banner</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-product-with-banner-page.html">Products With Banner</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#shopCatalog" role="button" aria-expanded="false">Shop catalog <i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="shopCatalog">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-standard.html">Catalog Style-1</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-style2.html">Catalog Style-2</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-style3.html">Catalog Style-3</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-style4.html">Catalog Style-4</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#filter" role="button" aria-expanded="false">Filter types<i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="filter">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-filter-sidebar.html">Filter Sidebar</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-filter-top.html">Filter Top</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-standard.html">Hidden Filter</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#pageLoading" role="button" aria-expanded="false">Page loading<i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="pageLoading">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-standard.html">Load More Scroll</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="#">Infinity Scroll</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="#">Pagination</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#wooPages" role="button" aria-expanded="false">Woo pages<i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="wooPages">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="my-account.html">My Account</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-standard.html">My Account Popup</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="wishlist-page.html">Wishlist</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="order-tracking-page.html">Order Tracking</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#cart" role="button" aria-expanded="false">Cart<i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="cart">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="cart-page.html">Shopping Cart</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-second-page.html">Cart Popup Light</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="tab-default.html">Cart Popup Dark</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-accordion.html">Cart Popup Dropdown</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#checkout" role="button" aria-expanded="false">Checkout<i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="checkout">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="checkout-page.html">Checkout Modern</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="py-2 px-4">
+                                <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#shopMenu" role="button" aria-expanded="false">Product  <i class="fa-solid fa-angle-down"></i></a>
+                                <ul class="collapse list-unstyled submenu pt-3" id="shopMenu">
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#productGallery" role="button" aria-expanded="false">Product Gallery <i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="productGallery">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-second-page.html">Left Thumbnail</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-right-thumbnail.html">Right Thumbnail</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-bottom-thumbnail.html">Bottom Thumbnail</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-single-column.html">Single Column</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-accordion.html">Gallery Grid</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-without-thumbnail.html">Without Thumbnail</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-image-slider.html">Image Slider</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="tab-default.html">Image Zoom</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#decriptionStyle" role="button" aria-expanded="false">Description Style <i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="decriptionStyle">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="tab-default.html">Tab Default</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-accordion.html">Accordion</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-vertical-description.html">Vertical Description</a></li>
+                                            <li class="py-2 px-2"><a class="dropdown-item p-0" href="shop-extended-description.html">Extended Description</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#productStyle" role="button" aria-expanded="false">Product Style <i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="productStyle">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-background-light-page.html">Background Light</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-background-dark-page.html">Background Dark</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-showcase-page.html">Showcase Style</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-modern-style-page.html">Modern Style</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="py-2 px-2">
+                                        <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#productType" role="button" aria-expanded="false">Product Type <i class="fa-solid fa-angle-down"></i></a>
+                                        <ul class="collapse list-unstyled submenu pt-3" id="productType">
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-second-page.html">Simple Product</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-bottom-thumbnail.html">Variable Product</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-accordion.html">Grouped Product</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-external-product.html">External Product</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-out-of-stock.html">Out of Stock Product</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-extended-description.html">Count Down Timer</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="tab-default.html">Product Video</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-back-in-stock-notifier.html">Back In Stock Notifier</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="tab-default.html">Sticky ATC</a></li>
+                                            <li class="py-2 px-2"><a class="nav-link fw-normal" href="shop-accordion.html">360 Product View</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="py-2 px-4">
+                                <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#pageMenu" role="button" aria-expanded="false">Pages  <i class="fa-solid fa-angle-down"></i></a>
+                                <ul class="collapse list-unstyled submenu pt-3" id="pageMenu">
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="about-us.html">About Us v1</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="about-us2.html">About Us v2</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="about-me.html">About me</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="contact-us.html">Contact</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="store-locator-page.html">Store Location</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="faq.html">FAQ</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="404-page.html">404 Error</a></li>
+                                </ul>
+                            </li>
+                            <li class="py-2 px-4">
+                                <a class="collapsed text-decoration-none fw-medium d-block py-2-toggle" data-bs-toggle="collapse" href="#blogMenu" role="button" aria-expanded="false">Blog  <i class="fa-solid fa-angle-down"></i></a>
+                                <ul class="collapse list-unstyled submenu pt-3" id="blogMenu">
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="blog-standard.html">Blog Standard</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="blog-grid.html">Blog Grid</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="blog-grid-sidebar.html">Blog Grid Sidebar</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="blog-list-sidebar.html">Blog List</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="blog-single.html">Blog Single v1</a></li>
+                                    <li class="py-2 px-2"><a class="nav-link fw-normal" href="blog-single2.html">Blog Single v2</a></li>
+                                </ul>
+                            </li>
+                            <li class="py-2 px-4">
+                                <a href="javascript:void(0);" class="collapsed text-decoration-none fw-medium d-block">Buy theme!</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="tab-pane fade" id="categories" role="tabpanel" aria-labelledby="categories-tab">
+                        <ul class="list-unstyled catemenu fw-normal">
+                            <li class="py-2 px-4"><a class="text-decoration-none d-block " href="javascript:void(0);">New Products</a></li>
+                            <li class="py-2 px-4"><a class="text-decoration-none d-block" href="javascript:void(0);">Today On Sale</a></li>
+                            <li class="py-2 px-4"><a class="text-decoration-none d-block" href="javascript:void(0);">Special Offer!</a></li>
+                            <li class="py-2 px-4"><a class="collapsed text-decoration-none d-block" href="javascript:void(0);">Necklaces <i class="fa-solid fa-angle-down"></i></a></li>
+                            <li class="py-2 px-4"><a class="collapsed text-decoration-none d-block" href="javascript:void(0);">Rings <i class="fa-solid fa-angle-down"></i></a></li>
+                            <li class="py-2 px-4"><a class="text-decoration-none d-block" href="javascript:void(0);">Bracelets</a></li>
+                            <li class="py-2 px-4"><a class="text-decoration-none d-block" href="javascript:void(0);">Earings</a></li>
+                            <li class="py-2 px-4"><a class="collapsed text-decoration-none d-block" href="javascript:void(0);">Charms & Dangles <i class="fa-solid fa-angle-down"></i></a></li>
+                            <li class="py-2 px-4"><a class="text-decoration-none d-block" href="javascript:void(0);">Watches</a></li>
+                            <li class="py-2 px-4"><a class="text-decoration-none d-block" href="javascript:void(0);">Gift Ideas</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button type="button" class="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#newsletterModal">Launch demo modal</button>
+        <!-- Newsletter Modal (HTML) -->
+        <div class="modal fade" id="newsletterModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-grid d-flex align-items-center">
+                        <div class="modal-visual" aria-hidden="true">
+                            <img src="assets/images/img148.jpg" class="img-fluid" alt="image description"/>
+                        </div>
+                        <div class="modal-body text-center px-10">
+                            <h2 class="newsHD fw-normal text-dark mb-3">Join the our family</h2>
+                            <p class="muted mb-6 fw-light">Sign up to get all the latest fashion news, website updates, offers and promos.</p>
+                            <form id="newsletter-form" novalidate>
+                                <label for="email" class="sr-only">Email address</label>
+                                <input id="email" class="email-txt mb-3" name="email" type="email" placeholder="Email Address" required aria-required="true">
+                                <button type="submit" class="btn-submit btnTheme mb-7">Subscribe</button>
+                                <div class="form-bottom">
+                                    <input class="form-check-input fakeInput" type="radio" id="dont-show">
+                                    <label class="no-show fw-light form-check-label ps-1" for="diff-ship-address">Do not show this window</label>
+                                </div>
+                                <div id="form-message" aria-live="polite" class="form-message"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

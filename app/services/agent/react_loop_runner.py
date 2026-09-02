@@ -98,6 +98,16 @@ class ReActLoopRunner:
                 state.is_complete = True
                 break
 
+            # Robust payload extraction across flat and nested response structures
+            extracted_payloads: dict[str, str] = {}
+            if isinstance(extracted_json, dict):
+                if isinstance(extracted_json.get("payloads"), dict):
+                    extracted_payloads = extracted_json["payloads"]
+                elif isinstance(extracted_json.get("response"), dict):
+                    raw_resp = extracted_json["response"]
+                    if isinstance(raw_resp.get("payloads"), dict):
+                        extracted_payloads = raw_resp["payloads"]
+
             execution = LLMExecution.from_json_payload(
                 payload=extracted_json,
                 conversation_id=conversation_id,
@@ -118,6 +128,7 @@ class ReActLoopRunner:
                 attachments=attachments,
                 conversation_history=conversation_history,
                 state=state,
+                payloads=extracted_payloads,
                 call_depth=call_depth,
             )
 
@@ -132,7 +143,8 @@ class ReActLoopRunner:
             if step_files:
                 all_created_files.extend(step_files)
 
-            if state.is_complete:
+            # Evaluate execution termination status
+            if execution.is_complete and state.is_complete:
                 break
 
             state.user_prompt = f"User Query: {user_text}\n\nTool Output:\n{last_result}"
@@ -179,18 +191,19 @@ class ReActLoopRunner:
             if not chunk:
                 continue
             display_text, json_data = parser.process_chunk(chunk)
+            
             if display_text:
                 state.accumulated_all_text.append(display_text)
                 yield display_text
             if json_data:
                 extracted_json = json_data
 
-        remaining_text, _ = parser.finalize()
+        remaining_text, finalized_json = parser.finalize()
         if remaining_text:
             state.accumulated_all_text.append(remaining_text)
             yield remaining_text
 
-        return extracted_json
+        return extracted_json or finalized_json
 
     def _execute_task_chain(
         self,
@@ -200,6 +213,7 @@ class ReActLoopRunner:
         attachments: list[MessageAttachment],
         conversation_history: list[Message],
         state: ReActTurnState,
+        payloads: dict[str, str] | None = None,
         call_depth: int = 0,
     ) -> Generator[str, None, tuple[str, list[dict[str, Any]]]]:
         def llm_stream_adapter(prompt_text: str) -> Generator[str, None, None]:
@@ -236,6 +250,7 @@ class ReActLoopRunner:
             "conversation_id": conversation_id,
             "agent_id": agent_id,
             "call_depth": call_depth,
+            "payloads": payloads or {},
         }
         chain_parser = StreamResponseParser()
         chain_text_chunks: list[str] = []

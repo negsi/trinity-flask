@@ -12,6 +12,25 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Changed
 
+## [0.2.3] - 2026-09-02
+
+### Added
+- **Decoupled Task Chain Payload Protocol (Issue #20):**
+  - Protocol delimiters (``) and tag syntax (`<<<PAYLOAD_ID>>>...<<<END_PAYLOAD_ID>>>`) to decouple multi-line source code, templates, and raw text payloads from the JSON schema.
+  - Automatic resolution of payload references (`REF:<PAYLOAD_ID>`) in `TaskExecutor._resolve_parameters()` and `_resolve_value()`.
+  - Added `payloads` dictionary attribute to `LLMExecution` domain entity and a corresponding `JSON` column in `LLMExecutionModel` for database persistence.
+
+### Changed
+- **Response Format & Agent Prompts:**
+  - Updated `base_agent.response_format.md` and `base_agent.prompt.md` to instruct models to externalize complex string payloads as references, eliminating JSON escaping and formatting errors.
+  - Refined tool usage guidelines for `write_file` and `message_llm` to adopt the new referencing mechanism.
+- **Streaming & Response Parser (`stream_parser.py`):**
+  - Extended `StreamResponseParser` with payload state management and partial-match buffering to prevent delimiter leaks and raw payload content from being emitted into visible SSE chat streams.
+  - Structured extraction and attachment of external payloads to parsed task chain responses.
+- **Execution & Orchestration:**
+  - Updated `ReActLoopRunner` and `AgentOrchestrator` to thread decoupled payloads through the execution lifecycle and safely link `LLMExecution` records to assistant messages.
+  - Updated `SQLAlchemyLLMExecutionRepository` to map and persist the `payloads` field.
+
 ## [0.2.2] - 2026-08-28
 
 ### Changed
@@ -394,7 +413,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.2...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.3...develop
+[0.2.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.3
 [0.2.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.2
 [0.2.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.1
 [0.2.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.0

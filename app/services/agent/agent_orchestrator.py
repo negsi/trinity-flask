@@ -6,19 +6,19 @@ task chain persistence, and file URL formatting.
 """
 
 from collections.abc import Callable, Generator
-import uuid
 import json
 import logging
 import mimetypes
 from pathlib import Path
 from typing import Any
+import uuid
 
 from app.domain.enums import ActorType
 from app.domain.models.llm_execution import LLMExecution
 from app.domain.models.message import Message
 from app.domain.repositories.agent_repository import AgentRepository
 from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
-from app.services.agent.constants import PROTOCOL_TASK_CHAIN, PROTOCOL_ATTACHMENTS
+from app.services.agent.constants import PROTOCOL_ATTACHMENTS, PROTOCOL_TASK_CHAIN
 from app.services.agent.react_loop_runner import ReActExecutionSummary, ReActLoopRunner
 from app.services.messaging.messaging_service import MessagingService
 
@@ -31,13 +31,14 @@ def default_file_url_resolver(conversation_id: str, filename: str) -> str:
     """Default fallback URI builder for conversation file attachments."""
     return f"/api/v1/chat/conversations/{conversation_id}/files/{filename}"
 
+
 MAX_SUBAGENT_CALL_DEPTH = 7
 
 
 class AgentOrchestrator:
     """Orchestrates streaming agent responses, database persistence, and ReAct loop execution."""
 
-    def __init__(    
+    def __init__(
         self,
         messaging_service: MessagingService,
         llm_execution_repo: LLMExecutionRepository,
@@ -63,7 +64,11 @@ class AgentOrchestrator:
     ) -> Generator[str, None, str]:
         """Streams sub-agent events and text tokens in real-time using generator delegation."""
         if call_depth > MAX_SUBAGENT_CALL_DEPTH:
-            logger.warning("Sub-agent execution aborted: call depth limit (%d) reached for agent %s.", MAX_SUBAGENT_CALL_DEPTH, target_agent_id)
+            logger.warning(
+                "Sub-agent execution aborted: call depth limit (%d) reached for agent %s.",
+                MAX_SUBAGENT_CALL_DEPTH,
+                target_agent_id,
+            )
             return f"Error: Maximum sub-agent delegation depth ({MAX_SUBAGENT_CALL_DEPTH}) exceeded."
 
         target_agent = None
@@ -71,12 +76,10 @@ class AgentOrchestrator:
             target_agent = self.agent_repository.get_by_id(target_agent_id)
 
         target_name = target_agent.name if target_agent else f"Agent_{target_agent_id[:8]}"
-        
+
         sub_context = context or {}
         target_conv_id = (
-            conversation_id 
-            or sub_context.get("conversation_id") 
-            or "root"
+            conversation_id or sub_context.get("conversation_id") or "root"
         )
 
         try:
@@ -101,7 +104,7 @@ class AgentOrchestrator:
                     continue
 
                 if (
-                    PROTOCOL_ATTACHMENTS in chunk 
+                    PROTOCOL_ATTACHMENTS in chunk
                     or chunk.strip() == "[DONE]"
                     or (chunk.strip().startswith("{") and '"type":"meta"' in chunk)
                 ):
@@ -121,7 +124,9 @@ class AgentOrchestrator:
             return result_text or "Task executed by sub-agent with no output."
 
         except Exception as exc:
-            logger.error("Error executing sub-agent %s: %s", target_agent_id, exc, exc_info=True)
+            logger.error(
+                "Error executing sub-agent %s: %s", target_agent_id, exc, exc_info=True
+            )
             return f"Error executing sub-agent '{target_agent_id}': {exc}"
 
     def run_subagent_task(
@@ -162,7 +167,9 @@ class AgentOrchestrator:
         user_id: str,
         call_depth: int = 0,
     ) -> Generator[str, None, None]:
-        fetched_attachments = self.messaging_service.get_latest_user_attachments(conversation_id)
+        fetched_attachments = self.messaging_service.get_latest_user_attachments(
+            conversation_id
+        )
         conversation_history = self.messaging_service.get_conversation_history(
             conversation_id=conversation_id,
             limit=100,
@@ -170,7 +177,9 @@ class AgentOrchestrator:
 
         saved_message: Message | None = None
 
-        def on_turn_completed(accumulated_text: str, execution: LLMExecution | None) -> None:
+        def on_turn_completed(
+            accumulated_text: str, execution: LLMExecution | None
+        ) -> None:
             nonlocal saved_message
             if call_depth == 0 and not saved_message and conversation_id:
                 try:
@@ -183,12 +192,13 @@ class AgentOrchestrator:
                         recipient_id=user_id,
                     )
                 except Exception as exc:
-                    logger.error("Error creating initial agent message: %s", exc, exc_info=True)
+                    logger.error(
+                        "Error creating initial agent message: %s", exc, exc_info=True
+                    )
 
             if execution:
-                if saved_message:
-                    execution.message_id = saved_message.id
-                self._save_execution_safe(execution)
+                message_id = saved_message.id if saved_message else None
+                self._save_execution_safe(execution, message_id)
 
         loop_gen = self.react_loop_runner.run_react_loop(
             user_text=user_text,
@@ -271,7 +281,11 @@ class AgentOrchestrator:
                         recipient_id=user_id,
                     )
                 except Exception as exc:
-                    logger.error("Error creating fallback agent message: %s", exc, exc_info=True)
+                    logger.error(
+                        "Error creating fallback agent message: %s",
+                        exc,
+                        exc_info=True,
+                    )
             elif saved_message and final_text:
                 try:
                     self.messaging_service.update_message_text(
@@ -279,7 +293,9 @@ class AgentOrchestrator:
                         text=final_text,
                     )
                 except Exception as exc:
-                    logger.error("Error updating final message text: %s", exc, exc_info=True)
+                    logger.error(
+                        "Error updating final message text: %s", exc, exc_info=True
+                    )
 
             if saved_message and formatted_files:
                 try:
@@ -294,13 +310,27 @@ class AgentOrchestrator:
                     }
                     yield f"\n{PROTOCOL_ATTACHMENTS}{json.dumps(attachments_payload)}"
                 except Exception as exc:
-                    logger.error("Error adding generated attachments to message: %s", exc, exc_info=True)
+                    logger.error(
+                        "Error adding generated attachments to message: %s",
+                        exc,
+                        exc_info=True,
+                    )
 
-    def _save_execution_safe(self, execution: LLMExecution) -> None:
+    def _save_execution_safe(
+        self, execution: LLMExecution | None, message_id: str | None
+    ) -> None:
+        """Saves the LLM execution record linked to the assistant message."""
+        if not execution or not message_id:
+            return
         try:
+            execution.message_id = message_id
             self.llm_execution_repo.save(execution)
         except Exception as exc:
-            logger.error("Error persisting LLMExecution metadata: %s", exc, exc_info=True)
+            logger.error(
+                "[AgentOrchestrator] Failed to save LLM execution: %s",
+                exc,
+                exc_info=True,
+            )
 
     def handle_incoming_message(self, message: Message) -> None:
         if message.sender_type == ActorType.AGENT or not message.recipient_id:

@@ -80,6 +80,7 @@ class LLMExecution:
         summary_or_content (str): Summary text or raw final generated output.
         is_complete (bool): Flag indicating whether the entire execution plan has terminated.
         steps (list[ExecutionStep]): Ordered list of execution sub-steps.
+        payloads (dict[str, str]): Decoupled raw text/code content payloads mapped by reference ID.
         id (str): Unique UUID identifier.
         created_at (datetime): Creation timestamp.
     """
@@ -90,15 +91,12 @@ class LLMExecution:
     summary_or_content: str = ""
     is_complete: bool = True
     steps: list[ExecutionStep] = field(default_factory=list)
+    payloads: dict[str, str] = field(default_factory=dict)
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def __post_init__(self) -> None:
-        """Validates the execution domain entity.
-
-        Raises:
-            ValidationError: If invariants are violated.
-        """
+        """Validates the execution domain entity."""
         if not self.conversation_id or not self.conversation_id.strip():
             raise ValidationError("LLMExecution conversation_id cannot be empty.")
 
@@ -114,11 +112,7 @@ class LLMExecution:
                 object.__setattr__(step, "execution_id", self.id)
 
     def to_dict(self) -> dict[str, Any]:
-        """Serializes the execution lifecycle model into a dictionary.
-
-        Returns:
-            dict[str, Any]: Serialized execution dictionary.
-        """
+        """Serializes the execution lifecycle model into a dictionary."""
         return {
             "id": self.id,
             "conversation_id": self.conversation_id,
@@ -127,6 +121,7 @@ class LLMExecution:
             "summary_or_content": self.summary_or_content,
             "is_complete": self.is_complete,
             "steps": [s.to_dict() for s in self.steps],
+            "payloads": self.payloads,
             "created_at": self.created_at.isoformat(),
         }
 
@@ -151,6 +146,11 @@ class LLMExecution:
 
         is_complete = bool(response_data.get("is_complete", True))
         raw_steps = response_data.get("steps", [])
+        
+        # Payloads aus Response oder Top-Level extrahieren
+        raw_payloads = response_data.get("payloads") or payload.get("payloads") or {}
+        extracted_payloads: dict[str, str] = raw_payloads if isinstance(raw_payloads, dict) else {}
+
         execution_id = str(uuid.uuid4())
 
         steps: list[ExecutionStep] = []
@@ -178,4 +178,5 @@ class LLMExecution:
             summary_or_content=str(response_data.get("summary", "")),
             is_complete=is_complete,
             steps=steps,
+            payloads=extracted_payloads,
         )
