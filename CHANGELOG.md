@@ -9,6 +9,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+## [0.2.3] - 2026-09-02
+
+### Added
 - **Decoupled Task Chain Payload Protocol (Issue #20):**
   - Protocol delimiters (``) and tag syntax (`<<<PAYLOAD_ID>>>...<<<END_PAYLOAD_ID>>>`) to decouple multi-line source code, templates, and raw text payloads from the JSON schema.
   - Automatic resolution of payload references (`REF:<PAYLOAD_ID>`) in `TaskExecutor._resolve_parameters()` and `_resolve_value()`.
@@ -407,7 +413,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.2...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.3...develop
+[0.2.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.3
 [0.2.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.2
 [0.2.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.1
 [0.2.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.0
