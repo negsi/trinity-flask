@@ -10,12 +10,15 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+- Added `render_llm_request_dashboard` in `app/debug.py` to render a two-column, content-responsive Rich table terminal dashboard displaying user input, extracted JSON task-chains, and LLM responses.
+- Integrated `render_llm_request_dashboard` into `ReActLoopRunner` (`app/services/agent/react_loop_runner.py`) to visualize request state and task chains during agent turn completions.
+
 ### Changed
 
 ## [0.2.3] - 2026-09-02
 
 ### Added
-- **Decoupled Task Chain Payload Protocol (Issue #20):**
+- **Decoupled Task Chain Payload Protocol (Issue #20): (flask db upgrade)** 
   - Protocol delimiters (``) and tag syntax (`<<<PAYLOAD_ID>>>...<<<END_PAYLOAD_ID>>>`) to decouple multi-line source code, templates, and raw text payloads from the JSON schema.
   - Automatic resolution of payload references (`REF:<PAYLOAD_ID>`) in `TaskExecutor._resolve_parameters()` and `_resolve_value()`.
   - Added `payloads` dictionary attribute to `LLMExecution` domain entity and a corresponding `JSON` column in `LLMExecutionModel` for database persistence.
