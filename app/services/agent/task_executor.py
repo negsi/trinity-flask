@@ -16,6 +16,7 @@ from app.domain.enums import ExecutionStepStatus
 from app.domain.models.llm_execution import ExecutionStep, LLMExecution
 from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
 from app.services.agent.constants import PROTOCOL_TASK_CHAIN
+from app.services.agent.constants import PAYLOAD_REF_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -339,25 +340,52 @@ class TaskExecutor:
                 })
 
     def _resolve_parameters(self, params: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
-        """Recursively resolves dynamic context placeholders across parameter dictionaries."""
+        """Recursively resolves dynamic context placeholders and decoupled payloads across parameters."""
         return {k: self._resolve_value(v, context) for k, v in params.items()}
 
     def _resolve_value(self, val: Any, context: dict[str, Any]) -> Any:
-        """Resolves placeholder tokens in parameter values."""
+        """Resolves payload references (REF:...) and step placeholder tokens in parameter values."""
         if isinstance(val, str):
             stripped = val.strip()
-            for ctx_key, ctx_val in context.items():
-                token_upper = f"[{ctx_key.upper()}]"
-                token_lower = f"[{ctx_key.lower()}]"
+            payloads: dict[str, str] = context.get("payloads", {})
 
-                if stripped in (token_upper, token_lower):
-                    return ctx_val
+            # 1. Direct Payload Resolution (e.g. "REF:PAYLOAD_STEP_1" or "PAYLOAD_STEP_1")
+            if stripped.startswith("REF:"):
+                ref_key = stripped[4:].strip()
+                if ref_key in payloads:
+                    val = payloads[ref_key]
+                    stripped = val.strip() if isinstance(val, str) else ""
 
-                val_str = str(ctx_val)
-                if token_upper in val:
-                    val = val.replace(token_upper, val_str)
-                if token_lower in val:
-                    val = val.replace(token_lower, val_str)
+            elif stripped in payloads:
+                val = payloads[stripped]
+                stripped = val.strip() if isinstance(val, str) else ""
+
+            # 2. Embedded Payload Resolution (if REF: appears inside a longer template string)
+            if isinstance(val, str) and "REF:" in val:
+                for p_key, p_val in payloads.items():
+                    target_ref = f"REF:{p_key}"
+                    if target_ref in val:
+                        val = val.replace(target_ref, p_val)
+
+            # 3. Context Step Placeholder Resolution ([STEP_1], [CONVERSATION_ID], etc.)
+            if isinstance(val, str):
+                stripped = val.strip()
+                for ctx_key, ctx_val in context.items():
+                    if ctx_key == "payloads":
+                        continue
+
+                    token_upper = f"[{ctx_key.upper()}]"
+                    token_lower = f"[{ctx_key.lower()}]"
+
+                    if stripped in (token_upper, token_lower):
+                        return ctx_val
+
+                    val_str = str(ctx_val)
+                    if token_upper in val:
+                        val = val.replace(token_upper, val_str)
+                    if token_lower in val:
+                        val = val.replace(token_lower, val_str)
+
             return val
 
         if isinstance(val, dict):

@@ -20,14 +20,7 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
     """SQLAlchemy implementation of the LLMExecutionRepository interface."""
 
     def _to_domain(self, model: LLMExecutionModel) -> LLMExecution:
-        """Maps an LLMExecutionModel ORM instance to an LLMExecution domain model.
-
-        Args:
-            model (LLMExecutionModel): ORM model.
-
-        Returns:
-            LLMExecution: Domain entity.
-        """
+        """Maps an LLMExecutionModel ORM instance to an LLMExecution domain model."""
         steps = []
         if model.steps:
             for s in model.steps:
@@ -48,7 +41,6 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
                     )
                 )
 
-        # Sortiere Schritte nach step_number zur Sicherheit
         steps.sort(key=lambda x: x.step_number)
 
         return LLMExecution(
@@ -59,21 +51,12 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
             summary_or_content=model.summary_or_content,
             is_complete=model.is_complete,
             steps=steps,
+            payloads=model.payloads or {},
             created_at=model.created_at,
         )
 
     def save(self, execution: LLMExecution) -> LLMExecution:
-        """Persists or updates an LLMExecution state and its associated steps in the database.
-
-        Args:
-            execution (LLMExecution): Entity to persist.
-
-        Returns:
-            LLMExecution: Persisted domain entity.
-
-        Raises:
-            StorageError: If database persistence fails.
-        """
+        """Persists or updates an LLMExecution state and its associated steps in the database."""
         try:
             model: LLMExecutionModel | None = None
             if execution.id:
@@ -87,6 +70,7 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
                     response_type=execution.response_type,
                     summary_or_content=execution.summary_or_content,
                     is_complete=execution.is_complete,
+                    payloads=execution.payloads or {},
                     created_at=execution.created_at,
                 )
                 db.session.add(model)
@@ -96,8 +80,8 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
                 model.response_type = execution.response_type
                 model.summary_or_content = execution.summary_or_content
                 model.is_complete = execution.is_complete
+                model.payloads = execution.payloads or {}
 
-            # Synchronisiere die verknüpften Execution Steps (Relational)
             existing_steps = {step_model.step_number: step_model for step_model in model.steps}
 
             for step in execution.steps:

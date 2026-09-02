@@ -40,6 +40,7 @@ class LLMExecutionModel(db.Model):
     response_type = Column(SQLEnum(ResponseType), nullable=False)
     summary_or_content = Column(Text, nullable=False)
     is_complete = Column(Boolean, nullable=False, default=True)
+    payloads = Column(JSON, nullable=False, default=dict)  # <-- NEU für Issue #20
 
     created_at = Column(DateTime(timezone=True), default=_utc_now, nullable=False, index=True)
 
