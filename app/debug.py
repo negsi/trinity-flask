@@ -4,6 +4,7 @@ Debugging Utilities Module.
 Provides formatted terminal logging and object inspection using the Rich library.
 """
 
+import logging
 from rich.pretty import pprint
 from rich.console import Console
 from rich.table import Table
@@ -94,6 +95,7 @@ def debug(obj, label=None, *, json=False, table=False, inspect_obj=False):
     # Fallback pretty printing
     pprint(obj)
 
+
 def render_llm_request_dashboard(
     user_prompt: str,
     extracted_json: dict | None,
@@ -158,3 +160,57 @@ def render_llm_request_dashboard(
     # 5. Rendern
     console.print(grid)
     console.rule("[bold magenta]End of Turn Debug")
+
+
+class RichPanelLogHandler(logging.Handler):
+    """
+    Custom Logging Handler, der Log-Nachrichten in Rich-Panels rendert.
+    """
+
+    LEVEL_COLORS = {
+        "DEBUG": "cyan",
+        "INFO": "blue",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "bold red on white",
+    }
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            msg = self.format(record)
+            level = record.levelname
+            color = self.LEVEL_COLORS.get(level, "white")
+
+            title = f"[bold {color}]{level}[/] [dim]({record.name})[/]"
+
+            panel = Panel(
+                Text(msg, style="default"),
+                title=title,
+                title_align="left",
+                border_style=color,
+                expand=True,
+            )
+            console.print(panel)
+        except Exception:
+            self.handleError(record)
+
+
+def setup_rich_logging(level: int = logging.INFO) -> None:
+    """
+    Configures the root logger to output records through RichPanelLogHandler.
+
+    Args:
+        level (int): Logging level to set for the root logger.
+    """
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+
+    # Remove existing handlers to avoid duplicated log records
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    panel_handler = RichPanelLogHandler()
+    formatter = logging.Formatter("%(asctime)s - %(message)s", datefmt="%H:%M:%S")
+    panel_handler.setFormatter(formatter)
+
+    root_logger.addHandler(panel_handler)

@@ -12,8 +12,11 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 - Added `render_llm_request_dashboard` in `app/debug.py` to render a two-column, content-responsive Rich table terminal dashboard displaying user input, extracted JSON task-chains, and LLM responses.
 - Integrated `render_llm_request_dashboard` into `ReActLoopRunner` (`app/services/agent/react_loop_runner.py`) to visualize request state and task chains during agent turn completions.
+- Added custom `RichPanelLogHandler` and `setup_rich_logging` helper function in `app/debug.py` to route Python system and third-party logs into styled Rich panels.
 
 ### Changed
+
+- Updated `DevelopmentConfig.init_app` in `app/config.py` to replace standard `logging.basicConfig` with `setup_rich_logging`, redirecting development logs through `RichPanelLogHandler`.
 
 ## [0.2.3] - 2026-09-02
 
