@@ -69,6 +69,7 @@ Erstelle bei Werkzeugeinsatz einen vollständigen, logischen Ablaufplan:
    - **Dynamische URLs (Multi-Turn):** Müssen Links erst aus Übersichten extrahiert werden, erst Feed/Suche abrufen (`"is_complete": false`).
 2. **Datenfluss & Pflicht-Referenz:** Jeder verarbeitende oder speichernde Schritt (`message_llm`, `write_file` etc.) MUSS in seinen Parametern mindestens einen Platzhalter `[STEP_N]` enthalten.
 3. **Pflicht zur Auswertung:** Ein Plan zur Datenbeschaffung darf NIEMALS nur aus Abrufen (`fetch_url`, `call_api`, `read_file`) bestehen. Am Ende MUSS zwingend eine Auswertung/Synthese via `message_llm` oder direkte Aufbereitung stehen.
+   - **WICHTIG (API-Calls):** Sobald ein Schritt das Tool `call_api` nutzt, um Daten abzufragen, MUSS zwingend ein nachfolgender Schritt mit `message_llm` eingeplant werden (z. B. Step 2), der die Rohdaten aus `[STEP_1]` analysiert und für den Nutzer formatiert. Eine Task-Chain darf NIEMALS mit `call_api` enden!
 4. **Format & Ausgabe:**
    - Bette die Task Chain als JSON ein:
 {base_agent.response_format.md}

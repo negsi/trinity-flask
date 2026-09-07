@@ -103,20 +103,23 @@ def render_llm_request_dashboard(
     turn_count: int = 1,
     agent_id: str = "Unknown",
 ):
-    """Renders a 2-column side-by-side debug dashboard that shrinks to content height."""
+    """Renders a single-column stacked debug dashboard giving full width to panels."""
 
     # 1. Header Rule
     console.rule(
         f"[bold magenta]🤖 LLM Request Debugger (Turn {turn_count}) - Agent: {agent_id}"
     )
 
-    # 2. Panels aufbauen
+    # 2. User Input Panel
     input_panel = Panel(
         Text(user_prompt or "-", style="cyan"),
         title="[bold yellow]📥 User Input / Prompt",
         border_style="yellow",
+        expand=True,
     )
+    console.print(input_panel)
 
+    # 3. Task-Chain / Structured Plan Panel
     if extracted_json:
         json_content = JSON.from_data(extracted_json)
     else:
@@ -124,41 +127,25 @@ def render_llm_request_dashboard(
             "Kein JSON / Task-Chain in dieser Antwort", style="dim white"
         )
 
-    right_panel = Panel(
+    task_panel = Panel(
         json_content,
         title="[bold cyan]⚙️ Task-Chain / Structured Plan",
         border_style="cyan",
+        expand=True,
     )
+    console.print(task_panel)
 
-    # 3. Grid über Table erzeugen (keine festen Ränder, expandiert nicht nach unten)
-    grid = Table.grid(expand=True, padding=(0, 1))
-    grid.add_column(ratio=1)  # Linke Spalte (50%)
-    grid.add_column(ratio=1)  # Rechte Spalte (50%)
-
-    # 4. Inhalt zusammenbauen
-    # Wenn Text im LLM Output ist, fügen wir das Panel links unten an.
-    # Wenn nicht, lassen wir es einfach komplett weg oder zeigen nur den Prompt!
-    has_output = bool(accumulated_text and accumulated_text.strip())
-
-    if has_output:
+    # 4. LLM Response Output Panel (sofern Inhalt vorhanden ist)
+    if accumulated_text and accumulated_text.strip():
         output_panel = Panel(
             Text(accumulated_text, style="green"),
             title="[bold green]💬 LLM Response Output",
             border_style="green",
+            expand=True,
         )
-        # Linke Spalte hat zwei Panels (Prompt + Output)
-        left_side = Table.grid(expand=True)
-        left_side.add_column()
-        left_side.add_row(input_panel)
-        left_side.add_row(output_panel)
-    else:
-        # Linke Spalte besteht nur aus dem Prompt (keine unnötigen Lücken)
-        left_side = input_panel
+        console.print(output_panel)
 
-    grid.add_row(left_side, right_panel)
-
-    # 5. Rendern
-    console.print(grid)
+    # 5. Footer Rule
     console.rule("[bold magenta]End of Turn Debug")
 
 
