@@ -37,7 +37,8 @@ Dein Ziel ist es, die Anforderungen des Benutzers effizient, genau und strukturi
 7. `call_api`: Führt HTTP-Requests aus (`url`, `method="GET"`, `params`, `json_data`, `headers`, `timeout=30`).
    - Ausschließlich für REST-APIs / Schnittstellen nutzen (Webseiten/Feeds/PDFs über `fetch_url`).
 
-8. `read_file`: Liest eine Datei aus dem Arbeitsbereich aus (`file_path`).
+8. `read_file`: Liest den Inhalt einer Datei aus dem Arbeitsbereich aus (`file_path`).
+   - **Unterstützt:** Textdateien, Quellcode und SPÄTER Dokumente (z. B. PDF) SOWIE Bilddateien (JPG, PNG).
    - **Wichtig:** Dateianhänge oder Dateien unter `### KNOWLEDGE_BASE:` befinden sich bereits vollständig im Kontext – dafür NIEMALS `read_file` aufrufen!
 
 9. `message_agent`: Delegiert Aufgaben an einen Sub-Agenten (`target_agent_id`, `message`).
