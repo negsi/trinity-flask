@@ -12,10 +12,25 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Changed
 
+## [0.2.4] - 2026-09-08
+
+### Added
+
+- Added `render_llm_request_dashboard` in `app/debug.py` to render a single-column, content-responsive Rich table terminal dashboard displaying user input, extracted JSON task-chains, and LLM responses.
+- Integrated `render_llm_request_dashboard` into `ReActLoopRunner` (`app/services/agent/react_loop_runner.py`) to visualize request state and task chains during agent turn completions.
+- Added custom `RichPanelLogHandler` and `setup_rich_logging` helper function in `app/debug.py` to route Python system and third-party logs into styled Rich panels.
+- Added REST API endpoints for conversation workspace management in `app/routes/conversations.py`, including fetching files recursively, creating and deleting folders, deleting files, and uploading multiple files.
+- Added path resolution and security sandbox validation helpers (`_resolve_and_validate_path`, `_extract_target_path`, `_serialize_fs_item`) in `app/routes/conversations.py` to prevent directory traversal and escape vulnerabilities.
+- Added `get_conversation_files` method to `MessagingService` (`app/services/messaging/messaging_service.py`) to extract and retrieve all file attachments embedded within a conversation's message history.
+
+### Changed
+
+- Updated `DevelopmentConfig.init_app` in `app/config.py` to replace standard `logging.basicConfig` with `setup_rich_logging`, redirecting development logs through `RichPanelLogHandler`.
+
 ## [0.2.3] - 2026-09-02
 
 ### Added
-- **Decoupled Task Chain Payload Protocol (Issue #20):**
+- **Decoupled Task Chain Payload Protocol (Issue #20): (flask db upgrade)** 
   - Protocol delimiters (``) and tag syntax (`<<<PAYLOAD_ID>>>...<<<END_PAYLOAD_ID>>>`) to decouple multi-line source code, templates, and raw text payloads from the JSON schema.
   - Automatic resolution of payload references (`REF:<PAYLOAD_ID>`) in `TaskExecutor._resolve_parameters()` and `_resolve_value()`.
   - Added `payloads` dictionary attribute to `LLMExecution` domain entity and a corresponding `JSON` column in `LLMExecutionModel` for database persistence.
@@ -413,7 +428,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.3...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.4...develop
+[0.2.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.4
 [0.2.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.3
 [0.2.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.2
 [0.2.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.1

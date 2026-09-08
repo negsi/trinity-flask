@@ -4,12 +4,18 @@ Debugging Utilities Module.
 Provides formatted terminal logging and object inspection using the Rich library.
 """
 
+import logging
 from rich.pretty import pprint
 from rich.console import Console
 from rich.table import Table
 from rich.json import JSON
 from rich import inspect
 from rich.traceback import Traceback
+from rich.columns import Columns
+from rich.text import Text
+from rich.panel import Panel
+from rich.console import Group
+from rich.layout import Layout
 
 console = Console()
 
@@ -88,3 +94,110 @@ def debug(obj, label=None, *, json=False, table=False, inspect_obj=False):
 
     # Fallback pretty printing
     pprint(obj)
+
+
+def render_llm_request_dashboard(
+    user_prompt: str,
+    extracted_json: dict | None,
+    accumulated_text: str,
+    turn_count: int = 1,
+    agent_id: str = "Unknown",
+):
+    """Renders a single-column stacked debug dashboard giving full width to panels."""
+
+    # 1. Header Rule
+    console.rule(
+        f"[bold magenta]🤖 LLM Request Debugger (Turn {turn_count}) - Agent: {agent_id}"
+    )
+
+    # 2. User Input Panel
+    input_panel = Panel(
+        Text(user_prompt or "-", style="cyan"),
+        title="[bold yellow]📥 User Input / Prompt",
+        border_style="yellow",
+        expand=True,
+    )
+    console.print(input_panel)
+
+    # 3. Task-Chain / Structured Plan Panel
+    if extracted_json:
+        json_content = JSON.from_data(extracted_json)
+    else:
+        json_content = Text(
+            "Kein JSON / Task-Chain in dieser Antwort", style="dim white"
+        )
+
+    task_panel = Panel(
+        json_content,
+        title="[bold cyan]⚙️ Task-Chain / Structured Plan",
+        border_style="cyan",
+        expand=True,
+    )
+    console.print(task_panel)
+
+    # 4. LLM Response Output Panel (sofern Inhalt vorhanden ist)
+    if accumulated_text and accumulated_text.strip():
+        output_panel = Panel(
+            Text(accumulated_text, style="green"),
+            title="[bold green]💬 LLM Response Output",
+            border_style="green",
+            expand=True,
+        )
+        console.print(output_panel)
+
+    # 5. Footer Rule
+    console.rule("[bold magenta]End of Turn Debug")
+
+
+class RichPanelLogHandler(logging.Handler):
+    """
+    Custom Logging Handler, der Log-Nachrichten in Rich-Panels rendert.
+    """
+
+    LEVEL_COLORS = {
+        "DEBUG": "cyan",
+        "INFO": "blue",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "bold red on white",
+    }
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            msg = self.format(record)
+            level = record.levelname
+            color = self.LEVEL_COLORS.get(level, "white")
+
+            title = f"[bold {color}]{level}[/] [dim]({record.name})[/]"
+
+            panel = Panel(
+                Text(msg, style="default"),
+                title=title,
+                title_align="left",
+                border_style=color,
+                expand=True,
+            )
+            console.print(panel)
+        except Exception:
+            self.handleError(record)
+
+
+def setup_rich_logging(level: int = logging.INFO) -> None:
+    """
+    Configures the root logger to output records through RichPanelLogHandler.
+
+    Args:
+        level (int): Logging level to set for the root logger.
+    """
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+
+    # Remove existing handlers to avoid duplicated log records
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    panel_handler = RichPanelLogHandler()
+    formatter = logging.Formatter("%(asctime)s - %(message)s", datefmt="%H:%M:%S")
+    panel_handler.setFormatter(formatter)
+
+    root_logger.addHandler(panel_handler)

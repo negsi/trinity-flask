@@ -81,17 +81,13 @@ class DevelopmentConfig(BaseConfig):
     @staticmethod
     def init_app(app):
         """Attach rich debugging utilities to the development Flask instance."""
-        from app.debug import debug
+        from app.debug import debug, setup_rich_logging
         app.d = debug
 
         log_level_str = app.config.get("LOG_LEVEL", "DEBUG")
         log_level = getattr(logging, log_level_str, logging.DEBUG)
 
-        logging.basicConfig(
-            level=log_level,
-            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-            force=True
-        )
+        setup_rich_logging(log_level)
         app.logger.setLevel(log_level)
 
 

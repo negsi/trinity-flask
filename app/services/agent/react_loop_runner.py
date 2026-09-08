@@ -20,6 +20,8 @@ from app.services.infrastructure.llm_service import LLMService
 from app.services.llm.stream_parser import StreamResponseParser
 from app.services.tools.registry import ToolRegistry
 
+from app.debug import render_llm_request_dashboard
+
 logger = logging.getLogger(__name__)
 
 
@@ -91,6 +93,15 @@ class ReActLoopRunner:
             )
 
             current_text = "".join(state.accumulated_all_text).strip()
+
+            render_llm_request_dashboard(
+                user_prompt=state.user_prompt,
+                extracted_json=extracted_json,
+                accumulated_text=current_text,
+                turn_count=state.turn_count,
+                agent_id=agent_id,
+            )
+
             if on_turn_completed:
                 on_turn_completed(current_text, None)
 
