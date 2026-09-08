@@ -10,9 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
-- Added `render_llm_request_dashboard` in `app/debug.py` to render a two-column, content-responsive Rich table terminal dashboard displaying user input, extracted JSON task-chains, and LLM responses.
+- Added `render_llm_request_dashboard` in `app/debug.py` to render a single-column, content-responsive Rich table terminal dashboard displaying user input, extracted JSON task-chains, and LLM responses.
 - Integrated `render_llm_request_dashboard` into `ReActLoopRunner` (`app/services/agent/react_loop_runner.py`) to visualize request state and task chains during agent turn completions.
 - Added custom `RichPanelLogHandler` and `setup_rich_logging` helper function in `app/debug.py` to route Python system and third-party logs into styled Rich panels.
+- Added REST API endpoints for conversation workspace management in `app/routes/conversations.py`, including fetching files recursively, creating and deleting folders, deleting files, and uploading multiple files[cite: 23].
+- Added path resolution and security sandbox validation helpers (`_resolve_and_validate_path`, `_extract_target_path`, `_serialize_fs_item`) in `app/routes/conversations.py` to prevent directory traversal and escape vulnerabilities[cite: 23].
+- Added `get_conversation_files` method to `MessagingService` (`app/services/messaging/messaging_service.py`) to extract and retrieve all file attachments embedded within a conversation's message history[cite: 23].
 
 ### Changed
 

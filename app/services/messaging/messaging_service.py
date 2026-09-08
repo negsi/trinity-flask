@@ -228,3 +228,8 @@ class MessagingService:
                 listener(message)
             except Exception as exc:
                 logger.error("Error notifying message listener: %s", exc, exc_info=True)
+
+    def get_conversation_files(self, conversation_id: str) -> list[dict[str, Any]]:
+        """Retrieves all file attachments embedded in messages for a conversation."""
+        messages = self.message_repo.get_by_conversation(conversation_id, limit=1000)
+        return [att.to_dict() for msg in messages if msg.attachments for att in msg.attachments]
