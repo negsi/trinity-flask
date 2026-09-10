@@ -14,10 +14,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - Dynamic conversation title generation in `MessagingService.send_message` featuring recipient agent name (`Chat gestartet mit <agent_name>`).
 - `update_conversation` endpoint in `app/routes/conversations.py` (`PATCH`/`PUT` `/<conversation_id>`) to handle conversation metadata updates.
 - `update_conversation_title` method in `MessagingService` to update and persist conversation titles.
+- Directory listing functionality to `read_file` tool in `file_tools.py` with flat/recursive options and sandbox path validation[cite: 14].
 
 ### Changed
 
 - Updated fallback user details in `SecurityContextService` from hardcoded "Christian" to generic "user" ID and "User" display name.
+- Updated `base_agent.prompt.md` to document directory listing support (`recursive=false`) for the `read_file` tool[cite: 14].
 
 ## [0.2.6] - 2026-09-10
 

@@ -101,31 +101,74 @@ def write_file(
 
 def read_file(
     file_storage_service: FileStorageService,
-    file_path: str,
+    file_path: str = ".",
     conversation_id: str | None = None,
     base_dir: str | Path | None = None,
     encoding: str = "utf-8",
+    recursive: bool = False,
     **kwargs: Any,
 ) -> str:
     """
-    Reads textual content from a sandboxed file, with native support for
-    plain text, PDFs, and ODF files (.odt, .ods, .odp).
+    Reads textual content from a sandboxed file, or lists directory contents
+    if target path is a directory (flat or recursive).
 
     Args:
         file_storage_service: Storage service instance.
-        file_path: Relative or absolute path of the file to read.
+        file_path: Relative or absolute path of the file or directory to read/list.
         conversation_id: Optional conversation sandbox ID.
         base_dir: Target base directory.
         encoding: File character encoding for plain text files (defaults to 'utf-8').
+        recursive: If True and file_path is a directory, recursively lists all contents.
 
     Returns:
-        str: Raw text content or extracted document text, or an error message.
+        str: Raw text content, extracted document text, directory listing, or an error message.
     """
     target_base = Path(base_dir or ".").resolve()
+    
+    # Target directory resolution logic inside sandbox
+    sandbox_dir = target_base / conversation_id if conversation_id else target_base
+    target_path = (sandbox_dir / file_path).resolve() if file_path and file_path != "." else sandbox_dir
+
+    # Security check: Ensure target path remains within sandbox
+    if sandbox_dir not in target_path.parents and target_path != sandbox_dir:
+        return f"Error: Access denied. Path '{file_path}' is outside the conversation sandbox."
+
+    # --- 1. DIRECTORY LISTING FEATURE ---
+    if target_path.exists() and target_path.is_dir():
+        try:
+            entries = []
+            rel_base = target_path
+
+            if recursive:
+                paths = sorted(target_path.rglob("*"))
+            else:
+                paths = sorted(target_path.iterdir())
+
+            for p in paths:
+                try:
+                    rel_p = p.relative_to(rel_base)
+                except ValueError:
+                    rel_p = p.name
+
+                prefix = "[DIR] " if p.is_dir() else "[FILE]"
+                entries.append(f"{prefix} {rel_p}")
+
+            if not entries:
+                return f"=== DIRECTORY LISTING ({target_path.name or '.'}) ===\n(Directory is empty)"
+
+            mode_str = "RECURSIVE" if recursive else "FLAT"
+            listing = "\n".join(entries)
+            return f"=== DIRECTORY LISTING [{mode_str}] ({file_path or '.'}) ===\n\n{listing}"
+
+        except Exception as exc:
+            logger.error("Error listing directory '%s': %s", file_path, exc, exc_info=True)
+            return f"Error listing directory '{file_path}': {exc}"
+
+    # --- 2. FILE READING FEATURE (Existing functionality) ---
     path_obj = Path(file_path)
     ext = path_obj.suffix.lower()
 
-    # 1. Handle ODF documents (.odt, .ods, .odp) via manage_odf
+    # Handle ODF documents (.odt, .ods, .odp) via manage_odf
     if ext in {".odt", ".ods", ".odp"}:
         from app.services.tools.office_tools import manage_odf
 
@@ -145,14 +188,14 @@ def read_file(
         # Resolve target path inside sandbox for PDFs and plain text
         resolved_path = locate_file(file_path, target_base, conversation_id)
         if not resolved_path or not resolved_path.is_file():
-            # Fallback to direct resolution via read_sandboxed_file for proper sandbox exception handling
+            # Fallback to direct resolution via read_sandboxed_file
             resolved_path = (
                 (target_base / conversation_id / file_path).resolve()
                 if conversation_id
                 else (target_base / file_path).resolve()
             )
 
-        # 2. Handle PDF documents via extract_text_content
+        # Handle PDF documents via extract_text_content
         if ext == ".pdf":
             extracted = file_storage_service.extract_text_content(
                 file_path_str=resolved_path, mime_type="application/pdf"
@@ -161,7 +204,7 @@ def read_file(
                 return f"=== PDF DOCUMENT CONTENT ({path_obj.name}) ===\n\n{extracted}"
             return f"Error: Could not extract text from PDF file '{file_path}' (file may be empty or image-only)."
 
-        # 3. Handle standard text files
+        # Handle standard text files
         return file_storage_service.read_sandboxed_file(
             file_path=file_path,
             base_dir=str(target_base),
