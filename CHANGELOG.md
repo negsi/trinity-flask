@@ -12,6 +12,17 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Changed
 
+## [0.2.6] - 2026-09-10
+
+### Added
+
+- Backend endpoint `DELETE /api/v1/agents/<agent_id>/conversations/<conversation_id>/messages/<message_id>` for deleting individual conversation messages.
+- Backend endpoint `DELETE /api/v1/agents/<agent_id>/conversations/<conversation_id>/messages` for resetting conversation history by clearing all messages.
+- `delete_message` method in `MessagingService` to delete message domain entities by ID.
+- `clear_conversation_messages` method in `MessagingService` to delete all messages belonging to a conversation.
+- `deleteMessage` service method in Angular `ApiChatService` for making message deletion HTTP calls.
+- Delete action button in `ChatWorkspaceComponent` message UI toolbar with reactive state update upon deletion.
+
 ## [0.2.5] - 2026-09-10
 
 ### Added
@@ -439,7 +450,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.5...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.6...develop
+[0.2.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.6
 [0.2.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.5
 [0.2.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.4
 [0.2.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.3
