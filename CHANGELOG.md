@@ -10,16 +10,22 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+### Changed
+
+## [0.2.7] - 2026-09-10
+
+### Added
+
 - `AgentRepository` injection in `MessagingService` constructor and dependency container setup.
 - Dynamic conversation title generation in `MessagingService.send_message` featuring recipient agent name (`Chat gestartet mit <agent_name>`).
 - `update_conversation` endpoint in `app/routes/conversations.py` (`PATCH`/`PUT` `/<conversation_id>`) to handle conversation metadata updates.
 - `update_conversation_title` method in `MessagingService` to update and persist conversation titles.
-- Directory listing functionality to `read_file` tool in `file_tools.py` with flat/recursive options and sandbox path validation[cite: 14].
+- Directory listing functionality to `read_file` tool in `file_tools.py` with flat/recursive options and sandbox path validation.
 
 ### Changed
 
 - Updated fallback user details in `SecurityContextService` from hardcoded "Christian" to generic "user" ID and "User" display name.
-- Updated `base_agent.prompt.md` to document directory listing support (`recursive=false`) for the `read_file` tool[cite: 14].
+- Updated `base_agent.prompt.md` to document directory listing support (`recursive=false`) for the `read_file` tool.
 
 ## [0.2.6] - 2026-09-10
 
@@ -459,7 +465,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.6...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.7...develop
+[0.2.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.7
 [0.2.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.6
 [0.2.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.5
 [0.2.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.4
