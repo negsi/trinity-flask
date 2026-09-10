@@ -10,6 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+### Changed
+
+## [0.2.5] - 2026-09-10
+
+### Added
+
 - Native support for reading PDF and ODF files (`.odt`, `.ods`, `.odp`) directly via the `read_file` tool.
 
 ### Changed
@@ -433,7 +439,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.4...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.5...develop
+[0.2.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.5
 [0.2.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.4
 [0.2.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.3
 [0.2.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.2
