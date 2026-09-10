@@ -291,3 +291,20 @@ def delete_conversation_message(
         return "", 204
     except Exception as exc:
         return jsonify({"error": f"Failed to delete message: {exc}"}), 404
+
+
+@bp.route("/<conversation_id>/messages", methods=["DELETE"])
+@inject
+def clear_conversation_messages(
+    agent_id: str,
+    conversation_id: str,
+    agent_service: AgentService = Provide[Container.agent_service],
+    messaging_service: MessagingService = Provide[Container.messaging_service],
+):
+    """Deletes all messages from a conversation (resets the chat history)."""
+    agent_service.get_agent(agent_id)
+    try:
+        messaging_service.clear_conversation_messages(conversation_id)
+        return "", 204
+    except Exception as exc:
+        return jsonify({"error": f"Failed to clear conversation messages: {exc}"}), 404

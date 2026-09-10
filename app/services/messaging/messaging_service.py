@@ -249,3 +249,22 @@ class MessagingService:
         self.message_repo.delete(message_id)
         logger.info("Successfully deleted message: %s", message_id)
         return True
+
+
+    def clear_conversation_messages(self, conversation_id: str) -> bool:
+        """
+        Deletes all messages belonging to a specific conversation.
+
+        Raises:
+            ConversationNotFoundError: If the conversation does not exist.
+        """
+        conv = self.conversation_repo.get_by_id(conversation_id)
+        if not conv:
+            raise ConversationNotFoundError(f"Conversation with ID '{conversation_id}' was not found.")
+
+        messages = self.message_repo.get_by_conversation(conversation_id, limit=10000)
+        for msg in messages:
+            self.message_repo.delete(msg.id)
+
+        logger.info("Successfully cleared all messages for conversation: %s", conversation_id)
+        return True

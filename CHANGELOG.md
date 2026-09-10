@@ -11,7 +11,9 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 ### Added
 
 - Backend endpoint `DELETE /api/v1/agents/<agent_id>/conversations/<conversation_id>/messages/<message_id>` for deleting individual conversation messages.
+- Backend endpoint `DELETE /api/v1/agents/<agent_id>/conversations/<conversation_id>/messages` for resetting conversation history by clearing all messages.
 - `delete_message` method in `MessagingService` to delete message domain entities by ID.
+- `clear_conversation_messages` method in `MessagingService` to delete all messages belonging to a conversation.
 - `deleteMessage` service method in Angular `ApiChatService` for making message deletion HTTP calls.
 - Delete action button in `ChatWorkspaceComponent` message UI toolbar with reactive state update upon deletion.
 
