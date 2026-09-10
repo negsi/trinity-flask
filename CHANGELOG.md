@@ -6,11 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
-## [Unreleased]
+# [Unreleased]
 
 ### Added
 
-### Changed
+- Routed incoming uploaded message attachments specifically into an isolated `uploads` subfolder within the conversation sandbox directory.
 
 ## [0.2.7] - 2026-09-10
 
