@@ -48,9 +48,9 @@ class SecurityContextService:
             except Exception:
                 pass
 
-        # 3. Standard Fallback: Christian (User)
+        # 3. Standard Fallback: user (User)
         return {
-            "id": "user-christian",
+            "id": "user",
             "type": ActorType.USER,
-            "name": "Christian",
+            "name": "User",
         }

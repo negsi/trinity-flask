@@ -308,3 +308,30 @@ def clear_conversation_messages(
         return "", 204
     except Exception as exc:
         return jsonify({"error": f"Failed to clear conversation messages: {exc}"}), 404
+
+
+@bp.route("/<conversation_id>", methods=["PATCH", "PUT"])
+@inject
+def update_conversation(
+    agent_id: str,
+    conversation_id: str,
+    agent_service: AgentService = Provide[Container.agent_service],
+    messaging_service: MessagingService = Provide[Container.messaging_service],
+):
+    """Updates a conversation's metadata (e.g., title)."""
+    agent_service.get_agent(agent_id)
+
+    payload = request.get_json(silent=True) or {}
+    title = payload.get("title")
+
+    if not title or not isinstance(title, str) or not title.strip():
+        return jsonify({"error": "Field 'title' is required and must be a non-empty string."}), 400
+
+    try:
+        updated_conv = messaging_service.update_conversation_title(
+            conversation_id=conversation_id,
+            title=title.strip()
+        )
+        return jsonify(updated_conv.to_dict()), 200
+    except Exception as exc:
+        return jsonify({"error": f"Failed to update conversation: {exc}"}), 404
