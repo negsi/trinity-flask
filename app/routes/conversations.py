@@ -273,3 +273,21 @@ def upload_conversation_files(
             return jsonify({"error": f"Failed to upload '{file_obj.filename}': {exc}"}), 500
 
     return jsonify({"uploaded": uploaded_results}), 201
+
+
+@bp.route("/<conversation_id>/messages/<message_id>", methods=["DELETE"])
+@inject
+def delete_conversation_message(
+    agent_id: str,
+    conversation_id: str,
+    message_id: str,
+    agent_service: AgentService = Provide[Container.agent_service],
+    messaging_service: MessagingService = Provide[Container.messaging_service],
+):
+    """Deletes a specific message from a conversation."""
+    agent_service.get_agent(agent_id)
+    try:
+        messaging_service.delete_message(message_id)
+        return "", 204
+    except Exception as exc:
+        return jsonify({"error": f"Failed to delete message: {exc}"}), 404

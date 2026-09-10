@@ -233,3 +233,19 @@ class MessagingService:
         """Retrieves all file attachments embedded in messages for a conversation."""
         messages = self.message_repo.get_by_conversation(conversation_id, limit=1000)
         return [att.to_dict() for msg in messages if msg.attachments for att in msg.attachments]
+
+
+    def delete_message(self, message_id: str) -> bool:
+        """
+        Deletes a specific message by its ID.
+
+        Raises:
+            MessageNotFoundError: If the message does not exist.
+        """
+        message = self.message_repo.get_by_id(message_id)
+        if not message:
+            raise MessageNotFoundError(f"Message with ID '{message_id}' was not found.")
+
+        self.message_repo.delete(message_id)
+        logger.info("Successfully deleted message: %s", message_id)
+        return True
