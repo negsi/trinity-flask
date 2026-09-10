@@ -10,7 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+- `AgentRepository` injection in `MessagingService` constructor and dependency container setup.
+- Dynamic conversation title generation in `MessagingService.send_message` featuring recipient agent name (`Chat gestartet mit <agent_name>`).
+
 ### Changed
+
+- Updated fallback user details in `SecurityContextService` from hardcoded "Christian" to generic "user" ID and "User" display name.
 
 ## [0.2.6] - 2026-09-10
 

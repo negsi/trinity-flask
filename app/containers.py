@@ -143,6 +143,7 @@ class Container(containers.DeclarativeContainer):
         message_repo=message_repository,
         conversation_repo=conversation_repository,
         attachment_service=message_attachment_service,
+        agent_repo=agent_repository,
     )
 
     llm_service = providers.Factory(

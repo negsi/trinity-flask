@@ -19,6 +19,7 @@ from app.domain.models.conversation import Conversation
 from app.domain.models.message import Message, MessageAttachment
 from app.domain.repositories.conversation_repository import ConversationRepository
 from app.domain.repositories.message_repository import MessageRepository
+from app.domain.repositories.agent_repository import AgentRepository
 from app.services.messaging.message_attachment_service import MessageAttachmentService
 
 logger = logging.getLogger(__name__)
@@ -32,10 +33,12 @@ class MessagingService:
         message_repo: MessageRepository,
         conversation_repo: ConversationRepository,
         attachment_service: MessageAttachmentService | None = None,
+        agent_repo: AgentRepository | None = None,
     ) -> None:
         self.message_repo = message_repo
         self.conversation_repo = conversation_repo
         self.attachment_service = attachment_service
+        self.agent_repo = agent_repo
         self._message_listeners: list[Callable[[Message], None]] = []
 
     def subscribe(self, callback: Callable[[Message], None]) -> None:
@@ -72,10 +75,18 @@ class MessagingService:
         )
 
         if not existing_conv:
+            agent_name = None
+            if recipient_id and self.agent_repo:
+                agent = self.agent_repo.get_by_id(recipient_id)
+                if agent:
+                    agent_name = agent.name
+
+            title = f"Chat gestartet mit {agent_name}" if agent_name else f"Chat gestartet von {sender_name}"
+
             new_conv = Conversation(
                 id=conversation_id or str(uuid.uuid4()),
                 agent_id=recipient_id,
-                title=f"Chat gestartet von {sender_name}",
+                title=title,
             )
             saved_conv = self.conversation_repo.save(new_conv)
             conversation_id = saved_conv.id
