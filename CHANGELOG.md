@@ -12,6 +12,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 - `AgentRepository` injection in `MessagingService` constructor and dependency container setup.
 - Dynamic conversation title generation in `MessagingService.send_message` featuring recipient agent name (`Chat gestartet mit <agent_name>`).
+- `update_conversation` endpoint in `app/routes/conversations.py` (`PATCH`/`PUT` `/<conversation_id>`) to handle conversation metadata updates.
+- `update_conversation_title` method in `MessagingService` to update and persist conversation titles.
 
 ### Changed
 

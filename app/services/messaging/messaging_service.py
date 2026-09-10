@@ -279,3 +279,20 @@ class MessagingService:
 
         logger.info("Successfully cleared all messages for conversation: %s", conversation_id)
         return True
+
+
+    def update_conversation_title(self, conversation_id: str, title: str) -> Conversation:
+        """
+        Updates the title of an existing conversation.
+
+        Raises:
+            ConversationNotFoundError: If the conversation does not exist.
+        """
+        conv = self.conversation_repo.get_by_id(conversation_id)
+        if not conv:
+            raise ConversationNotFoundError(f"Conversation with ID '{conversation_id}' was not found.")
+
+        conv.title = title
+        saved_conv = self.conversation_repo.save(conv)
+        logger.info("Successfully updated title for conversation '%s' to '%s'", conversation_id, title)
+        return saved_conv
