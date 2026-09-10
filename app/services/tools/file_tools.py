@@ -108,26 +108,67 @@ def read_file(
     **kwargs: Any,
 ) -> str:
     """
-    Reads text content from a sandboxed file.
+    Reads textual content from a sandboxed file, with native support for
+    plain text, PDFs, and ODF files (.odt, .ods, .odp).
 
     Args:
         file_storage_service: Storage service instance.
-        file_path: Relative path of the file to read.
+        file_path: Relative or absolute path of the file to read.
         conversation_id: Optional conversation sandbox ID.
         base_dir: Target base directory.
-        encoding: File character encoding (defaults to 'utf-8').
+        encoding: File character encoding for plain text files (defaults to 'utf-8').
 
     Returns:
-        str: Raw text content of the file or an error message.
+        str: Raw text content or extracted document text, or an error message.
     """
-    target_base = str(base_dir) if base_dir else "."
+    target_base = Path(base_dir or ".").resolve()
+    path_obj = Path(file_path)
+    ext = path_obj.suffix.lower()
+
+    # 1. Handle ODF documents (.odt, .ods, .odp) via manage_odf
+    if ext in {".odt", ".ods", ".odp"}:
+        from app.services.tools.office_tools import manage_odf
+
+        doc_type = ext.lstrip(".")
+        result = manage_odf(
+            file_storage_service=file_storage_service,
+            action="read",
+            doc_type=doc_type,
+            filename=path_obj.name,
+            conversation_id=conversation_id,
+            base_dir=target_base,
+            **kwargs,
+        )
+        return str(result)
+
     try:
+        # Resolve target path inside sandbox for PDFs and plain text
+        resolved_path = locate_file(file_path, target_base, conversation_id)
+        if not resolved_path or not resolved_path.is_file():
+            # Fallback to direct resolution via read_sandboxed_file for proper sandbox exception handling
+            resolved_path = (
+                (target_base / conversation_id / file_path).resolve()
+                if conversation_id
+                else (target_base / file_path).resolve()
+            )
+
+        # 2. Handle PDF documents via extract_text_content
+        if ext == ".pdf":
+            extracted = file_storage_service.extract_text_content(
+                file_path_str=resolved_path, mime_type="application/pdf"
+            )
+            if extracted:
+                return f"=== PDF DOCUMENT CONTENT ({path_obj.name}) ===\n\n{extracted}"
+            return f"Error: Could not extract text from PDF file '{file_path}' (file may be empty or image-only)."
+
+        # 3. Handle standard text files
         return file_storage_service.read_sandboxed_file(
             file_path=file_path,
-            base_dir=target_base,
+            base_dir=str(target_base),
             sandbox_id=conversation_id,
             encoding=encoding,
         )
+
     except Exception as exc:
-        logger.error("Error executing read_file tool: %s", exc, exc_info=True)
+        logger.error("Error executing read_file tool for '%s': %s", file_path, exc, exc_info=True)
         return f"Error executing read_file: {exc}"
