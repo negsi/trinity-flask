@@ -10,7 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+- Native support for reading PDF and ODF files (`.odt`, `.ods`, `.odp`) directly via the `read_file` tool.
+
 ### Changed
+
+- Refactored `read_file` for automatic file-type detection and delegation to ODF and PDF extractors.
+- Tightened and streamlined system prompt instructions to strictly enforce a downstream `message_llm` step after read and fetch operations (`read_file`, `manage_odf`, `call_api`, `fetch_url`).
 
 ## [0.2.4] - 2026-09-08
 
