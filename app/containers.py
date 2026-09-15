@@ -13,6 +13,7 @@ from app.repositories import (
     SQLAlchemyDatasourceRepository,
     SQLAlchemyLLMExecutionRepository,
     SQLAlchemyMessageRepository,
+    SQLAlchemyGroupRepository,
 )
 
 from app.services.agent.agent_context_builder import AgentContextBuilder
@@ -22,12 +23,12 @@ from app.services.agent.react_loop_runner import ReActLoopRunner
 
 from app.services.messaging.message_attachment_service import MessageAttachmentService
 from app.services.messaging.messaging_service import MessagingService
-
 from app.services.knowledge.datasource_service import DatasourceService
-
 from app.services.infrastructure.email_service import EmailService
 from app.services.infrastructure.file_storage_service import FileStorageService
 from app.services.infrastructure.llm_service import LLMService
+from app.services.group.group_service import GroupService
+
 from app.services.infrastructure.security_context import SecurityContextService
 
 from app.services.llm.providers import GeminiImagenProvider, OpenAIDalleProvider
@@ -45,6 +46,9 @@ class Container(containers.DeclarativeContainer):
     # -------------------------------------------------------------------------
     agent_repository = providers.Singleton(
         SQLAlchemyAgentRepository
+    )
+    group_repository = providers.Singleton(
+        SQLAlchemyGroupRepository
     )
     datasource_repository = providers.Singleton(
         SQLAlchemyDatasourceRepository
@@ -78,6 +82,12 @@ class Container(containers.DeclarativeContainer):
         password=config.SMTP_PASSWORD,
         sender=config.SMTP_FROM,
         template_path=config.SMTP_TEMPLATE_PATH,
+    )
+
+    group_service = providers.Factory(
+        GroupService,
+        group_repo=group_repository,
+        agent_repo=agent_repository,
     )
 
     # -------------------------------------------------------------------------

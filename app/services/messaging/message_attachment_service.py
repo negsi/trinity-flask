@@ -39,7 +39,7 @@ class MessageAttachmentService:
         conversation_id: str | None = None,
     ) -> MessageAttachment:
         """
-        Saves an incoming uploaded file into the conversation sandbox directory.
+        Saves an incoming uploaded file into the conversation sandbox 'uploads' directory.
 
         Args:
             file: Incoming uploaded file wrapper.
@@ -52,9 +52,13 @@ class MessageAttachmentService:
         attachment_id = str(uuid.uuid4())
         stored_filename = f"{attachment_id}_{original_filename}"
 
-        target_dir = (
+        # Base conversation folder or default root
+        base_dir = (
             self.conversations_folder / conversation_id if conversation_id else self.conversations_folder
         )
+        
+        # Route uploads specifically into the 'uploads' subfolder
+        target_dir = base_dir / "uploads"
         self.file_storage_service.ensure_directory(target_dir)
 
         destination_path = target_dir / stored_filename

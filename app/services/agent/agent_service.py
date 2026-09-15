@@ -1,8 +1,4 @@
-"""
-Agent Application Service Module.
-
-Encapsulates business operations for agent creation, modification, retrieval, and skill execution.
-"""
+"""Agent Application Service Module."""
 
 import logging
 from typing import Any
@@ -31,30 +27,17 @@ class AgentService:
         name: str,
         system_prompt: str | None = None,
         description: str | None = None,
+        group_ids: list[str] | None = None,
         memory_enabled: bool = False,
         memory_mode: str = "user_only",
         memory_limit_type: str = "all",
         memory_message_count: int | None = None,
     ) -> Agent:
-        """
-        Creates and persists a new Agent entity.
-
-        Args:
-            name: Display name.
-            system_prompt: Custom system prompt instruction.
-            description: Short summary of agent purpose.
-            memory_enabled: Whether agent recalls historical chat turns.
-            memory_mode: Memory filtering strategy ('user_only', 'full').
-            memory_limit_type: Truncation strategy ('all', 'message_count').
-            memory_message_count: Number of recent turns to retain.
-
-        Returns:
-            Agent: The saved agent model.
-        """
         new_agent = Agent(
             name=name,
             system_prompt=system_prompt,
             description=description,
+            groups=group_ids or [],
             memory_enabled=memory_enabled,
             memory_mode=memory_mode,
             memory_limit_type=memory_limit_type,
@@ -67,57 +50,52 @@ class AgentService:
     def update_agent(
         self,
         agent_id: str,
-        name: str,
-        system_prompt: str,
+        name: str | None = None,
+        system_prompt: str | None = None,
         description: str | None = None,
-        memory_enabled: bool = False,
-        memory_mode: str = "user_only",
-        memory_limit_type: str = "all",
+        group_ids: list[str] | None = None,
+        memory_enabled: bool | None = None,
+        memory_mode: str | None = None,
+        memory_limit_type: str | None = None,
         memory_message_count: int | None = None,
     ) -> Agent:
-        """
-        Updates an existing Agent entity.
-
-        Raises:
-            AgentNotFoundError: If no agent with the given ID exists.
-        """
+        """Updates metadata and memory configurations for an existing agent."""
         agent = self.get_agent(agent_id)
 
-        agent.name = name
-        agent.system_prompt = system_prompt
-        agent.description = description
-        agent.memory_enabled = memory_enabled
-        agent.memory_mode = memory_mode
-        agent.memory_limit_type = memory_limit_type
-        agent.memory_message_count = memory_message_count
+        if name is not None:
+            agent.name = name
+        if system_prompt is not None:
+            agent.system_prompt = system_prompt
+        if description is not None:
+            agent.description = description
+        
+        # Only overwrite groups if explicitly provided as a non-None list
+        if group_ids is not None:
+            agent.groups = group_ids
+
+        if memory_enabled is not None:
+            agent.memory_enabled = memory_enabled
+        if memory_mode is not None:
+            agent.memory_mode = memory_mode
+        if memory_limit_type is not None:
+            agent.memory_limit_type = memory_limit_type
+        if memory_message_count is not None:
+            agent.memory_message_count = memory_message_count
 
         saved = self.agent_repo.save(agent)
         logger.info("Updated Agent '%s' (ID: '%s')", saved.name, saved.id)
         return saved
 
     def get_agent(self, agent_id: str) -> Agent:
-        """
-        Retrieves an Agent entity by ID.
-
-        Raises:
-            AgentNotFoundError: If the agent cannot be found.
-        """
         agent = self.agent_repo.get_by_id(agent_id)
         if not agent:
             raise AgentNotFoundError(f"Agent with ID '{agent_id}' was not found.")
         return agent
 
     def get_all_agents(self) -> list[Agent]:
-        """Retrieves all registered Agent entities."""
         return self.agent_repo.get_all()
 
     def delete_agent(self, agent_id: str) -> None:
-        """
-        Permanently deletes an Agent entity.
-
-        Raises:
-            AgentNotFoundError: If the agent does not exist.
-        """
         self.get_agent(agent_id)
         self.agent_repo.delete(agent_id)
         logger.info("Deleted Agent with ID '%s'", agent_id)
@@ -128,22 +106,6 @@ class AgentService:
         skill_name: str,
         parameters: dict[str, Any],
     ) -> str:
-        """
-        Executes a registered skill or tool function on behalf of an agent.
-
-        Args:
-            agent_id: ID of the requesting agent.
-            skill_name: Registered tool identifier.
-            parameters: Keyword parameters for tool execution.
-
-        Returns:
-            str: Output of the tool execution.
-
-        Raises:
-            AgentNotFoundError: If the agent is missing.
-            ToolExecutionError: If registry is unconfigured or tool execution fails.
-            ToolNotFoundError: If skill name is unmapped.
-        """
         self.get_agent(agent_id)
 
         if not self.tool_registry:

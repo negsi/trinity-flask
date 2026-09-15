@@ -6,7 +6,7 @@ from dependency_injector.wiring import inject, Provide
 from app.containers import Container
 from app.services.agent import AgentService
 from app.routes.decorators import validate_json
-from app.routes.schemas import CreateAgentRequest
+from app.routes.schemas import CreateAgentRequest, UpdateAgentRequest
 
 bp = Blueprint("agents", __name__, url_prefix="/api/v1/agents")
 
@@ -23,6 +23,7 @@ def create_agent(
         name=dto.name,
         system_prompt=dto.system_prompt,
         description=dto.description,
+        group_ids=dto.group_ids,
         memory_enabled=dto.memory_enabled,
         memory_mode=dto.memory_mode,
         memory_limit_type=dto.memory_limit_type,
@@ -42,10 +43,10 @@ def get_all_agents(
 
 
 @bp.route("/<agent_id>", methods=["PUT"])
-@validate_json(CreateAgentRequest)
+@validate_json(UpdateAgentRequest)
 @inject
 def update_agent(
-    dto: CreateAgentRequest,
+    dto: UpdateAgentRequest,
     *,
     agent_id: str,
     agent_service: AgentService = Provide[Container.agent_service]
@@ -56,6 +57,7 @@ def update_agent(
         name=dto.name,
         system_prompt=dto.system_prompt,
         description=dto.description,
+        group_ids=dto.group_ids,
         memory_enabled=dto.memory_enabled,
         memory_mode=dto.memory_mode,
         memory_limit_type=dto.memory_limit_type,

@@ -9,6 +9,7 @@ from flask import Flask
 
 ROUTE_MODULES = [
     "app.routes.agents",
+    "app.routes.groups",
     "app.routes.datasources",
     "app.routes.conversations",
     "app.routes.streaming",
