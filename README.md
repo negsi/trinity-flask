@@ -1,23 +1,32 @@
-<p align="center">
+^<p align="center">
   <img src="./docs/readme.md_banner.svg" alt="Trinity Agent Designer Banner" width="100%">
 </p>
 
-<p align="right">
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License">
-  </a>
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white" alt="Flask">
   <img src="https://img.shields.io/github/v/tag/negsi/trinity-flask?style=flat-square&label=Version&color=blue" alt="Latest Version">
-</p>
-
-<p align="right">
   <img src="https://img.shields.io/badge/AI-Google%20Gemini-8E75B2?style=flat-square&logo=googlegemini&logoColor=white" alt="Gemini">
 </p>
 
-This is the python flask backend for Trinity, an AI agent designer. The goal of this project is the simple and convenient creation of AI agents that are capable of solving complex tasks and understanding complicated situations. All agents possess capabilities that can be executed as tools on your system. Trinity can create and process task sequences. You can use an API to control the system. 
+<p align="center"><strong>Highly Configurable Multi-Agent Orchestration Framework</strong><br>
+Customizable Agent Builder & Workflow Engine
+</p>
 
-However, we recommend using our [Angular frontend](https://github.com/negsi/trinity-angular).
+<p align="center">
+  <a href="#installation"><strong>Quickstart</strong></a> · 
+  <a href="docs/documentation"><strong>Documentation</strong></a> · 
+  <a href="docs/documentation/en/06.trinity-api.md"><strong>Trinity API</strong></a>
+</p>
+
+<p align="center">
+  This is the python flask backend for Trinity, an AI agent designer. The goal of this project is the simple and convenient creation of AI agents that are capable of solving complex tasks and understanding complicated situations. All agents possess capabilities that can be executed as tools on your system. Trinity can create and process task sequences. You can use an API to control the system. 
+</p>
+
+<p align="center">
+  However, we recommend using our <a href="https://github.com/negsi/trinity-angular"><strong>Angular Frontend</strong></a>.
+</p>
 
 ---
 

@@ -10,7 +10,16 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+- Added complete English language documentation files.
+- Added a dedicated technical documentation for the Trinity API.
+
 ### Changed
+
+- Updated the main header in the `README.md` file.
+
+### Deleted
+
+- Removed the inline API documentation sections from the `README.md`.
 
 # [0.2.8] - 2026-09-15
 
