@@ -13,6 +13,11 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - Added support for agent groups, including domain models, database repositories, application services, API routes, and Alembic migrations. (**flask db upgrade**)
 - Routed incoming uploaded message attachments specifically into an isolated `uploads` subfolder within the conversation sandbox directory.
 
+### Changed
+
+- Updated agent update routing and schema validation (`UpdateAgentRequest`) to allow partial updates.
+- Refactored `AgentService.update_agent` to support optional/partial field updates without overwriting unprovided fields.
+
 ## [0.2.7] - 2026-09-10
 
 ### Added

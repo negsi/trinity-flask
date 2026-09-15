@@ -6,7 +6,7 @@ from dependency_injector.wiring import inject, Provide
 from app.containers import Container
 from app.services.agent import AgentService
 from app.routes.decorators import validate_json
-from app.routes.schemas import CreateAgentRequest
+from app.routes.schemas import CreateAgentRequest, UpdateAgentRequest
 
 bp = Blueprint("agents", __name__, url_prefix="/api/v1/agents")
 
@@ -43,10 +43,10 @@ def get_all_agents(
 
 
 @bp.route("/<agent_id>", methods=["PUT"])
-@validate_json(CreateAgentRequest)
+@validate_json(UpdateAgentRequest)
 @inject
 def update_agent(
-    dto: CreateAgentRequest,
+    dto: UpdateAgentRequest,
     *,
     agent_id: str,
     agent_service: AgentService = Provide[Container.agent_service]

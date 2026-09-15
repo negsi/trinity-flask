@@ -50,26 +50,37 @@ class AgentService:
     def update_agent(
         self,
         agent_id: str,
-        name: str,
+        name: str | None = None,
         system_prompt: str | None = None,
         description: str | None = None,
         group_ids: list[str] | None = None,
-        memory_enabled: bool = False,
-        memory_mode: str = "user_only",
-        memory_limit_type: str = "all",
+        memory_enabled: bool | None = None,
+        memory_mode: str | None = None,
+        memory_limit_type: str | None = None,
         memory_message_count: int | None = None,
     ) -> Agent:
+        """Updates metadata and memory configurations for an existing agent."""
         agent = self.get_agent(agent_id)
 
-        agent.name = name
-        agent.system_prompt = system_prompt
-        agent.description = description
+        if name is not None:
+            agent.name = name
+        if system_prompt is not None:
+            agent.system_prompt = system_prompt
+        if description is not None:
+            agent.description = description
+        
+        # Only overwrite groups if explicitly provided as a non-None list
         if group_ids is not None:
             agent.groups = group_ids
-        agent.memory_enabled = memory_enabled
-        agent.memory_mode = memory_mode
-        agent.memory_limit_type = memory_limit_type
-        agent.memory_message_count = memory_message_count
+
+        if memory_enabled is not None:
+            agent.memory_enabled = memory_enabled
+        if memory_mode is not None:
+            agent.memory_mode = memory_mode
+        if memory_limit_type is not None:
+            agent.memory_limit_type = memory_limit_type
+        if memory_message_count is not None:
+            agent.memory_message_count = memory_message_count
 
         saved = self.agent_repo.save(agent)
         logger.info("Updated Agent '%s' (ID: '%s')", saved.name, saved.id)
