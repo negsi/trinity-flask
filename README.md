@@ -1,4 +1,4 @@
-^<p align="center">
+<p align="center">
   <img src="./docs/readme.md_banner.svg" alt="Trinity Agent Designer Banner" width="100%">
 </p>
 
