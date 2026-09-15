@@ -8,6 +8,7 @@ from sqlalchemy.orm import relationship
 
 from app.domain.enums import MemoryLimitType, MemoryMode
 from app.storage.sqlalchemy.db import db
+from app.storage.sqlalchemy.models.group import agent_groups
 
 
 def _generate_uuid() -> str:
@@ -56,6 +57,12 @@ class AgentModel(db.Model):
         back_populates="agent",
         cascade="all, delete-orphan",
         lazy="select",
+    )
+    groups = relationship(
+        "GroupModel",
+        secondary=agent_groups,
+        back_populates="agents",
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:

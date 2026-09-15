@@ -1,7 +1,4 @@
-"""SQLAlchemy Agent Repository Implementation Module.
-
-Handles persistence, retrieval, mapping, and transaction management for Agent domain entities.
-"""
+"""SQLAlchemy Agent Repository Implementation Module."""
 
 import logging
 from sqlalchemy import func
@@ -12,7 +9,7 @@ from app.domain.models.agent import Agent
 from app.domain.models.datasource import Datasource
 from app.domain.repositories.agent_repository import AgentRepository
 from app.storage.sqlalchemy.db import db
-from app.storage.sqlalchemy.models import AgentModel, DatasourceModel, MessageModel
+from app.storage.sqlalchemy.models import AgentModel, DatasourceModel, GroupModel, MessageModel
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +18,6 @@ class SQLAlchemyAgentRepository(AgentRepository):
     """SQLAlchemy-backed implementation of the AgentRepository domain interface."""
 
     def _to_domain(self, model: AgentModel) -> Agent:
-        """Converts an AgentModel ORM instance into an Agent domain entity.
-
-        Args:
-            model (AgentModel): SQLAlchemy ORM model instance.
-
-        Returns:
-            Agent: Fully mapped domain entity.
-        """
         datasources = [
             Datasource(
                 id=ds.id,
@@ -43,6 +32,8 @@ class SQLAlchemyAgentRepository(AgentRepository):
             for ds in (model.datasources or [])
         ]
 
+        group_ids = [g.id for g in (model.groups or [])]
+
         return Agent(
             id=model.id,
             name=model.name,
@@ -53,21 +44,11 @@ class SQLAlchemyAgentRepository(AgentRepository):
             memory_limit_type=model.memory_limit_type,
             memory_message_count=model.memory_message_count,
             datasources=datasources,
+            groups=group_ids,
             created_at=model.created_at,
         )
 
     def save(self, agent: Agent) -> Agent:
-        """Persists or updates an Agent entity in the database.
-
-        Args:
-            agent (Agent): Domain entity to persist.
-
-        Returns:
-            Agent: Mapped domain entity after persistence.
-
-        Raises:
-            StorageError: If database persistence or synchronization fails.
-        """
         try:
             model: AgentModel | None = None
             if agent.id:
@@ -95,7 +76,16 @@ class SQLAlchemyAgentRepository(AgentRepository):
                 model.memory_limit_type = agent.memory_limit_type
                 model.memory_message_count = agent.memory_message_count
 
-            # Synchronize attached datasources
+            # Synchronize Groups Many-to-Many
+            if agent.groups is not None:
+                matched_groups = (
+                    db.session.query(GroupModel).filter(GroupModel.id.in_(agent.groups)).all()
+                    if agent.groups
+                    else []
+                )
+                model.groups = matched_groups
+
+            # Synchronize Datasources
             synced_datasources: list[DatasourceModel] = []
             for ds in agent.datasources:
                 ds_model = db.session.get(DatasourceModel, ds.id)
@@ -129,17 +119,6 @@ class SQLAlchemyAgentRepository(AgentRepository):
             raise StorageError(f"Database error while saving Agent '{agent.id}': {exc}") from exc
 
     def get_by_id(self, agent_id: str) -> Agent | None:
-        """Retrieves an Agent domain entity by its primary key UUID.
-
-        Args:
-            agent_id (str): Unique UUID of the agent.
-
-        Returns:
-            Agent | None: The found agent entity, or None if missing.
-
-        Raises:
-            StorageError: If database querying encounters an error.
-        """
         try:
             model = db.session.get(AgentModel, agent_id)
             return self._to_domain(model) if model else None
@@ -148,14 +127,6 @@ class SQLAlchemyAgentRepository(AgentRepository):
             raise StorageError(f"Database error retrieving Agent '{agent_id}': {exc}") from exc
 
     def get_all(self) -> list[Agent]:
-        """Retrieves all registered agents ordered descending by their latest message activity.
-
-        Returns:
-            list[Agent]: List of all agent domain entities.
-
-        Raises:
-            StorageError: If querying entities fails.
-        """
         try:
             models = (
                 AgentModel.query.outerjoin(
@@ -173,17 +144,6 @@ class SQLAlchemyAgentRepository(AgentRepository):
             raise StorageError(f"Database error retrieving agents: {exc}") from exc
 
     def delete(self, agent_id: str) -> bool:
-        """Permanently removes an Agent from persistence.
-
-        Args:
-            agent_id (str): Target Agent UUID.
-
-        Returns:
-            bool: True if found and deleted, False otherwise.
-
-        Raises:
-            StorageError: If the deletion transaction fails.
-        """
         try:
             model = db.session.get(AgentModel, agent_id)
             if not model:
@@ -196,3 +156,24 @@ class SQLAlchemyAgentRepository(AgentRepository):
             db.session.rollback()
             logger.error("Error deleting Agent '%s': %s", agent_id, exc, exc_info=True)
             raise StorageError(f"Database error deleting Agent '{agent_id}': {exc}") from exc
+
+    def update_group_assignments(self, group_id: str, agent_ids: list[str]) -> None:
+        """Synchronizes agent assignments for a specific group directly in SQLAlchemy."""
+        try:
+            group_model = db.session.get(GroupModel, group_id)
+            if not group_model:
+                raise StorageError(f"Group with ID '{group_id}' does not exist.")
+
+            assigned_agents = (
+                db.session.query(AgentModel).filter(AgentModel.id.in_(agent_ids)).all()
+                if agent_ids
+                else []
+            )
+
+            group_model.agents = assigned_agents
+            db.session.commit()
+
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            logger.error("Failed to update agents for group '%s': %s", group_id, exc, exc_info=True)
+            raise StorageError(f"Database error updating agents for group '{group_id}': {exc}") from exc
