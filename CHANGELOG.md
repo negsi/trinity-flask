@@ -10,6 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+### Changed
+
+# [0.2.8] - 2026-09-15
+
+### Added
+
 - Added support for agent groups, including domain models, database repositories, application services, API routes, and Alembic migrations. (**flask db upgrade**)
 - Routed incoming uploaded message attachments specifically into an isolated `uploads` subfolder within the conversation sandbox directory.
 
@@ -471,7 +477,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.7...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.8...develop
+[0.2.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.8
 [0.2.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.7
 [0.2.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.6
 [0.2.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.5
