@@ -12,6 +12,30 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Changed
 
+# [0.2.9] - 2026-09-16
+
+### Added
+
+- Added complete English language documentation files.
+- Added a dedicated technical documentation for the Trinity API.
+- Appview banner to README.md
+- Feature flag support (`FEATURE_MESSAGE_AGENT_ENABLED`) for the `message_agent` tool via environment variables and configuration.
+
+### Changed
+
+- Updated the main header in the `README.md` file.
+- Updated `SQLAlchemyAgentRepository.get_all()` to accurately order agents by their latest interaction activity.
+- Refactored `AgentContextBuilder` to dynamically load and evaluate the `message_agent` prompt based on its feature flag configuration.
+
+### Fixed
+
+- Fixed agent list sorting in `SQLAlchemyAgentRepository` by joining conversations and fallback-ordering by `created_at` timestamp if no messages exist.
+
+### Deleted
+
+- Removed the inline API documentation sections from the `README.md`.
+- Trinity API description from README.md
+
 # [0.2.8] - 2026-09-15
 
 ### Added
@@ -477,7 +501,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.8...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.9...develop
+[0.2.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.9
 [0.2.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.8
 [0.2.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.7
 [0.2.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.6

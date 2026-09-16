@@ -9,7 +9,13 @@ from app.domain.models.agent import Agent
 from app.domain.models.datasource import Datasource
 from app.domain.repositories.agent_repository import AgentRepository
 from app.storage.sqlalchemy.db import db
-from app.storage.sqlalchemy.models import AgentModel, DatasourceModel, GroupModel, MessageModel
+from app.storage.sqlalchemy.models import (
+    AgentModel,
+    ConversationModel,
+    DatasourceModel,
+    GroupModel,
+    MessageModel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -127,15 +133,22 @@ class SQLAlchemyAgentRepository(AgentRepository):
             raise StorageError(f"Database error retrieving Agent '{agent_id}': {exc}") from exc
 
     def get_all(self) -> list[Agent]:
+        """Retrieves all registered agents sorted by their latest activity."""
         try:
+            # English comment: Join conversations and messages to find the most recent interaction per agent
             models = (
-                AgentModel.query.outerjoin(
-                    MessageModel,
-                    (AgentModel.id == MessageModel.sender_id)
-                    | (AgentModel.id == MessageModel.recipient_id),
-                )
+                db.session.query(AgentModel)
+                .outerjoin(ConversationModel, AgentModel.id == ConversationModel.agent_id)
+                .outerjoin(MessageModel, ConversationModel.id == MessageModel.conversation_id)
                 .group_by(AgentModel.id)
-                .order_by(func.max(MessageModel.timestamp).desc().nulls_last())
+                .order_by(
+                    func.coalesce(
+                        func.max(MessageModel.timestamp),
+                        func.max(ConversationModel.created_at),
+                        AgentModel.created_at
+                    ).desc(),
+                    AgentModel.name.asc()
+                )
                 .all()
             )
             return [self._to_domain(m) for m in models]

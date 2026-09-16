@@ -67,6 +67,11 @@ class BaseConfig:
         os.path.join(BASE_DIR, "app", "templates", "base_email.html")
     )
 
+    # Tool Feature Flags
+    FEATURE_MESSAGE_AGENT_ENABLED = (
+        os.getenv("TRINITY_TOOLS_MESSAGE_AGENT_ENABLED", "true").lower() == "true"
+    )
+
     @staticmethod
     def init_app(app):
         """Hook for initializing application-specific configuration logic."""
