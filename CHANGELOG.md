@@ -12,6 +12,7 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 - Added complete English language documentation files.
 - Added a dedicated technical documentation for the Trinity API.
+- Appview banner to README.md
 
 ### Changed
 
@@ -25,6 +26,7 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 ### Deleted
 
 - Removed the inline API documentation sections from the `README.md`.
+- Trinity API description from README.md
 
 # [0.2.8] - 2026-09-15
 
