@@ -16,6 +16,11 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 ### Changed
 
 - Updated the main header in the `README.md` file.
+- Updated `SQLAlchemyAgentRepository.get_all()` to accurately order agents by their latest interaction activity.
+
+### Fixed
+
+- Fixed agent list sorting in `SQLAlchemyAgentRepository` by joining conversations and fallback-ordering by `created_at` timestamp if no messages exist.
 
 ### Deleted
 
