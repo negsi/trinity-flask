@@ -228,6 +228,7 @@ Trinity agents execute complex web gathering, data processing, and analysis task
     - Supports real-time streaming of sub-agent task events, text output, and execution steps via generator delegation.
     - Automatically enforces nested execution depth safety limits (up to `MAX_SUBAGENT_CALL_DEPTH = 3`) to prevent infinite recursive agent loops.
     - Results returned by `message_agent` are treated as final for that sub-task; parent agents are instructed to consume the returned payload directly without executing redundant fallback steps.
+  - **Feature Toggle:** Can be globally disabled via environment configuration by setting `TRINITY_TOOLS_MESSAGE_AGENT_ENABLED=false` in `.env`. When disabled, the tool description and system agent list are stripped from the prompt context.
 
 10. **`manage_odf`**
   - **Purpose:** Creates, reads, appends to, or updates OpenDocument Format files (`.odt` text documents, `.ods` spreadsheets, `.odp` presentations) using `odfdo`.
