@@ -13,11 +13,13 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - Added complete English language documentation files.
 - Added a dedicated technical documentation for the Trinity API.
 - Appview banner to README.md
+- Feature flag support (`FEATURE_MESSAGE_AGENT_ENABLED`) for the `message_agent` tool via environment variables and configuration.
 
 ### Changed
 
 - Updated the main header in the `README.md` file.
 - Updated `SQLAlchemyAgentRepository.get_all()` to accurately order agents by their latest interaction activity.
+- Refactored `AgentContextBuilder` to dynamically load and evaluate the `message_agent` prompt based on its feature flag configuration.
 
 ### Fixed
 

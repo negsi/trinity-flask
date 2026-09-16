@@ -168,6 +168,7 @@ class Container(containers.DeclarativeContainer):
         file_storage_service=file_storage_service,
         message_repository=message_repository,
         conversation_directory=config.CONVERSATIONS_FOLDER,
+        feature_message_agent_enabled=config.FEATURE_MESSAGE_AGENT_ENABLED,
     )
 
     react_loop_runner = providers.Factory(

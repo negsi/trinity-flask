@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 LLM_DIR = Path(__file__).resolve().parents[1] / "llm"
 BASE_PROMPT_PATH = LLM_DIR / "base_agent.prompt.md"
 RESPONSE_FORMAT_PATH = LLM_DIR / "base_agent.response_format.md"
+TOOL_MESSAGE_AGENT_PROMPT_PATH = LLM_DIR / "tool_message_agent.prompt.md"
 
 
 class AgentContextBuilder:
@@ -37,11 +38,13 @@ class AgentContextBuilder:
         file_storage_service: FileStorageService,
         message_repository: MessageRepository | None = None,
         conversation_directory: str | None = None,
+        feature_message_agent_enabled: bool = True,
     ) -> None:
         self.agent_service = agent_service
         self.file_storage_service = file_storage_service
         self.message_repository = message_repository
         self.conversation_directory = conversation_directory
+        self.feature_message_agent_enabled = feature_message_agent_enabled
 
     def build_llm_messages(
         self,
@@ -137,12 +140,14 @@ class AgentContextBuilder:
         for placeholder, replacement in placeholders.items():
             rendered = rendered.replace(placeholder, replacement)
 
-        # Lazy execution: Only query the database if the placeholder is present
+        # Lazy execution: Agentenliste auflösen (prüft Instanzvariablen)
         if "{available_agents_list}" in rendered:
-            rendered = rendered.replace(
-                "{available_agents_list}",
-                self._build_available_agents_context(),
-            )
+            if self.feature_message_agent_enabled:
+                agents_context = self._build_available_agents_context()
+            else:
+                agents_context = "[FEATURE_DISABLED]"
+
+            rendered = rendered.replace("{available_agents_list}", agents_context)
 
         return rendered
 
@@ -251,9 +256,28 @@ class AgentContextBuilder:
         try:
             content = BASE_PROMPT_PATH.read_text(encoding="utf-8")
             response_format = self._load_response_format()
-            return content.replace("{base_agent.response_format.md}", response_format).strip()
+            tool_msg_agent = self._load_tool_message_agent_prompt()
+
+            content = content.replace("{base_agent.response_format.md}", response_format)
+            content = content.replace("{tool_message_agent_description}", tool_msg_agent)
+            
+            return content.strip()
         except OSError as exc:
             logger.error("Error reading base prompt file: %s", exc)
+            return ""
+
+    def _load_tool_message_agent_prompt(self) -> str:
+        """Loads the message_agent tool prompt description if enabled."""
+        if not self.feature_message_agent_enabled:
+            return "[FEATURE_DISABLED] Werkzeug ist derzeit deaktiviert."
+
+        if not TOOL_MESSAGE_AGENT_PROMPT_PATH.is_file():
+            return ""
+
+        try:
+            return TOOL_MESSAGE_AGENT_PROMPT_PATH.read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            logger.error("Error reading tool_message_agent prompt file: %s", exc)
             return ""
 
     def _load_response_format(self) -> str:

@@ -42,18 +42,15 @@ Dein Ziel ist es, die Anforderungen des Benutzers effizient, genau und strukturi
    - **Unterstützte Dateitypen:** Textdateien, Quellcode, PDF-/ODF-Dokumente.
    - **Wichtig:** Dateianhänge oder Dateien unter `### KNOWLEDGE_BASE:` befinden sich bereits vollständig im Kontext – dafür NIEMALS `read_file` aufrufen!
 
-9. `message_agent`: Delegiert Aufgaben an einen Sub-Agenten (`target_agent_id`, `message`).
-   - Nur Ziel-IDs aus "Verfügbare Agenten" nutzen. Kein Selbstaufruf.
-   - **Keine Re-Executions / Fallbacks:** Die Rückgabe von `message_agent` ist final. Bei eigener Werkzeugausstattung Aufgaben direkt selbst ausführen statt weiterzuverteilen.
-   - **Ergebnisübernahme:** Die Antwort des Sub-Agenten zwingend in die finale Nutzerantwort übernehmen (keine bloße Floskel "Erledigt"). Kein nachfolgendes `message_llm` zur reinen "Zusammenfassung", es sei denn, mehrere Quellen werden synthetisiert.
-
-10. `manage_odf`: Erstellt, liest oder erweitert OpenDocument-Dateien (`action="create"|"read"|"append"|"update"`, `doc_type="odt"|"ods"|"odp"`, `filename`, `title`, `content=[]`).
+9. `manage_odf`: Erstellt, liest oder erweitert OpenDocument-Dateien (`action="create"|"read"|"append"|"update"`, `doc_type="odt"|"ods"|"odp"`, `filename`, `title`, `content=[]`).
     - **Erstellen (`action="create"`):** Generiert neue Dokumente (`.odt`), Tabellen (`.ods`) oder Präsentationen (`.odp`).
     - **Lesen (`action="read"`):** Extrahiert Text und Struktur aus einer bestehenden ODF-Datei.
     - **Erweitern/Editieren (`action="append"` / `"update"`):** Fügt neue Zeilen an eine bestehende Tabelle (`.ods`), neue Absätze an ein Textdokument (`.odt`) oder neue Folien an eine Präsentation (`.odp`) an. Falls die Datei nicht existiert, wird sie automatisch neu erstellt.
     - **Formeln in Tabellen (`.ods`):** Verwende für Berechnungen zwingend die englischen ODF-Standardfunktionen (z. B. `=AVERAGE(B2:D2)` statt `=MITTELWERT(...)`, `=SUM(...)` statt `=SUMME(...)`), da LibreOffice deutsche Funktionsnamen in ODF-Formeln nicht auflösen kann (`#NAME?`).
     - **Dynamische Erzeugung:** Werden Daten aus Zwischenschritten genutzt, MUSS ein `message_llm`-Schritt vorgeschaltet werden. Weise diesen an, reine Textinhalte ohne Markdown zu liefern.
     - **Lesen (`action="read"`):** Extrahiert Text und Struktur aus einer bestehenden ODF-Datei. Bei Beantwortung von Benutzerfragen MUSS ein nachfolgender `message_llm`-Schritt zur Auswertung eingeplant werden.
+
+10. {tool_message_agent_description}
 
 ---
 
