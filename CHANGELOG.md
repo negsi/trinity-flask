@@ -10,6 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+### Changed
+
+# [0.2.9] - 2026-09-16
+
+### Added
+
 - Added complete English language documentation files.
 - Added a dedicated technical documentation for the Trinity API.
 - Appview banner to README.md
@@ -495,7 +501,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.8...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.9...develop
+[0.2.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.9
 [0.2.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.8
 [0.2.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.7
 [0.2.6]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.6
