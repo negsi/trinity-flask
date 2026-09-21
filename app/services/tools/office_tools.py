@@ -213,7 +213,9 @@ def create_ods_spreadsheet(title: str, content: Any) -> bytes:
     doc.body.clear()
 
     sheet_matrix = _normalize_content_to_matrix(content) or [["Keine Daten übergeben"]]
-    table = Table(title or "Sheet1")
+    
+    sheet_name = _sanitize_table_name(title)
+    table = Table(sheet_name)
 
     for row_data in sheet_matrix:
         row = Row()
@@ -533,3 +535,12 @@ def manage_odf(
     except Exception as exc:
         logger.error("Error executing manage_odf for file '%s': %s", filename, exc, exc_info=True)
         return f"Error executing manage_odf: {exc}"
+
+
+def _sanitize_table_name(name: str | None, default: str = "Sheet1") -> str:
+    """Sanitizes ODS sheet names to prevent odfdo invalid character errors (e.g. colons)."""
+    if not name:
+        return default
+    # Replace invalid ODF table name characters (:, ?, *, \, /, [, ]) with an underscore
+    clean_name = re.sub(r'[:\?\*\\/\[\]]', '_', name).strip()
+    return clean_name or default
