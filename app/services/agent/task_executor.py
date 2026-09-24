@@ -15,7 +15,7 @@ from typing import Any
 from app.domain.enums import ExecutionStepStatus
 from app.domain.models.llm_execution import ExecutionStep, LLMExecution
 from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
-from app.services.agent.constants import PROTOCOL_TASK_CHAIN
+from app.services.agent.constants import PROTOCOL_TASK_CHAIN, PROTOCOL_THOUGHT
 from app.services.agent.constants import PAYLOAD_REF_PREFIX
 
 logger = logging.getLogger(__name__)
@@ -166,7 +166,7 @@ class TaskExecutor:
         params: dict[str, Any],
         context: dict[str, Any],
     ) -> Generator[str, None, None]:
-        """Executes nested LLM streaming tool requests."""
+        """Executes nested LLM streaming tool requests and decouples thoughts from tool result."""
         prompt = str(
             params.get("prompt")
             or params.get("message")
@@ -191,16 +191,45 @@ class TaskExecutor:
         accumulated_response: list[str] = []
         try:
             for chunk in self.llm_stream_func(prompt):
-                if chunk:
-                    accumulated_response.append(chunk)
+                if not chunk:
+                    continue
+
+                # 1. Catch raw PROTOCOL_THOUGHT lines
+                if chunk.startswith(PROTOCOL_THOUGHT):
                     yield chunk
+                    continue
+
+                # 2. Catch internal/embedded __THOUGHT__: prefixes or JSON constructs
+                if "__THOUGHT__:" in chunk:
+                    # Strip the thought part out for tool result, stream it as thought protocol
+                    parts = chunk.split("__THOUGHT__:", 1)
+                    if parts[0]:
+                        accumulated_response.append(parts[0])
+                        yield parts[0]
+                    
+                    thought_content = parts[1].strip()
+                    # If it was JSON formatted like __THOUGHT__:{"content": "..."}
+                    if thought_content.startswith("{") and "content" in thought_content:
+                        try:
+                            parsed_t = json.loads(thought_content)
+                            thought_content = parsed_t.get("content", thought_content)
+                        except Exception:
+                            pass
+
+                    yield f"\n{PROTOCOL_THOUGHT}{json.dumps({'content': thought_content})}\n"
+                    continue
+
+                # Standard text output (Markdown) -> keep for result payload
+                accumulated_response.append(chunk)
+                yield chunk
+
         except Exception as exc:
             error_msg = f"\n[Error during LLM execution in Step {step_num}: {exc}]"
             logger.error(error_msg, exc_info=True)
             yield error_msg
             accumulated_response.append(error_msg)
 
-        full_output = "".join(accumulated_response)
+        full_output = "".join(accumulated_response).strip()
         context[f"step_{step_num}"] = full_output
         context["last_result"] = full_output
         context["has_previous_llm_output"] = True

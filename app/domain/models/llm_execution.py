@@ -14,18 +14,7 @@ from app.domain.errors import ValidationError
 
 @dataclass(slots=True)
 class ExecutionStep:
-    """Represents a single step in a multi-turn ReAct task execution plan.
-
-    Attributes:
-        step_number (int): Order index of the step within the chain.
-        description (str): Human-readable explanation of the step's goal.
-        tool_name (str | None): Identifier of the tool or skill to invoke.
-        parameters (dict[str, Any]): Arguments passed to the tool invocation.
-        status (ExecutionStepStatus): Current execution state of this step.
-        result (str | None): Output string generated upon tool execution.
-        id (str): Unique UUID identifier for the step record.
-        execution_id (str | None): Parent execution UUID reference.
-    """
+    """Represents a single step in a multi-turn ReAct task execution plan."""
 
     step_number: int
     description: str
@@ -37,11 +26,6 @@ class ExecutionStep:
     execution_id: str | None = None
 
     def __post_init__(self) -> None:
-        """Validates execution step constraints.
-
-        Raises:
-            ValidationError: If step properties are invalid.
-        """
         if self.step_number < 0:
             raise ValidationError("Step number cannot be negative.")
 
@@ -52,11 +36,6 @@ class ExecutionStep:
                 raise ValidationError(f"Invalid step status '{self.status}'.")
 
     def to_dict(self) -> dict[str, Any]:
-        """Serializes the execution step into a dictionary format.
-
-        Returns:
-            dict[str, Any]: Serialized step data.
-        """
         return {
             "id": self.id,
             "execution_id": self.execution_id,
@@ -75,6 +54,7 @@ class LLMExecution:
 
     Attributes:
         conversation_id (str): Unique UUID of the associated conversation.
+        sequence_index (int): Order index of this execution relative to thought blocks.
         message_id (str | None): Optional message ID triggered by or creating this execution.
         response_type (ResponseType): Whether the execution is a simple message or a task chain.
         summary_or_content (str): Summary text or raw final generated output.
@@ -86,6 +66,7 @@ class LLMExecution:
     """
 
     conversation_id: str
+    sequence_index: int = 0
     message_id: str | None = None
     response_type: ResponseType = ResponseType.SIMPLE_MESSAGE
     summary_or_content: str = ""
@@ -99,6 +80,8 @@ class LLMExecution:
         """Validates the execution domain entity."""
         if not self.conversation_id or not self.conversation_id.strip():
             raise ValidationError("LLMExecution conversation_id cannot be empty.")
+        if self.sequence_index < 0:
+            raise ValidationError("LLMExecution sequence_index cannot be negative.")
 
         if isinstance(self.response_type, str):
             try:
@@ -106,7 +89,6 @@ class LLMExecution:
             except ValueError:
                 raise ValidationError(f"Invalid response type '{self.response_type}'.")
 
-        # Verknüpfe Schritte automatisch mit der eigenen execution_id
         for step in self.steps:
             if not step.execution_id:
                 object.__setattr__(step, "execution_id", self.id)
@@ -116,6 +98,7 @@ class LLMExecution:
         return {
             "id": self.id,
             "conversation_id": self.conversation_id,
+            "sequence_index": self.sequence_index,
             "message_id": self.message_id,
             "response_type": self.response_type.value,
             "summary_or_content": self.summary_or_content,
@@ -131,6 +114,7 @@ class LLMExecution:
         payload: dict[str, Any],
         conversation_id: str,
         message_id: str | None = None,
+        sequence_index: int = 0,
     ) -> Self | None:
         """Parses structured JSON response from an LLM into an LLMExecution task chain entity."""
         if not isinstance(payload, dict):
@@ -147,7 +131,6 @@ class LLMExecution:
         is_complete = bool(response_data.get("is_complete", True))
         raw_steps = response_data.get("steps", [])
         
-        # Payloads aus Response oder Top-Level extrahieren
         raw_payloads = response_data.get("payloads") or payload.get("payloads") or {}
         extracted_payloads: dict[str, str] = raw_payloads if isinstance(raw_payloads, dict) else {}
 
@@ -173,6 +156,7 @@ class LLMExecution:
         return cls(
             id=execution_id,
             conversation_id=conversation_id,
+            sequence_index=sequence_index,
             message_id=message_id,
             response_type=ResponseType.TASK_CHAIN,
             summary_or_content=str(response_data.get("summary", "")),

@@ -1,20 +1,21 @@
 """ReAct Loop Runner Module.
 
 Encapsulates multi-turn reasoning and tool execution loops, managing turn iterations,
-sub-step stream parsing, and conversational follow-up prompt compilation.
+sub-step stream parsing, thought handling, and conversational follow-up prompt compilation.
 """
 
 from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
+import json
 import logging
 from pathlib import Path
 from typing import Any
 
 from app.domain.models.llm_execution import LLMExecution
-from app.domain.models.message import Message, MessageAttachment
+from app.domain.models.message import Message, MessageAttachment, MessageThought
 from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
 from app.services.agent.agent_context_builder import AgentContextBuilder
-from app.services.agent.constants import PROTOCOL_TASK_CHAIN
+from app.services.agent.constants import PROTOCOL_TASK_CHAIN, PROTOCOL_THOUGHT
 from app.services.agent.task_executor import ChainExecutionResult, TaskExecutor
 from app.services.infrastructure.llm_service import LLMService
 from app.services.llm.stream_parser import StreamResponseParser
@@ -31,10 +32,12 @@ class ReActTurnState:
 
     user_prompt: str
     accumulated_all_text: list[str] = field(default_factory=list)
+    accumulated_thoughts: list[str] = field(default_factory=list)
     last_chain_chunks: list[str] = field(default_factory=list)
     is_complete: bool = False
     turn_count: int = 0
     max_turns: int = 5
+    timeline: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -43,12 +46,13 @@ class ReActExecutionSummary:
 
     accumulated_text: str
     final_text: str
+    thoughts: list[MessageThought] = field(default_factory=list)
     last_execution: LLMExecution | None = None
     created_files: list[dict[str, Any]] = field(default_factory=list)
 
 
 class ReActLoopRunner:
-    """Service managing multi-turn ReAct reasoning and tool invocation cycles."""
+    """Service managing multi-turn ReAct reasoning, thoughts, and tool invocation cycles."""
 
     def __init__(
         self,
@@ -73,7 +77,7 @@ class ReActLoopRunner:
         agent_id: str,
         attachments: list[MessageAttachment],
         conversation_history: list[Message],
-        on_turn_completed: Callable[[str, LLMExecution | None], None] | None = None,
+        on_turn_completed: Callable[[str, LLMExecution | None, list[MessageThought] | None], None] | None = None,
         call_depth: int = 0,
     ) -> Generator[str, None, ReActExecutionSummary]:
         state = ReActTurnState(user_prompt=user_text)
@@ -93,6 +97,7 @@ class ReActLoopRunner:
             )
 
             current_text = "".join(state.accumulated_all_text).strip()
+            current_thoughts = self._build_thought_entities(state)
 
             render_llm_request_dashboard(
                 user_prompt=state.user_prompt,
@@ -103,7 +108,7 @@ class ReActLoopRunner:
             )
 
             if on_turn_completed:
-                on_turn_completed(current_text, None)
+                on_turn_completed(current_text, None, current_thoughts)
 
             if not extracted_json:
                 state.is_complete = True
@@ -130,7 +135,7 @@ class ReActLoopRunner:
 
             last_execution = execution
             if on_turn_completed:
-                on_turn_completed(current_text, execution)
+                on_turn_completed(current_text, execution, current_thoughts)
 
             last_result, step_files = yield from self._execute_task_chain(
                 execution=execution,
@@ -165,13 +170,34 @@ class ReActLoopRunner:
             if state.last_chain_chunks
             else "".join(state.accumulated_all_text).strip()
         )
+        final_thoughts = self._build_thought_entities(state)
 
         return ReActExecutionSummary(
             accumulated_text="".join(state.accumulated_all_text).strip(),
             final_text=final_text,
+            thoughts=final_thoughts,
             last_execution=last_execution,
             created_files=all_created_files,
         )
+
+    def _build_thought_entities(self, state: ReActTurnState) -> list[MessageThought]:
+        """Combines raw stream chunks or timeline thoughts into MessageThought entities."""
+        # Prefer timeline sequence if populated to preserve ordered thought segments
+        timeline_thoughts = [
+            item.get("content", "").strip()
+            for item in state.timeline
+            if item.get("type") == "thought" and item.get("content", "").strip()
+        ]
+        if timeline_thoughts:
+            return [
+                MessageThought(content=thought_content, sequence_index=idx)
+                for idx, thought_content in enumerate(timeline_thoughts)
+            ]
+
+        full_thought_text = "".join(state.accumulated_thoughts).strip()
+        if not full_thought_text:
+            return []
+        return [MessageThought(content=full_thought_text, sequence_index=0)]
 
     def _has_llm_step_in_chain(self, execution: LLMExecution | None) -> bool:
         """Checks whether the execution chain contains a message_llm step."""
@@ -201,8 +227,50 @@ class ReActLoopRunner:
         for chunk in self.llm_service.stream(llm_messages):
             if not chunk:
                 continue
-            display_text, json_data = parser.process_chunk(chunk)
-            
+
+            # Support tuple, dict, and string protocol formats for reasoning tokens
+            is_thought = False
+            text_delta = ""
+
+            if isinstance(chunk, tuple) and len(chunk) == 2:
+                is_thought, text_delta = chunk
+            elif isinstance(chunk, dict):
+                if chunk.get("type") == "thought" or "thought" in chunk:
+                    is_thought = True
+                    text_delta = chunk.get("content") or chunk.get("thought") or chunk.get("delta") or ""
+                else:
+                    text_delta = chunk.get("content") or chunk.get("text") or ""
+            elif isinstance(chunk, str):
+                if chunk.startswith(PROTOCOL_THOUGHT):
+                    is_thought = True
+                    raw_val = chunk[len(PROTOCOL_THOUGHT):].strip()
+                    try:
+                        parsed = json.loads(raw_val)
+                        text_delta = parsed.get("content", "") or parsed.get("delta", "")
+                    except Exception:
+                        text_delta = raw_val
+                else:
+                    text_delta = chunk
+
+            if is_thought:
+                if text_delta:
+                    state.accumulated_thoughts.append(text_delta)
+
+                    # Update timeline structure for initial turn thoughts
+                    if state.timeline and state.timeline[-1].get("type") == "thought":
+                        state.timeline[-1]["content"] += text_delta
+                    else:
+                        state.timeline.append({
+                            "type": "thought",
+                            "content": text_delta,
+                        })
+
+                    # Yield thought protocol chunk for orchestrator / SSE streaming
+                    yield f"{PROTOCOL_THOUGHT}{json.dumps({'content': text_delta})}"
+                continue
+
+            display_text, json_data = parser.process_chunk(text_delta)
+
             if display_text:
                 state.accumulated_all_text.append(display_text)
                 yield display_text
@@ -230,7 +298,7 @@ class ReActLoopRunner:
         def llm_stream_adapter(prompt_text: str) -> Generator[str, None, None]:
             system_instruction = (
                 "System Notice: You are executing a sub-step execution task. "
-                "Do NOT wrap your response in JSON (###START_JSON_RESPONSE###). "
+                "Do NOT wrap your response in JSON. "
                 "Do NOT output a task chain plan. "
                 "Provide strictly and directly the raw requested text/code response.\n\n"
             )
@@ -241,7 +309,40 @@ class ReActLoopRunner:
                 conversation_history=conversation_history,
                 conversation_id=conversation_id,
             )
-            yield from self.llm_service.stream(messages)
+
+            # Intercept raw chunks from sub-LLM stream (tuples, dicts or thought lines)
+            for chunk in self.llm_service.stream(messages):
+                if not chunk:
+                    continue
+
+                is_thought = False
+                text_delta = ""
+
+                if isinstance(chunk, tuple) and len(chunk) == 2:
+                    is_thought, text_delta = chunk
+                elif isinstance(chunk, dict):
+                    if chunk.get("type") == "thought" or "thought" in chunk:
+                        is_thought = True
+                        text_delta = chunk.get("content") or chunk.get("thought") or chunk.get("delta") or ""
+                    else:
+                        text_delta = chunk.get("content") or chunk.get("text") or ""
+                elif isinstance(chunk, str):
+                    if chunk.startswith(PROTOCOL_THOUGHT):
+                        is_thought = True
+                        raw_val = chunk[len(PROTOCOL_THOUGHT):].strip()
+                        try:
+                            parsed = json.loads(raw_val)
+                            text_delta = parsed.get("content", "") or parsed.get("delta", "")
+                        except Exception:
+                            text_delta = raw_val
+                    else:
+                        text_delta = chunk
+
+                if is_thought:
+                    if text_delta:
+                        yield f"{PROTOCOL_THOUGHT}{json.dumps({'content': text_delta})}"
+                else:
+                    yield text_delta
 
         if self.execution_repository:
             try:
@@ -274,7 +375,64 @@ class ReActLoopRunner:
             while True:
                 raw_chunk = next(chain_gen)
                 if raw_chunk:
+                    # 1. TASK CHAIN UPDATES
                     if PROTOCOL_TASK_CHAIN in raw_chunk:
+                        idx = raw_chunk.find(PROTOCOL_TASK_CHAIN)
+                        chain_payload = raw_chunk[idx + len(PROTOCOL_TASK_CHAIN):].strip()
+
+                        try:
+                            parsed_chain = json.loads(chain_payload)
+                            phase_data = parsed_chain.get("phase") if "phase" in parsed_chain else parsed_chain
+                            if isinstance(phase_data, dict) and "phase" in phase_data:
+                                phase_data = phase_data["phase"]
+
+                            current_phase_entry = {
+                                "type": "phase",
+                                "phase": phase_data,
+                            }
+
+                            # Search for an existing phase object in the timeline
+                            existing_phase_idx = None
+                            for t_idx, item in enumerate(state.timeline):
+                                if item.get("type") == "phase":
+                                    existing_phase_idx = t_idx
+                                    break
+
+                            if existing_phase_idx is not None:
+                                # Update in-place to prevent shifting phase position relative to subsequent thoughts
+                                state.timeline[existing_phase_idx]["phase"] = phase_data
+                            else:
+                                state.timeline.append(current_phase_entry)
+
+                        except Exception as parse_err:
+                            logger.warning("[TaskChain] Failed to parse chain protocol event: %s", parse_err)
+
+                        yield raw_chunk
+                        continue
+
+                    # 2. THOUGHT UPDATES
+                    if PROTOCOL_THOUGHT in raw_chunk:
+                        idx = raw_chunk.find(PROTOCOL_THOUGHT)
+                        thought_data = raw_chunk[idx + len(PROTOCOL_THOUGHT):].strip()
+                        try:
+                            parsed = json.loads(thought_data)
+                            t_delta = parsed.get("content", "") or parsed.get("delta", "")
+                        except Exception:
+                            t_delta = thought_data
+
+                        if t_delta:
+                            state.accumulated_thoughts.append(t_delta)
+
+                            # Append to existing thought block only if the tail element is a thought
+                            if state.timeline and state.timeline[-1].get("type") == "thought":
+                                state.timeline[-1]["content"] += t_delta
+                            else:
+                                # Create a new thought block following the task phase entry
+                                state.timeline.append({
+                                    "type": "thought",
+                                    "content": t_delta,
+                                })
+
                         yield raw_chunk
                         continue
 

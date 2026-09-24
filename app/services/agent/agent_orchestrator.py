@@ -15,10 +15,14 @@ import uuid
 
 from app.domain.enums import ActorType
 from app.domain.models.llm_execution import LLMExecution
-from app.domain.models.message import Message
+from app.domain.models.message import Message, MessageThought
 from app.domain.repositories.agent_repository import AgentRepository
 from app.domain.repositories.llm_execution_repository import LLMExecutionRepository
-from app.services.agent.constants import PROTOCOL_ATTACHMENTS, PROTOCOL_TASK_CHAIN
+from app.services.agent.constants import (
+    PROTOCOL_ATTACHMENTS,
+    PROTOCOL_TASK_CHAIN,
+    PROTOCOL_THOUGHT,
+)
 from app.services.agent.react_loop_runner import ReActExecutionSummary, ReActLoopRunner
 from app.services.messaging.messaging_service import MessagingService
 
@@ -103,6 +107,11 @@ class AgentOrchestrator:
                     yield chunk
                     continue
 
+                # Stream thought protocol events immediately to frontend
+                if PROTOCOL_THOUGHT in chunk:
+                    yield chunk
+                    continue
+
                 if (
                     PROTOCOL_ATTACHMENTS in chunk
                     or chunk.strip() == "[DONE]"
@@ -178,7 +187,9 @@ class AgentOrchestrator:
         saved_message: Message | None = None
 
         def on_turn_completed(
-            accumulated_text: str, execution: LLMExecution | None
+            accumulated_text: str,
+            execution: LLMExecution | None,
+            thoughts: list[MessageThought] | None = None,
         ) -> None:
             nonlocal saved_message
             if call_depth == 0 and not saved_message and conversation_id:
@@ -190,6 +201,7 @@ class AgentOrchestrator:
                         sender_name=agent_name,
                         text=accumulated_text,
                         recipient_id=user_id,
+                        thoughts=thoughts,
                     )
                 except Exception as exc:
                     logger.error(
@@ -233,9 +245,10 @@ class AgentOrchestrator:
         saved_message: Message | None,
         call_depth: int = 0,
     ) -> Generator[str, None, None]:
-        """Handles final message persistence, image markdown formatting, and attachment protocols."""
+        """Handles final message persistence, image markdown formatting, thoughts, and attachment protocols."""
         final_text = summary.final_text or summary.accumulated_text or ""
         created_files = summary.created_files
+        final_thoughts = summary.thoughts
 
         image_snippets: list[str] = []
         formatted_files: list[dict[str, str]] = []
@@ -279,6 +292,7 @@ class AgentOrchestrator:
                         sender_name=agent_name,
                         text=final_text,
                         recipient_id=user_id,
+                        thoughts=final_thoughts,
                     )
                 except Exception as exc:
                     logger.error(
@@ -286,11 +300,12 @@ class AgentOrchestrator:
                         exc,
                         exc_info=True,
                     )
-            elif saved_message and final_text:
+            elif saved_message and (final_text or final_thoughts):
                 try:
                     self.messaging_service.update_message_text(
                         message_id=saved_message.id,
                         text=final_text,
+                        thoughts=final_thoughts,
                     )
                 except Exception as exc:
                     logger.error(

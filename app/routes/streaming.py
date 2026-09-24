@@ -9,6 +9,7 @@ from app.containers import Container
 from app.services.agent import AgentService
 from app.services.messaging import MessagingService
 from app.services.agent.agent_orchestrator import AgentOrchestrator
+from app.services.agent.constants import PROTOCOL_THOUGHT
 from app.services.infrastructure.security_context import SecurityContextService
 from app.domain.errors import ValidationError
 
@@ -78,6 +79,7 @@ def stream_agent_execution(
 
     def sse_formatter(generator: Generator[str, None, None]) -> Generator[str, None, None]:
         """Format raw text chunks into W3C-compliant Server-Sent Events (SSE)."""
+        # Always comment source code in English
         meta_payload = {
             "conversation_id": resolved_conversation_id,
             "user_message_id": saved_message.id,
@@ -85,14 +87,37 @@ def stream_agent_execution(
         yield f"data: {json.dumps({'type': 'meta', 'data': meta_payload})}\n\n"
 
         try:
-            while True:
-                chunk = next(generator)
+            for chunk in generator:
                 if not chunk:
                     continue
-                lines = chunk.split("\n")
-                for line in lines:
-                    yield f"data: {line}\n"
-                yield "\n"
+
+                # 1. Handle explicit PROTOCOL_THOUGHT markers
+                if PROTOCOL_THOUGHT in chunk:
+                    idx = chunk.find(PROTOCOL_THOUGHT)
+                    thought_content = chunk[idx + len(PROTOCOL_THOUGHT):].strip()
+                    try:
+                        parsed = json.loads(thought_content)
+                        delta = parsed.get("content", "") or parsed.get("delta", "")
+                    except Exception:
+                        delta = thought_content
+                    thought_event = {"type": "thought", "content": delta, "delta": delta}
+                    yield f"data: {json.dumps(thought_event)}\n\n"
+                    continue
+
+                # 2. Pass through pre-formatted JSON thought strings directly
+                stripped = chunk.strip()
+                if stripped.startswith('{"type": "thought"') or stripped.startswith('{"type":"thought"'):
+                    yield f"data: {stripped}\n\n"
+                    continue
+
+                # 3. Format standard LLM text chunks as structured JSON SSE payloads
+                content_event = {
+                    "type": "content",
+                    "delta": chunk,
+                    "content": chunk,
+                }
+                yield f"data: {json.dumps(content_event)}\n\n"
+
         except StopIteration:
             pass
 
@@ -102,6 +127,5 @@ def stream_agent_execution(
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
         },
     )

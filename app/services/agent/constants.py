@@ -10,6 +10,7 @@ import re
 # Stream Protocol Markers
 PROTOCOL_TASK_CHAIN: Final[str] = "__TASK_CHAIN__:"
 PROTOCOL_ATTACHMENTS: Final[str] = "__ATTACHMENTS__:"
+PROTOCOL_THOUGHT: Final[str] = "__THOUGHT__:"
 
 # JSON Response Block Markers
 JSON_START_MARKER: Final[str] = "###START_JSON_RESPONSE###"
