@@ -10,6 +10,13 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+
+### Changed
+
+# [0.3.0] - 2026-09-24
+
+### Added
+
 - Added `MessageThought` domain entity and `MessageThoughtModel` database table to persist sequenced thought blocks. (**flask db upgrade**)
 - Added `sequence_index` field to `LLMExecution` domain model and database schema to maintain ordering relative to thoughts.
 - Added reasoning and thought streaming support across Gemini and OpenAI providers using the `PROTOCOL_THOUGHT` marker.
@@ -513,7 +520,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.9...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.0...develop
+[0.3.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.0
 [0.2.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.9
 [0.2.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.8
 [0.2.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.7
