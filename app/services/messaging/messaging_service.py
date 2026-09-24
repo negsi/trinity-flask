@@ -16,10 +16,10 @@ from werkzeug.datastructures import FileStorage
 from app.domain.enums import ActorType
 from app.domain.errors import ConversationNotFoundError, MessageNotFoundError
 from app.domain.models.conversation import Conversation
-from app.domain.models.message import Message, MessageAttachment
+from app.domain.models.message import Message, MessageAttachment, MessageThought
+from app.domain.repositories.agent_repository import AgentRepository
 from app.domain.repositories.conversation_repository import ConversationRepository
 from app.domain.repositories.message_repository import MessageRepository
-from app.domain.repositories.agent_repository import AgentRepository
 from app.services.messaging.message_attachment_service import MessageAttachmentService
 
 logger = logging.getLogger(__name__)
@@ -54,6 +54,7 @@ class MessagingService:
         text: str,
         recipient_id: str | None = None,
         files: list[FileStorage] | None = None,
+        thoughts: list[MessageThought] | list[str] | str | None = None,
     ) -> Message:
         """
         Persists a message and its optional file attachments, then triggers observers.
@@ -66,6 +67,7 @@ class MessagingService:
             text: Message text payload.
             recipient_id: Recipient entity ID.
             files: List of uploaded files.
+            thoughts: Optional internal thoughts generated during response processing.
 
         Returns:
             Message: The persisted message model.
@@ -101,6 +103,9 @@ class MessagingService:
                     )
                     attachments.append(attachment)
 
+        # Normalize thoughts to list of MessageThought domain entities
+        normalized_thoughts: list[MessageThought] = self._normalize_thoughts(thoughts)
+
         message = Message(
             conversation_id=conversation_id,
             sender_id=sender_id,
@@ -109,6 +114,7 @@ class MessagingService:
             text=text,
             recipient_id=recipient_id,
             attachments=attachments,
+            thoughts=normalized_thoughts,
         )
 
         saved_message = self.message_repo.save(message)
@@ -139,9 +145,14 @@ class MessagingService:
             logger.error("Error fetching attachments for conversation '%s': %s", conversation_id, exc)
         return []
 
-    def update_message_text(self, message_id: str, text: str) -> Message:
+    def update_message_text(
+        self,
+        message_id: str,
+        text: str,
+        thoughts: list[MessageThought] | list[str] | str | None = None,
+    ) -> Message:
         """
-        Updates the text content of an existing message.
+        Updates the text content and optional thoughts of an existing message.
 
         Raises:
             MessageNotFoundError: If the message ID does not exist.
@@ -151,6 +162,9 @@ class MessagingService:
             raise MessageNotFoundError(f"Message with ID '{message_id}' not found.")
 
         message.text = text
+        if thoughts is not None:
+            message.thoughts = self._normalize_thoughts(thoughts)
+
         return self.message_repo.save(message)
 
     def create_conversation(self, agent_id: str, title: str | None = None) -> Conversation:
@@ -182,19 +196,6 @@ class MessagingService:
         return True
 
     def add_attachments_to_message(self, message_id: str, file_info_list: list[dict[str, Any]]) -> Message:
-        """
-        Creates MessageAttachment records for generated files and associates them with a message.
-
-        Args:
-            message_id: Target message ID.
-            file_info_list: List of generated file dictionaries containing paths.
-
-        Returns:
-            Message: The updated message domain model.
-
-        Raises:
-            MessageNotFoundError: If the message ID does not exist.
-        """
         message = self.message_repo.get_by_id(message_id)
         if not message:
             raise MessageNotFoundError(f"Message with ID '{message_id}' not found.")
@@ -214,8 +215,8 @@ class MessagingService:
 
             attachment = MessageAttachment(
                 id=str(uuid.uuid4()),
-                message_id=message_id,
                 name=filename,
+                message_id=message_id,
                 filename=filename,
                 file_path=file_path,
                 file_size=file_size,
@@ -245,7 +246,6 @@ class MessagingService:
         messages = self.message_repo.get_by_conversation(conversation_id, limit=1000)
         return [att.to_dict() for msg in messages if msg.attachments for att in msg.attachments]
 
-
     def delete_message(self, message_id: str) -> bool:
         """
         Deletes a specific message by its ID.
@@ -260,7 +260,6 @@ class MessagingService:
         self.message_repo.delete(message_id)
         logger.info("Successfully deleted message: %s", message_id)
         return True
-
 
     def clear_conversation_messages(self, conversation_id: str) -> bool:
         """
@@ -280,7 +279,6 @@ class MessagingService:
         logger.info("Successfully cleared all messages for conversation: %s", conversation_id)
         return True
 
-
     def update_conversation_title(self, conversation_id: str, title: str) -> Conversation:
         """
         Updates the title of an existing conversation.
@@ -296,3 +294,23 @@ class MessagingService:
         saved_conv = self.conversation_repo.save(conv)
         logger.info("Successfully updated title for conversation '%s' to '%s'", conversation_id, title)
         return saved_conv
+
+    @staticmethod
+    def _normalize_thoughts(
+        thoughts: list[MessageThought] | list[str] | str | None,
+    ) -> list[MessageThought]:
+        """Converts arbitrary thought inputs (str, list of strings, or MessageThought list) into MessageThought entities."""
+        if not thoughts:
+            return []
+
+        if isinstance(thoughts, str):
+            return [MessageThought(content=thoughts, sequence_index=0)]
+
+        normalized: list[MessageThought] = []
+        for idx, item in enumerate(thoughts):
+            if isinstance(item, MessageThought):
+                normalized.append(item)
+            elif isinstance(item, str):
+                normalized.append(MessageThought(content=item, sequence_index=idx))
+
+        return normalized

@@ -1,11 +1,12 @@
-"""Message and MessageAttachment Domain Models Module.
+"""Message, MessageThought, and MessageAttachment Domain Models Module.
 
-Defines chat messages, sender identities, associated binary attachments, and task execution phases.
+Defines chat messages, sender identities, associated binary attachments,
+sequenced thoughts, and task execution phases.
 """
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
+from typing import Optional, List, Dict, Any
 import uuid
 
 from app.domain.enums import ActorType
@@ -13,19 +14,52 @@ from app.domain.errors import ValidationError
 
 
 @dataclass(slots=True)
-class MessageAttachment:
-    """Domain model representing a file attached to a chat message.
+class MessageThought:
+    """Domain model representing an individual thought block with a sequence order.
 
     Attributes:
-        name (str): Original display name of the uploaded attachment.
-        filename (str): Sanitized storage filename on disk.
-        file_path (str): Absolute path to the physical file.
-        mime_type (str): MIME type of the attachment payload.
-        file_size (int): Size in bytes.
+        content (str): Text body of the thought.
+        sequence_index (int): Temporal order index relative to executions within a message.
         id (str): Unique UUID identifier.
         message_id (str | None): ID of the parent message.
-        created_at (datetime): Attachment creation timestamp.
+        created_at (datetime): Thought creation timestamp.
     """
+
+    content: str
+    sequence_index: int = 0
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    message_id: str | None = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    def __post_init__(self) -> None:
+        """Validates thought attributes.
+
+        Raises:
+            ValidationError: If attributes fail boundary checks.
+        """
+        if not self.content or not self.content.strip():
+            raise ValidationError("Thought content cannot be empty.")
+        if self.sequence_index < 0:
+            raise ValidationError("Thought sequence_index cannot be negative.")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serializes the thought model to a dictionary.
+
+        Returns:
+            dict[str, Any]: Serialized dictionary representation.
+        """
+        return {
+            "id": self.id,
+            "content": self.content,
+            "sequence_index": self.sequence_index,
+            "message_id": self.message_id,
+            "created_at": self.created_at.isoformat(),
+        }
+
+
+@dataclass(slots=True)
+class MessageAttachment:
+    """Domain model representing a file attached to a chat message."""
 
     name: str
     filename: str
@@ -37,13 +71,6 @@ class MessageAttachment:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def __post_init__(self) -> None:
-        """Validates attachment attributes.
-
-        Raises:
-            ValidationError: If attributes fail boundary checks.
-        """
-        if not self.name or not self.name.strip():
-            raise ValidationError("Attachment name cannot be empty.")
         if not self.filename or not self.filename.strip():
             raise ValidationError("Attachment filename cannot be empty.")
         if not self.file_path or not self.file_path.strip():
@@ -52,11 +79,6 @@ class MessageAttachment:
             raise ValidationError("Attachment file size cannot be negative.")
 
     def to_dict(self) -> dict[str, Any]:
-        """Serializes the attachment model to a dictionary.
-
-        Returns:
-            dict[str, Any]: Serialized dictionary representation.
-        """
         return {
             "id": self.id,
             "name": self.name,
@@ -71,20 +93,7 @@ class MessageAttachment:
 
 @dataclass(slots=True)
 class Message:
-    """Domain model representing an individual chat message entry.
-
-    Attributes:
-        conversation_id (str): UUID of the parent conversation.
-        sender_id (str): Identifier of the sending actor.
-        sender_type (ActorType): Category of the sending actor (USER, AGENT, SYSTEM).
-        sender_name (str): Display name of the sender.
-        text (str): Text body of the message.
-        id (str): Unique UUID message identifier.
-        recipient_id (str | None): Optional identifier of the targeted recipient.
-        attachments (list[MessageAttachment]): Associated file attachments.
-        task_phases (list[dict[str, Any]]): Executed task chains associated with this message.
-        timestamp (datetime): UTC creation timestamp.
-    """
+    """Domain model representing an individual chat message entry."""
 
     conversation_id: str
     sender_id: str
@@ -94,15 +103,11 @@ class Message:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     recipient_id: str | None = None
     attachments: list[MessageAttachment] = field(default_factory=list)
-    task_phases: list[dict[str, Any]] = field(default_factory=list)
+    thoughts: list[MessageThought] = field(default_factory=list)
+    timeline: list[dict[str, Any]] = field(default_factory=list)
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def __post_init__(self) -> None:
-        """Validates message domain constraints.
-
-        Raises:
-            ValidationError: If constraints are violated.
-        """
         if not self.conversation_id or not self.conversation_id.strip():
             raise ValidationError("Message conversation_id cannot be empty.")
         if not self.sender_id or not self.sender_id.strip():
@@ -117,11 +122,7 @@ class Message:
                 raise ValidationError(f"Invalid sender_type '{self.sender_type}'.")
 
     def to_dict(self) -> dict[str, Any]:
-        """Serializes the message entity and its attachments into a dictionary.
-
-        Returns:
-            dict[str, Any]: Serialized message dictionary matching frontend contract.
-        """
+        """Serializes the message entity matching the current timeline frontend contract."""
         return {
             "id": self.id,
             "conversation_id": self.conversation_id,
@@ -131,6 +132,6 @@ class Message:
             "text": self.text,
             "recipient_id": self.recipient_id,
             "attachments": [att.to_dict() for att in self.attachments],
-            "taskPhases": self.task_phases,
+            "timeline": self.timeline,
             "timestamp": self.timestamp.isoformat(),
         }

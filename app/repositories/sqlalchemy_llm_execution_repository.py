@@ -46,6 +46,7 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
         return LLMExecution(
             id=model.id,
             conversation_id=model.conversation_id,
+            sequence_index=getattr(model, "sequence_index", 0),
             message_id=model.message_id,
             response_type=ResponseType(model.response_type),
             summary_or_content=model.summary_or_content,
@@ -66,6 +67,7 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
                 model = LLMExecutionModel(
                     id=execution.id,
                     conversation_id=execution.conversation_id,
+                    sequence_index=execution.sequence_index,
                     message_id=execution.message_id,
                     response_type=execution.response_type,
                     summary_or_content=execution.summary_or_content,
@@ -76,6 +78,7 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
                 db.session.add(model)
             else:
                 model.conversation_id = execution.conversation_id
+                model.sequence_index = execution.sequence_index
                 model.message_id = execution.message_id
                 model.response_type = execution.response_type
                 model.summary_or_content = execution.summary_or_content
@@ -85,7 +88,11 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
             existing_steps = {step_model.step_number: step_model for step_model in model.steps}
 
             for step in execution.steps:
-                status_val = step.status if isinstance(step.status, ExecutionStepStatus) else ExecutionStepStatus(step.status)
+                status_val = (
+                    step.status
+                    if isinstance(step.status, ExecutionStepStatus)
+                    else ExecutionStepStatus(step.status)
+                )
 
                 if step.step_number in existing_steps:
                     step_model = existing_steps[step.step_number]
@@ -122,22 +129,11 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
         status: ExecutionStepStatus | str,
         result: str | None = None,
     ) -> bool:
-        """Selectively updates the status and result of an individual execution step row.
-
-        Args:
-            execution_id (str): Target LLMExecution UUID.
-            step_number (int): Order index of the step.
-            status (ExecutionStepStatus | str): New step execution state.
-            result (str | None): Optional execution output string.
-
-        Returns:
-            bool: True if row updated, False if step not found.
-
-        Raises:
-            StorageError: If database update fails.
-        """
+        """Selectively updates the status and result of an individual execution step row."""
         try:
-            status_enum = status if isinstance(status, ExecutionStepStatus) else ExecutionStepStatus(status)
+            status_enum = (
+                status if isinstance(status, ExecutionStepStatus) else ExecutionStepStatus(status)
+            )
 
             step_model = (
                 LLMExecutionStepModel.query.filter(
@@ -170,20 +166,11 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
                 exc,
                 exc_info=True,
             )
-            raise StorageError(f"Database error updating step {step_number} for execution '{execution_id}': {exc}") from exc
+            raise StorageError(
+                f"Database error updating step {step_number} for execution '{execution_id}': {exc}"
+            ) from exc
 
     def get_by_id(self, execution_id: str) -> LLMExecution | None:
-        """Retrieves an execution record by its unique ID.
-
-        Args:
-            execution_id (str): Unique UUID.
-
-        Returns:
-            LLMExecution | None: Domain entity if found, else None.
-
-        Raises:
-            StorageError: If query execution fails.
-        """
         try:
             model = db.session.get(LLMExecutionModel, execution_id)
             return self._to_domain(model) if model else None
@@ -192,21 +179,10 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
             raise StorageError(f"Database error retrieving LLMExecution '{execution_id}': {exc}") from exc
 
     def get_by_message_id(self, message_id: str) -> list[LLMExecution]:
-        """Retrieves execution records associated with a message ID.
-
-        Args:
-            message_id (str): Message UUID.
-
-        Returns:
-            list[LLMExecution]: List of matching domain executions.
-
-        Raises:
-            StorageError: If query execution fails.
-        """
         try:
             models = (
                 LLMExecutionModel.query.filter(LLMExecutionModel.message_id == message_id)
-                .order_by(LLMExecutionModel.created_at.asc())
+                .order_by(LLMExecutionModel.sequence_index.asc(), LLMExecutionModel.created_at.asc())
                 .all()
             )
             return [self._to_domain(m) for m in models]
@@ -215,17 +191,6 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
             raise StorageError(f"Database error retrieving executions for Message '{message_id}': {exc}") from exc
 
     def get_by_conversation_id(self, conversation_id: str) -> list[LLMExecution]:
-        """Retrieves all executions for a conversation ordered descending by timestamp.
-
-        Args:
-            conversation_id (str): Target conversation UUID.
-
-        Returns:
-            list[LLMExecution]: Chronologically sorted execution records.
-
-        Raises:
-            StorageError: If query execution fails.
-        """
         try:
             models = (
                 LLMExecutionModel.query.filter(LLMExecutionModel.conversation_id == conversation_id)
@@ -238,17 +203,6 @@ class SQLAlchemyLLMExecutionRepository(LLMExecutionRepository):
             raise StorageError(f"Database error fetching executions for Conversation '{conversation_id}': {exc}") from exc
 
     def delete(self, execution_id: str) -> bool:
-        """Deletes an execution record by its unique ID.
-
-        Args:
-            execution_id (str): Target UUID.
-
-        Returns:
-            bool: True if removed, False if not found.
-
-        Raises:
-            StorageError: If deletion fails.
-        """
         try:
             model = db.session.get(LLMExecutionModel, execution_id)
             if not model:

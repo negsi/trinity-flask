@@ -37,10 +37,12 @@ class LLMExecutionModel(db.Model):
         index=True,
     )
 
+    sequence_index = Column(Integer, nullable=False, default=0)
+
     response_type = Column(SQLEnum(ResponseType), nullable=False)
     summary_or_content = Column(Text, nullable=False)
     is_complete = Column(Boolean, nullable=False, default=True)
-    payloads = Column(JSON, nullable=False, default=dict)  # <-- NEU für Issue #20
+    payloads = Column(JSON, nullable=False, default=dict)
 
     created_at = Column(DateTime(timezone=True), default=_utc_now, nullable=False, index=True)
 
@@ -54,7 +56,10 @@ class LLMExecutionModel(db.Model):
     )
 
     def __repr__(self) -> str:
-        return f"<LLMExecutionModel id='{self.id}' response_type='{self.response_type}'>"
+        return (
+            f"<LLMExecutionModel id='{self.id}' response_type='{self.response_type}' "
+            f"sequence_index={self.sequence_index}>"
+        )
 
 
 class LLMExecutionStepModel(db.Model):

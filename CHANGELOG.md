@@ -10,7 +10,26 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+
 ### Changed
+
+# [0.3.0] - 2026-09-24
+
+### Added
+
+- Added `MessageThought` domain entity and `MessageThoughtModel` database table to persist sequenced thought blocks. (**flask db upgrade**)
+- Added `sequence_index` field to `LLMExecution` domain model and database schema to maintain ordering relative to thoughts.
+- Added reasoning and thought streaming support across Gemini and OpenAI providers using the `PROTOCOL_THOUGHT` marker.
+- Added `LLM_THINKING_BUDGET` configuration option to control reasoning token budgets.
+- Added unified `timeline` composition in `SQLAlchemyMessageRepository` merging thoughts and task phases sequentially.
+
+### Changed
+
+- Replaced `task_phases` attribute on `Message` model with `thoughts` and structured `timeline`.
+- Updated Gemini LLM provider to stream thoughts via `ThinkingConfig` using the Google GenAI SDK.
+- Updated `TaskExecutor` and `ReActLoopRunner` to isolate thoughts from tool execution results and sub-step outputs.
+- Updated default Gemini model configurations to `gemini-3.8-flash` and `gemini-3.7-flash`.
+- Updated base agent prompt with strict guidelines preventing reasoning artifacts in tool parameters and generated files.
 
 # [0.2.9] - 2026-09-16
 
@@ -501,7 +520,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.2.9...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.0...develop
+[0.3.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.0
 [0.2.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.9
 [0.2.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.8
 [0.2.7]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.7

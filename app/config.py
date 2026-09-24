@@ -38,7 +38,13 @@ class BaseConfig:
     # LLM Settings
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
     LLM_API_KEY = os.getenv("LLM_API_KEY")
-    LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+    LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.7-flash")
+
+    LLM_THINKING_BUDGET = (
+        int(os.getenv("LLM_THINKING_BUDGET"))
+        if os.getenv("LLM_THINKING_BUDGET") and os.getenv("LLM_THINKING_BUDGET").isdigit()
+        else 1024
+    )
 
     # Image Generator Settings
     IMAGE_GENERATOR_PROVIDER = os.getenv("IMAGE_GENERATOR_PROVIDER", "gemini")

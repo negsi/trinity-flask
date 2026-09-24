@@ -1,9 +1,9 @@
-"""SQLAlchemy ORM model for persisted chat messages."""
+"""SQLAlchemy ORM models for persisted chat messages, attachments, and sequenced thoughts."""
 
 from datetime import datetime, timezone
 import uuid
 
-from sqlalchemy import Column, DateTime, Enum as SQLEnum, ForeignKey, Index, String, Text
+from sqlalchemy import Column, DateTime, Enum as SQLEnum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.domain.enums import ActorType
@@ -18,8 +18,64 @@ def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class MessageThoughtModel(db.Model):
+    """SQLAlchemy ORM model for individual thought blocks within a message."""
+
+    __tablename__ = "message_thoughts"
+
+    id = Column(String(36), primary_key=True, default=_generate_uuid)
+    message_id = Column(
+        String(36),
+        ForeignKey("messages.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    content = Column(Text, nullable=False)
+    sequence_index = Column(Integer, nullable=False, default=0)
+
+    created_at = Column(DateTime(timezone=True), default=_utc_now, nullable=False)
+
+    # Relationships
+    message = relationship("MessageModel", back_populates="thoughts")
+
+    def __repr__(self) -> str:
+        return (
+            f"<MessageThoughtModel id='{self.id}' message_id='{self.message_id}' "
+            f"sequence_index={self.sequence_index}>"
+        )
+
+
+class MessageAttachmentModel(db.Model):
+    """SQLAlchemy ORM model for file attachments linked to a message."""
+
+    __tablename__ = "message_attachments"
+
+    id = Column(String(36), primary_key=True, default=_generate_uuid)
+    message_id = Column(
+        String(36),
+        ForeignKey("messages.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    name = Column(String(255), nullable=False)
+    filename = Column(String(255), nullable=False)
+    file_path = Column(Text, nullable=False)
+    mime_type = Column(String(100), nullable=False)
+    file_size = Column(Integer, nullable=False, default=0)
+
+    created_at = Column(DateTime(timezone=True), default=_utc_now, nullable=False)
+
+    # Relationships
+    message = relationship("MessageModel", back_populates="attachments")
+
+    def __repr__(self) -> str:
+        return f"<MessageAttachmentModel id='{self.id}' filename='{self.filename}'>"
+
+
 class MessageModel(db.Model):
-    """SQLAlchemy ORM model representing persisted chat messages in `messages`."""
+    """SQLAlchemy ORM model for chat messages."""
 
     __tablename__ = "messages"
 
@@ -45,10 +101,13 @@ class MessageModel(db.Model):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-
-    __table_args__ = (
-        Index("ix_messages_conv_timestamp", "conversation_id", "timestamp"),
+    thoughts = relationship(
+        "MessageThoughtModel",
+        back_populates="message",
+        cascade="all, delete-orphan",
+        order_by="MessageThoughtModel.sequence_index",
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:
-        return f"<MessageModel id='{self.id}' sender='{self.sender_name}' conv='{self.conversation_id}'>"
+        return f"<MessageModel id='{self.id}' sender_name='{self.sender_name}'>"
