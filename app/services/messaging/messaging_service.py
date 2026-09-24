@@ -215,6 +215,7 @@ class MessagingService:
 
             attachment = MessageAttachment(
                 id=str(uuid.uuid4()),
+                name=filename,
                 message_id=message_id,
                 filename=filename,
                 file_path=file_path,
