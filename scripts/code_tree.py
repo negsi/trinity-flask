@@ -79,11 +79,11 @@ def print_tree_with_symbols(root_dir: str = ".") -> None:
             file_path = Path(current_root) / file
             print(f"{file_indent}📄 {file}")
 
-            if file.endswith(".py"):
-                symbols = parse_python_symbols(file_path)
-                symbol_indent = "    " * (indent_level + 2)
-                for sym in symbols:
-                    print(f"{symbol_indent}{sym}")
+            #if file.endswith(".py"):
+                #symbols = parse_python_symbols(file_path)
+                #symbol_indent = "    " * (indent_level + 2)
+                #for sym in symbols:
+                    #print(f"{symbol_indent}{sym}")
 
 
 if __name__ == "__main__":
