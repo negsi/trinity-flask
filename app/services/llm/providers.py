@@ -53,14 +53,17 @@ class GeminiProvider(LLMProvider):
         self,
         model: str | None = None,
         thinking_budget: int | None = None,
+        thinking_level: str | None = None,  # Neu: Unterstützt direktes Level für Gemini 4
     ) -> None:
         from google import genai  # type: ignore
 
         self.client = genai.Client(api_key=Config.LLM_API_KEY)
         self.model = model or Config.LLM_MODEL or "gemini-3.7-flash"
         self.thinking_budget = (
-            thinking_budget if thinking_budget is not None else Config.LLM_THINKING_BUDGET
+            thinking_budget if thinking_budget is not None else getattr(Config, "LLM_THINKING_BUDGET", None)
         )
+        # Fallback oder Konfig für thinking_level (z.B. "MEDIUM" für Gemini 4)
+        self.thinking_level = thinking_level or getattr(Config, "LLM_THINKING_LEVEL", "MEDIUM" if "gemini-4" in self.model.lower() else None)
 
     def stream(self, messages: list[LLMMessage]) -> Generator[Any, None, None]:
         """Streams thoughts and text tokens directly via standard GenAI SDK."""
@@ -97,10 +100,17 @@ class GeminiProvider(LLMProvider):
             else:
                 contents.append({"role": role, "parts": [{"text": str(m.content)}]})
 
-        # 3. Build thinking_config safely
+        # 3. Build thinking_config safely (Backward compatible for Gemini 3.x and Gemini 4)
         thinking_kwargs: dict[str, Any] = {"include_thoughts": True}
-        if self.thinking_budget is not None and self.thinking_budget > 0:
-            thinking_kwargs["thinking_budget"] = self.thinking_budget
+        
+        if "gemini-4" in self.model.lower():
+            # Gemini 4 expects thinking_level instead of budget
+            if self.thinking_level:
+                thinking_kwargs["thinking_level"] = self.thinking_level
+        else:
+            # Older models use thinking_budget
+            if self.thinking_budget is not None and self.thinking_budget > 0:
+                thinking_kwargs["thinking_budget"] = self.thinking_budget
 
         config_kwargs: dict[str, Any] = {
             "thinking_config": types.ThinkingConfig(**thinking_kwargs)

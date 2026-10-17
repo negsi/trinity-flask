@@ -10,8 +10,13 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+- Support for Gemini 4+ `thinking_level` configuration (`LOW`, `MEDIUM`, `HIGH`) in `GeminiProvider` (`app/services/llm/providers.py`).
+- New environment variable `LLM_THINKING_LEVEL` in `.env.template` to configure reasoning levels for Gemini 4+ models.
 
 ### Changed
+
+- Updated `GeminiProvider.stream()` to dynamically switch between `thinking_level` (for Gemini 4 models) and `thinking_budget` (for Gemini 3.x and older models) when building `ThinkingConfig`.
+- Improved fallback resolution for `LLM_THINKING_BUDGET` and `LLM_THINKING_LEVEL` using `getattr` on `Config`.
 
 # [0.3.0] - 2026-09-24
 
