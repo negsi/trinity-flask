@@ -10,6 +10,12 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 ### Added
 
+### Changed
+
+# [0.3.1] - 2026-10-20
+
+### Added
+
 - Support for Gemini 4+ `thinking_level` configuration (`LOW`, `MEDIUM`, `HIGH`) in `GeminiProvider` (`app/services/llm/providers.py`).
 - New environment variable `LLM_THINKING_LEVEL` in `.env.template` to configure reasoning levels for Gemini 4+ models.
 - Support for uploading image attachments via the Gemini Files API (`client.files.upload`) in `GeminiProvider.stream()`.
@@ -529,7 +535,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.0...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.1...develop
+[0.3.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.1
 [0.3.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.0
 [0.2.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.9
 [0.2.8]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.8
