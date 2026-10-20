@@ -186,10 +186,12 @@ class AgentContextBuilder:
             if mime_type.startswith("image/"):
                 try:
                     img_bytes = Path(file_path).read_bytes()
+                    # Korrektes Format für das GenAI SDK / Gemini Provider
                     image_parts.append({
                         "type": "image",
                         "mime_type": mime_type,
                         "data": img_bytes,
+                        "file_path": file_path,
                         "filename": filename,
                     })
                 except OSError as exc:

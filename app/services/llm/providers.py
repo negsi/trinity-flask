@@ -9,6 +9,7 @@ from collections.abc import Generator
 import logging
 import json
 from typing import Any
+from pathlib import Path
 
 from app.config import BaseConfig as Config
 from app.domain.image_generator import ImageGeneratorProvider
@@ -47,95 +48,103 @@ class OpenAIProvider(LLMProvider):
 
 
 class GeminiProvider(LLMProvider):
-    """Google Gemini Provider streaming thoughts and text using standard generate_content_stream."""
+    """Google Gemini Provider using the official Interactions API for streaming thoughts and text."""
 
     def __init__(
         self,
         model: str | None = None,
-        thinking_budget: int | None = None,
+        thinking_level: str | None = None,
     ) -> None:
         from google import genai  # type: ignore
 
         self.client = genai.Client(api_key=Config.LLM_API_KEY)
-        self.model = model or Config.LLM_MODEL or "gemini-3.7-flash"
-        self.thinking_budget = (
-            thinking_budget if thinking_budget is not None else Config.LLM_THINKING_BUDGET
-        )
+        self.model = model or Config.LLM_MODEL or "gemini-4-argon"
+        
+        config_level = getattr(Config, "LLM_THINKING_LEVEL", "medium")
+        self.thinking_level = thinking_level or config_level
 
     def stream(self, messages: list[LLMMessage]) -> Generator[Any, None, None]:
-        """Streams thoughts and text tokens directly via standard GenAI SDK."""
-        # Always comment source code in English
+        """Streams thoughts and text tokens using client.interactions.create with streaming enabled."""
         from google.genai import types  # type: ignore
 
-        # 1. Extract system instruction
+        # 1. Extract system instruction if present
         system_prompts = [
             m.content for m in messages if m.role == "system" and isinstance(m.content, str)
         ]
         system_instruction = "\n\n---\n\n".join(system_prompts) if system_prompts else None
 
-        # 2. Format contents list for generate_content_stream
-        contents = []
-        for m in messages:
-            if m.role == "system":
-                continue
-
-            role = "user" if m.role == "user" else "model"
-
-            if isinstance(m.content, list):
-                parts = []
-                for part in m.content:
-                    if isinstance(part, dict) and part.get("type") == "image":
-                        parts.append({
-                            "inline_data": {
-                                "data": part["data"],
-                                "mime_type": part["mime_type"],
-                            }
+        # 2. Build input payload supporting text and uploaded image files for the Interactions API
+        final_input: Any = ""
+        latest_message = messages[-1] if messages else None
+        
+        if latest_message and isinstance(latest_message.content, list):
+            input_parts = []
+            for item in latest_message.content:
+                if isinstance(item, str):
+                    input_parts.append({"type": "text", "text": item})
+                elif isinstance(item, dict):
+                    if "file_path" in item and item["file_path"] and Path(item["file_path"]).is_file():
+                        # Upload image file to Gemini Files API as required by Interactions API
+                        uploaded_file = self.client.files.upload(file=item["file_path"])
+                        input_parts.append({
+                            "type": "image",
+                            "uri": uploaded_file.uri,
+                            "mime_type": item.get("mime_type", "image/png"),
+                            "resolution": "high",
                         })
-                    else:
-                        parts.append({"text": str(part)})
-                contents.append({"role": role, "parts": parts})
-            else:
-                contents.append({"role": role, "parts": [{"text": str(m.content)}]})
-
-        # 3. Build thinking_config safely
-        thinking_kwargs: dict[str, Any] = {"include_thoughts": True}
-        if self.thinking_budget is not None and self.thinking_budget > 0:
-            thinking_kwargs["thinking_budget"] = self.thinking_budget
-
-        config_kwargs: dict[str, Any] = {
-            "thinking_config": types.ThinkingConfig(**thinking_kwargs)
-        }
-        if system_instruction:
-            config_kwargs["system_instruction"] = system_instruction
-
-        config = types.GenerateContentConfig(**config_kwargs)
-
-        # 4. Invoke generate_content_stream
-        response_stream = self.client.models.generate_content_stream(
-            model=self.model,
-            contents=contents,
-            config=config,
-        )
-
-        # 5. Extract incremental thoughts and response text
-        for chunk in response_stream:
-            if not chunk.candidates:
-                continue
-
-            candidate = chunk.candidates[0]
-            if not candidate.content or not candidate.content.parts:
-                continue
-
-            for part in candidate.content.parts:
-                if not part.text:
+                    elif "text" in item:
+                        input_parts.append({"type": "text", "text": item["text"]})
+            final_input = input_parts
+        else:
+            prompt_parts = []
+            for m in messages:
+                if m.role == "system":
                     continue
+                role_prefix = "User: " if m.role == "user" else ("Assistant: " if m.role == "model" else "System: ")
+                if isinstance(m.content, str):
+                    prompt_parts.append(f"{role_prefix}{m.content}")
+            final_input = "\n".join(prompt_parts)
 
-                is_thought = getattr(part, "thought", False)
+        # 3. Prepare generation configuration with thinking enabled
+        generation_config: dict[str, Any] = {
+            "thinking_level": self.thinking_level,
+            "thinking_summaries": "auto",
+        }
 
-                if is_thought:
-                    yield f"{PROTOCOL_THOUGHT}{json.dumps({'content': part.text})}"
-                else:
-                    yield part.text
+        call_kwargs: dict[str, Any] = {
+            "model": self.model,
+            "input": final_input,
+            "generation_config": generation_config,
+            "stream": True,
+        }
+
+        if system_instruction:
+            call_kwargs["system_instruction"] = system_instruction
+
+        # 4. Invoke Interactions API stream
+        stream = self.client.interactions.create(**call_kwargs)
+
+        # 5. Process event stream conforming to Interactions API specs
+        for event in stream:
+            event_type = getattr(event, "event_type", None)
+            
+            if event_type == "step.delta":
+                delta = getattr(event, "delta", None)
+                if not delta:
+                    continue
+                
+                delta_type = getattr(delta, "type", None)
+                
+                if delta_type == "thought_summary":
+                    content_obj = getattr(delta, "content", None)
+                    thought_text = getattr(content_obj, "text", "") if content_obj else ""
+                    if thought_text:
+                        yield f"{PROTOCOL_THOUGHT}{json.dumps({'content': thought_text})}"
+                
+                elif delta_type == "text":
+                    text_content = getattr(delta, "text", "")
+                    if text_content:
+                        yield text_content
 
 
 class GeminiImagenProvider(ImageGeneratorProvider):
