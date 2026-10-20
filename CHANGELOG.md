@@ -12,11 +12,15 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 
 - Support for Gemini 4+ `thinking_level` configuration (`LOW`, `MEDIUM`, `HIGH`) in `GeminiProvider` (`app/services/llm/providers.py`).
 - New environment variable `LLM_THINKING_LEVEL` in `.env.template` to configure reasoning levels for Gemini 4+ models.
+- Support for uploading image attachments via the Gemini Files API (`client.files.upload`) in `GeminiProvider.stream()`.
+- Added `file_path` metadata to image parts in `AgentContextBuilder` (`app/services/agent/agent_context_builder.py`) to enable file-based uploads for the Gemini Interactions API.
 
 ### Changed
 
-- Updated `GeminiProvider.stream()` to dynamically switch between `thinking_level` (for Gemini 4 models) and `thinking_budget` (for Gemini 3.x and older models) when building `ThinkingConfig`.
-- Improved fallback resolution for `LLM_THINKING_BUDGET` and `LLM_THINKING_LEVEL` using `getattr` on `Config`.
+- Migrated `GeminiProvider.stream()` from `generate_content_stream` to the Gemini Interactions API (`client.interactions.create`) with `step.delta` event stream processing for `thought_summary` and `text` deltas (`app/services/llm/providers.py`).
+- Simplified `GeminiProvider` configuration to exclusively use `thinking_level` (defaulting to `"medium"`) and `thinking_summaries="auto"`, removing legacy `thinking_budget` handling.
+- Updated default fallback model in `GeminiProvider` from `gemini-3.7-flash` to `gemini-4-argon`.
+- Improved fallback resolution for `LLM_THINKING_LEVEL` using `getattr` on `Config`.
 
 # [0.3.0] - 2026-09-24
 
