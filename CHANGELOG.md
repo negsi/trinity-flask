@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+### Changed
+
+# [0.3.2] - 2026-10-23
+
+### Added
+
 - Add `SHARED_FOLDER` configuration option (defaulting to `instance/shared`) for cross-conversation shared project storage.
 - Add `FileStorageService.resolve_sandbox_target()` to centrally resolve workspace and `shared/` sandbox paths while enforcing directory traversal protection.
 - Support creating empty directories via `write_file` and `FileStorageService.write_sandboxed_file()` when `content` is empty or the path ends with a slash.
@@ -540,7 +546,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.1...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.2...develop
+[0.3.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.2
 [0.3.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.1
 [0.3.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.0
 [0.2.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.9
