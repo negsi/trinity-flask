@@ -8,6 +8,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from app.config import BaseConfig
+from app.domain.errors import StorageError
 from app.services.infrastructure.file_storage_service import FileStorageService
 
 logger = logging.getLogger(__name__)
@@ -15,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def locate_file(filename: str, target_base: Path, conversation_id: str | None = None) -> Path | None:
     """
-    Helper to locate a named file across conversation sandboxes.
+    Helper to locate a named file across conversation or shared sandboxes.
 
     Args:
         filename: Name or relative path of the file to find.
@@ -25,20 +27,36 @@ def locate_file(filename: str, target_base: Path, conversation_id: str | None = 
     Returns:
         Path | None: Resolved absolute Path if found, otherwise None.
     """
+    raw_str = str(filename).strip().replace("\\", "/").lstrip("/")
+    shared_root = Path(
+        getattr(BaseConfig, "SHARED_FOLDER", target_base.resolve().parent / "shared")
+    ).resolve()
+
+    if raw_str == "shared" or raw_str.startswith("shared/"):
+        sub_path = raw_str[len("shared"):].lstrip("/")
+        candidate = (shared_root / sub_path).resolve()
+        if candidate.is_relative_to(shared_root) and candidate.is_file():
+            return candidate
+        target_search_dir = shared_root
+    else:
+        target_search_dir = (target_base / conversation_id).resolve() if conversation_id else target_base.resolve()
+        direct_candidate = (target_search_dir / raw_str).resolve()
+        if direct_candidate.is_relative_to(target_search_dir) and direct_candidate.is_file():
+            return direct_candidate
+
     clean_name = Path(filename).name
     candidates = [
+        target_search_dir / clean_name,
         target_base / clean_name,
-        Path(filename),
+        shared_root / clean_name,
     ]
-    if conversation_id:
-        candidates.insert(0, target_base / conversation_id / clean_name)
 
     for candidate in candidates:
         if candidate.is_file():
             return candidate.resolve()
 
-    if target_base.is_dir():
-        for found_file in target_base.rglob(clean_name):
+    if target_search_dir.is_dir():
+        for found_file in target_search_dir.rglob(clean_name):
             if found_file.is_file():
                 return found_file.resolve()
 
@@ -65,25 +83,25 @@ def get_latest_image_in_dir(directory: Path) -> Path | None:
 def write_file(
     file_storage_service: FileStorageService,
     file_path: str,
-    content: str,
+    content: str = "",
     mode: str = "w",
     conversation_id: str | None = None,
     base_dir: str | Path | None = None,
     **kwargs: Any,
 ) -> str:
     """
-    Writes content to a sandboxed file.
+    Writes content to a sandboxed file or creates an empty directory.
 
     Args:
         file_storage_service: Storage service instance.
-        file_path: Destination path of the file.
-        content: String content to write.
+        file_path: Destination path of the file or directory (use 'shared/...' for shared project folder).
+        content: String content to write (leave empty to create a directory).
         mode: File write mode ('w' or 'a').
         conversation_id: Optional conversation sandbox ID.
         base_dir: Target base directory.
 
     Returns:
-        str: Absolute path of the written file or an error message.
+        str: Informational message or error description.
     """
     target_base = str(base_dir) if base_dir else "."
     try:
@@ -114,7 +132,7 @@ def read_file(
 
     Args:
         file_storage_service: Storage service instance.
-        file_path: Relative or absolute path of the file or directory to read/list.
+        file_path: Relative path of the file or directory (supports 'shared/...' prefix).
         conversation_id: Optional conversation sandbox ID.
         base_dir: Target base directory.
         encoding: File character encoding for plain text files (defaults to 'utf-8').
@@ -124,14 +142,15 @@ def read_file(
         str: Raw text content, extracted document text, directory listing, or an error message.
     """
     target_base = Path(base_dir or ".").resolve()
-    
-    # Target directory resolution logic inside sandbox
-    sandbox_dir = target_base / conversation_id if conversation_id else target_base
-    target_path = (sandbox_dir / file_path).resolve() if file_path and file_path != "." else sandbox_dir
 
-    # Security check: Ensure target path remains within sandbox
-    if sandbox_dir not in target_path.parents and target_path != sandbox_dir:
-        return f"Error: Access denied. Path '{file_path}' is outside the conversation sandbox."
+    try:
+        sandbox_dir, target_path = file_storage_service.resolve_sandbox_target(
+            file_path=file_path or ".",
+            base_dir=target_base,
+            sandbox_id=conversation_id,
+        )
+    except StorageError as exc:
+        return f"Error: Access denied. {exc}"
 
     # --- 1. DIRECTORY LISTING FEATURE ---
     if target_path.exists() and target_path.is_dir():
@@ -164,7 +183,7 @@ def read_file(
             logger.error("Error listing directory '%s': %s", file_path, exc, exc_info=True)
             return f"Error listing directory '{file_path}': {exc}"
 
-    # --- 2. FILE READING FEATURE (Existing functionality) ---
+    # --- 2. FILE READING FEATURE ---
     path_obj = Path(file_path)
     ext = path_obj.suffix.lower()
 
@@ -177,7 +196,7 @@ def read_file(
             file_storage_service=file_storage_service,
             action="read",
             doc_type=doc_type,
-            filename=path_obj.name,
+            filename=file_path,
             conversation_id=conversation_id,
             base_dir=target_base,
             **kwargs,
@@ -185,18 +204,14 @@ def read_file(
         return str(result)
 
     try:
-        # Resolve target path inside sandbox for PDFs and plain text
-        resolved_path = locate_file(file_path, target_base, conversation_id)
+        resolved_path = target_path if target_path.is_file() else locate_file(file_path, target_base, conversation_id)
         if not resolved_path or not resolved_path.is_file():
-            # Fallback to direct resolution via read_sandboxed_file
-            resolved_path = (
-                (target_base / conversation_id / file_path).resolve()
-                if conversation_id
-                else (target_base / file_path).resolve()
-            )
+            resolved_path = target_path
 
         # Handle PDF documents via extract_text_content
         if ext == ".pdf":
+            if not resolved_path.is_file():
+                return f"Error: PDF file '{file_path}' does not exist."
             extracted = file_storage_service.extract_text_content(
                 file_path_str=resolved_path, mime_type="application/pdf"
             )

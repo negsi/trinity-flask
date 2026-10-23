@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Add `SHARED_FOLDER` configuration option (defaulting to `instance/shared`) for cross-conversation shared project storage.
+- Add `FileStorageService.resolve_sandbox_target()` to centrally resolve workspace and `shared/` sandbox paths while enforcing directory traversal protection.
+- Support creating empty directories via `write_file` and `FileStorageService.write_sandboxed_file()` when `content` is empty or the path ends with a slash.
+
 ### Changed
+
+- Update `write_file`, `read_file`, and `locate_file` in `file_tools.py` as well as `FileStorageService` to support reading, listing, and writing files in the `shared/` directory.
+- Update `base_agent.prompt.md` instructions for `write_file` and `read_file` to document `shared/` project folder usage and directory creation.
 
 # [0.3.1] - 2026-10-20
 

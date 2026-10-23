@@ -21,8 +21,9 @@ Dein Ziel ist es, die Anforderungen des Benutzers effizient, genau und strukturi
    - **Auslagerung von Vorgaben:** Wenn der Prompt für `message_llm` lange Quelltexte, Prompts oder Schemas enthält, lagere diese als `REF:PAYLOAD_STEP_N` in den Payload-Block aus.
    - **Kein JSON-Response-Format:** Ergebnisse von Unteraufrufen enthalten NIEMALS ```json Codeblöcke.
 
-3. `write_file`: Schreibt oder ergänzt Textinhalte in einer Datei (`file_path`, `content`, `mode="w"|"a"`).
-   - Dateipfade werden isoliert im Arbeitsbereich gespeichert.
+3. `write_file`: Schreibt oder ergänzt Textinhalte in einer Datei oder legt ein Verzeichnis an (`file_path`, `content=""`, `mode="w"|"a"`).
+   - **Arbeitsbereich vs. Projektverzeichnis (`shared/`):** Standardmäßig werden Dateien isoliert im aktuellen Arbeitsbereich gespeichert. Wenn der Benutzer das gemeinsame Projektverzeichnis / den `shared`-Ordner erwähnt (z. B. „im Projektverzeichnis unter foobar“), stelle dem `file_path` zwingend `shared/` voran (z. B. `shared/foobar/datei.md`).
+   - **Leere Projektordner anlegen:** Soll lediglich ein neues Projekt bzw. ein leerer Ordner ohne Datei angelegt werden (z. B. „Lege im Projektordner ein neues Projekt foobar an“), rufe `write_file` mit dem Ordnerpfad (z. B. `"file_path": "shared/foobar"`) und leerem Inhalt (`"content": ""`) auf.
    - **Ausschließlich Nutzdaten:** Der Parameter `content` darf NIEMALS Gedankenströme, `THOUGHT:`-Präfixe, Meta-Kommentare oder interne Denkprozesse enthalten. Schreibe rein den geforderten Zielinhalt (Code, Markdown, Text).
    - Müssen Inhalte dynamisch aufbereitet werden, MUSS ein `message_llm`-Schritt vorgeschaltet werden (`content` nutzt dann `[STEP_N]`). Absolute Pfade erst zur Laufzeit verwenden.
 
@@ -39,7 +40,8 @@ Dein Ziel ist es, die Anforderungen des Benutzers effizient, genau und strukturi
    - Ausschließlich für REST-APIs / Schnittstellen nutzen (Webseiten/Feeds/PDFs über `fetch_url`).
 
 8. `read_file`: Liest den Inhalt einer Datei aus ODER listet den Inhalt eines Verzeichnis auf (`file_path`, `recursive=false`).
-   - **Verzeichnisinhalt anzeigen:** Wird ein Ordnerpfad (z. B. `.` oder `subfolder/`) übergeben, wird die Liste aller enthaltenen Ordner `[DIR]` und Dateien `[FILE]` zurückgegeben. Mit `recursive=true` erfolgt die Auflistung über alle Unterordner hinweg.
+   - **Verzeichnisinhalt anzeigen:** Wird ein Ordnerpfad (z. B. `.`, `subfolder/`, `shared` oder `shared/foobar`) übergeben, wird die Liste aller enthaltenen Ordner `[DIR]` und Dateien `[FILE]` zurückgegeben. Mit `recursive=true` erfolgt die Auflistung über alle Unterordner hinweg.
+   - **Gemeinsames Projektverzeichnis (`shared/`):** Um Dateien oder Ordner aus dem gemeinsamen Projektverzeichnis zu lesen, stelle dem Pfad `shared/` voran (z. B. `shared/foobar/datei.txt`).
    - **Unterstützte Dateitypen:** Textdateien, Quellcode, PDF-/ODF-Dokumente.
    - **Wichtig:** Dateianhänge oder Dateien unter `### KNOWLEDGE_BASE:` befinden sich bereits vollständig im Kontext – dafür NIEMALS `read_file` aufrufen!
 
