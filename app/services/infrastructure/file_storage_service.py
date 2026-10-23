@@ -13,6 +13,7 @@ from werkzeug.utils import secure_filename
 
 import pypdf
 
+from app.config import BaseConfig
 from app.domain.errors import InvalidFileError, StorageError
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,59 @@ logger = logging.getLogger(__name__)
 
 class FileStorageService:
     """Centralized service managing filesystem storage, sandboxing, and document text extraction."""
+
+    def resolve_sandbox_target(
+        self,
+        file_path: str | Path,
+        base_dir: str | Path,
+        sandbox_id: str | None = None,
+    ) -> tuple[Path, Path]:
+        """
+        Resolves the active sandbox root directory and the target path.
+        Routes paths starting with 'shared' or 'shared/' to the global SHARED_FOLDER.
+
+        Args:
+            file_path: Relative or absolute target path.
+            base_dir: Base root directory for conversation workspaces.
+            sandbox_id: Optional conversation subfolder identifier.
+
+        Returns:
+            tuple[Path, Path]: (target_sandbox_dir, resolved_target_path)
+
+        Raises:
+            StorageError: If the resolved path escapes the active sandbox root.
+        """
+        raw_str = str(file_path).strip().replace("\\", "/")
+        clean_rel = raw_str.lstrip("/")
+
+        if clean_rel == "shared" or clean_rel.startswith("shared/"):
+            shared_root = getattr(
+                BaseConfig,
+                "SHARED_FOLDER",
+                Path(base_dir).resolve().parent / "shared",
+            )
+            target_dir = Path(shared_root).resolve()
+            sub_path_str = clean_rel[len("shared"):].lstrip("/")
+            raw_path = Path(sub_path_str) if sub_path_str else Path(".")
+        else:
+            base_root = Path(base_dir).resolve()
+            target_dir = (base_root / sandbox_id).resolve() if sandbox_id else base_root
+            raw_path = Path(file_path) if raw_str else Path(".")
+
+        self.ensure_directory(target_dir)
+
+        resolved_path = (
+            (target_dir / raw_path).resolve()
+            if not raw_path.is_absolute()
+            else raw_path.resolve()
+        )
+
+        if not resolved_path.is_relative_to(target_dir):
+            error_msg = f"Security Violation: Path '{resolved_path}' escapes sandbox '{target_dir}'."
+            logger.error(error_msg)
+            raise StorageError(error_msg)
+
+        return target_dir, resolved_path
 
     @staticmethod
     def ensure_directory(directory_path: str | Path) -> Path:
@@ -138,17 +192,18 @@ class FileStorageService:
     def write_sandboxed_file(
         self,
         file_path: str | Path,
-        content: str | bytes,
-        base_dir: str | Path,
+        content: str | bytes | None = "",
+        base_dir: str | Path = ".",
         sandbox_id: str | None = None,
         mode: str = "w",
     ) -> str:
         """
-        Safely writes content to disk, guarding strictly against directory traversal.
+        Safely writes content to disk or creates an empty directory,
+        guarding strictly against directory traversal.
 
         Args:
-            file_path: Relative or absolute target path.
-            content: Payload to write (str or bytes).
+            file_path: Relative or absolute target path (supports 'shared/...' prefix).
+            content: Payload to write (str, bytes, or None/empty for directory creation).
             base_dir: Base root directory for workspaces.
             sandbox_id: Optional workspace subfolder identifier.
             mode: File write mode ('w', 'a', 'wb', 'ab').
@@ -159,23 +214,31 @@ class FileStorageService:
         Raises:
             StorageError: If security boundaries are violated or write fails.
         """
+        target_dir, resolved_path = self.resolve_sandbox_target(
+            file_path=file_path,
+            base_dir=base_dir,
+            sandbox_id=sandbox_id,
+        )
+
+        raw_str = str(file_path).strip().replace("\\", "/")
+        is_empty_content = content is None or content == "" or content == b""
+        is_dir_request = raw_str.endswith("/") or (is_empty_content and not resolved_path.suffix)
+
+        # Handle pure directory creation (e.g. "shared/foobar" with empty content)
+        if is_dir_request:
+            try:
+                resolved_path.mkdir(parents=True, exist_ok=True)
+                logger.info("Created directory '%s'", resolved_path)
+                return f"Successfully created directory '{resolved_path.name}' at '{resolved_path}'."
+            except OSError as exc:
+                logger.error("Failed creating directory '%s': %s", resolved_path, exc, exc_info=True)
+                raise StorageError(f"Error creating directory '{file_path}': {exc}") from exc
+
         valid_modes = {"w", "a", "wb", "ab"}
         normalized_mode = f"{mode}b" if isinstance(content, bytes) and mode in {"w", "a"} else mode
 
         if normalized_mode not in valid_modes:
             raise StorageError(f"Invalid write mode '{mode}'. Supported: {sorted(valid_modes)}")
-
-        base_root = Path(base_dir).resolve()
-        target_dir = (base_root / sandbox_id).resolve() if sandbox_id else base_root
-        self.ensure_directory(target_dir)
-
-        raw_path = Path(file_path)
-        resolved_path = (target_dir / raw_path).resolve() if not raw_path.is_absolute() else raw_path.resolve()
-
-        if not resolved_path.is_relative_to(target_dir):
-            error_msg = f"Security Violation: Path '{resolved_path}' escapes sandbox '{target_dir}'."
-            logger.error(error_msg)
-            raise StorageError(error_msg)
 
         try:
             resolved_path.parent.mkdir(parents=True, exist_ok=True)
@@ -205,7 +268,7 @@ class FileStorageService:
         Safely reads text content from disk, guarding strictly against directory traversal.
 
         Args:
-            file_path: Relative or absolute target path.
+            file_path: Relative or absolute target path (supports 'shared/...' prefix).
             base_dir: Base root directory for workspaces.
             sandbox_id: Optional workspace subfolder identifier.
             encoding: Text character encoding (defaults to 'utf-8').
@@ -216,16 +279,11 @@ class FileStorageService:
         Raises:
             StorageError: If security boundaries are violated, file does not exist, or read fails.
         """
-        base_root = Path(base_dir).resolve()
-        target_dir = (base_root / sandbox_id).resolve() if sandbox_id else base_root
-
-        raw_path = Path(file_path)
-        resolved_path = (target_dir / raw_path).resolve() if not raw_path.is_absolute() else raw_path.resolve()
-
-        if not resolved_path.is_relative_to(target_dir):
-            error_msg = f"Security Violation: Path '{resolved_path}' escapes sandbox '{target_dir}'."
-            logger.error(error_msg)
-            raise StorageError(error_msg)
+        _, resolved_path = self.resolve_sandbox_target(
+            file_path=file_path,
+            base_dir=base_dir,
+            sandbox_id=sandbox_id,
+        )
 
         if not resolved_path.is_file():
             raise StorageError(f"File '{file_path}' does not exist inside sandbox.")

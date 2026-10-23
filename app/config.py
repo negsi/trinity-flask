@@ -58,6 +58,9 @@ class BaseConfig:
     CONVERSATIONS_FOLDER = os.getenv(
         "CONVERSATIONS_FOLDER", os.path.join(BASE_DIR, "instance", "conversations")
     )
+    SHARED_FOLDER = os.getenv(
+        "SHARED_FOLDER", os.path.join(BASE_DIR, "instance", "shared")
+    )
     MESSAGE_UPLOAD_FOLDER = os.getenv(
         "MESSAGE_UPLOAD_FOLDER", CONVERSATIONS_FOLDER
     )

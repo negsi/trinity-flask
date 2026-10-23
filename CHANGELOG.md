@@ -4,13 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
-
 # [Unreleased]
 
 ### Added
 
 ### Changed
+
+# [0.3.2] - 2026-10-23
+
+### Added
+
+- Add `SHARED_FOLDER` configuration option (defaulting to `instance/shared`) for cross-conversation shared project storage.
+- Add `FileStorageService.resolve_sandbox_target()` to centrally resolve workspace and `shared/` sandbox paths while enforcing directory traversal protection.
+- Support creating empty directories via `write_file` and `FileStorageService.write_sandboxed_file()` when `content` is empty or the path ends with a slash.
+
+### Changed
+
+- Update `write_file`, `read_file`, and `locate_file` in `file_tools.py` as well as `FileStorageService` to support reading, listing, and writing files in the `shared/` directory.
+- Update `base_agent.prompt.md` instructions for `write_file` and `read_file` to document `shared/` project folder usage and directory creation.
 
 # [0.3.1] - 2026-10-20
 
@@ -535,7 +546,8 @@ Hier ist der fertige Changelog-Auszug basierend auf deinen Git-Patches:
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.1...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.2...develop
+[0.3.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.2
 [0.3.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.1
 [0.3.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.0
 [0.2.9]: https://github.com/negsi/trinity-flask/releases/tag/v0.2.9
