@@ -61,4 +61,14 @@ def create_app() -> Flask:
     register_error_handlers(flask_app)
     register_routes(flask_app, container)
 
+    @flask_app.cli.group("scheduler")
+    def scheduler_cli() -> None:
+        """Agent schedule background worker commands."""
+
+    @scheduler_cli.command("run")
+    def run_scheduler_command() -> None:
+        """Starts the blocking agent schedule runner loop."""
+        runner = container.schedule_runner()
+        runner.run_blocking(app=flask_app)
+
     return flask_app

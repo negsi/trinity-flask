@@ -64,6 +64,12 @@ class AgentModel(db.Model):
         back_populates="agents",
         lazy="selectin",
     )
+    schedules = relationship(
+        "ScheduleModel",
+        back_populates="agent",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
 
     def __repr__(self) -> str:
         return f"<AgentModel id='{self.id}' name='{self.name}'>"

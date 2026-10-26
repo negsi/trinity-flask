@@ -14,6 +14,7 @@ ROUTE_MODULES = [
     "app.routes.conversations",
     "app.routes.streaming",
     "app.routes.chat",
+    "app.routes.schedules",
 ]
 
 

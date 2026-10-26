@@ -63,3 +63,27 @@ class ExecutionStepStatus(str, Enum):
     def __str__(self) -> str:
         """Returns the string value of the enumeration."""
         return self.value
+
+
+class ScheduleTriggerType(str, Enum):
+    """Defines the execution trigger mechanism for an agent schedule."""
+
+    CRON = "cron"
+    ONCE = "once"
+
+    def __str__(self) -> str:
+        """Returns the string value of the enumeration."""
+        return self.value
+
+
+class ScheduleExecutionStatus(str, Enum):
+    """Represents the lifecycle execution state of a scheduled agent run."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCESS = "success"
+    FAILED = "failed"
+
+    def __str__(self) -> str:
+        """Returns the string value of the enumeration."""
+        return self.value

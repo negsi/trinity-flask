@@ -1,5 +1,6 @@
 """API Request Schemas."""
 
+from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
@@ -51,3 +52,25 @@ class AssignAgentsRequest(BaseModel):
     """Request payload schema for assigning agents to a group."""
 
     agent_ids: list[str]
+
+
+class CreateScheduleRequest(BaseModel):
+    """Request payload schema for creating an agent schedule."""
+
+    name: str = Field(..., min_length=1, max_length=150)
+    prompt: str = Field(..., min_length=1)
+    trigger_type: str = Field(default="cron")
+    is_active: bool = True
+    cron_expression: Optional[str] = Field(None, max_length=100)
+    scheduled_at: Optional[datetime] = None
+
+
+class UpdateScheduleRequest(BaseModel):
+    """Request payload schema for updating an existing agent schedule."""
+
+    name: Optional[str] = Field(None, min_length=1, max_length=150)
+    prompt: Optional[str] = Field(None, min_length=1)
+    trigger_type: Optional[str] = None
+    is_active: Optional[bool] = None
+    cron_expression: Optional[str] = Field(None, max_length=100)
+    scheduled_at: Optional[datetime] = None

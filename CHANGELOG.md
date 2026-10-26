@@ -4,9 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+Hier ist der ausgefüllte Changelog-Abschnitt basierend auf den bereitgestellten Patches:
+
 # [Unreleased]
 
 ### Added
+
+- Added scheduling module with support for cron-based and one-time agent task triggers (`Schedule`, `ScheduleExecution` domain models and SQLAlchemy repositories). (**pip install -r requirements.txt** & **flask db upgrade**)
+- Introduced `ScheduleService` to handle schedule lifecycle management, validation, and automated execution via the agent orchestrator.
+- Integrated APScheduler-based `ScheduleRunner` for background polling and execution of due schedules, along with a dedicated Flask CLI command (`flask scheduler run`).
+- Added REST API endpoints under `/api/v1` for full CRUD management, manual testing (`/run`), and execution history retrieval of agent schedules.
+- Added `croniter` and `APScheduler` to project requirements.
 
 ### Changed
 

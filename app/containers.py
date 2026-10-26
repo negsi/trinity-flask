@@ -14,6 +14,7 @@ from app.repositories import (
     SQLAlchemyLLMExecutionRepository,
     SQLAlchemyMessageRepository,
     SQLAlchemyGroupRepository,
+    SQLAlchemyScheduleRepository,
 )
 
 from app.services.agent.agent_context_builder import AgentContextBuilder
@@ -33,6 +34,9 @@ from app.services.infrastructure.security_context import SecurityContextService
 
 from app.services.llm.providers import GeminiImagenProvider, OpenAIDalleProvider
 from app.services.tools.registry import ToolRegistry
+
+from app.services.schedule.schedule_runner import ScheduleRunner
+from app.services.schedule.schedule_service import ScheduleService
 
 
 class Container(containers.DeclarativeContainer):
@@ -61,6 +65,9 @@ class Container(containers.DeclarativeContainer):
     )
     llm_execution_repository = providers.Singleton(
         SQLAlchemyLLMExecutionRepository
+    )
+    schedule_repository = providers.Singleton(
+        SQLAlchemyScheduleRepository
     )
 
     # -------------------------------------------------------------------------
@@ -187,4 +194,18 @@ class Container(containers.DeclarativeContainer):
         llm_execution_repo=llm_execution_repository,
         react_loop_runner=react_loop_runner,
         agent_repository=agent_repository,
+    )
+
+    schedule_service = providers.Factory(
+        ScheduleService,
+        schedule_repo=schedule_repository,
+        agent_repo=agent_repository,
+        messaging_service=messaging_service,
+        agent_orchestrator=agent_orchestrator,
+    )
+
+    schedule_runner = providers.Singleton(
+        ScheduleRunner,
+        schedule_repo=schedule_repository,
+        schedule_service=schedule_service,
     )
