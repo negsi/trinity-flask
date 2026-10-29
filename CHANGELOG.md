@@ -10,6 +10,12 @@ Hier ist der ausgefüllte Changelog-Abschnitt basierend auf den bereitgestellten
 
 ### Added
 
+### Changed
+
+# [0.3.3] - 2026-10-29
+
+### Added
+
 - Added scheduling module with support for cron-based and one-time agent task triggers (`Schedule`, `ScheduleExecution` domain models and SQLAlchemy repositories). (**pip install -r requirements.txt** & **flask db upgrade**)
 - Introduced `ScheduleService` to handle schedule lifecycle management, validation, and automated execution via the agent orchestrator.
 - Integrated APScheduler-based `ScheduleRunner` for background polling and execution of due schedules, along with a dedicated Flask CLI command (`flask scheduler run`).
@@ -556,7 +562,8 @@ Hier ist der ausgefüllte Changelog-Abschnitt basierend auf den bereitgestellten
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.2...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.3...develop
+[0.3.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.3
 [0.3.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.2
 [0.3.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.1
 [0.3.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.0
