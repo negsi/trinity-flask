@@ -4,11 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+Hier ist der ausgefüllte Changelog-Abschnitt basierend auf den bereitgestellten Patches:
+
 # [Unreleased]
 
 ### Added
 
 ### Changed
+
+# [0.3.3] - 2026-10-29
+
+### Added
+
+- Added scheduling module with support for cron-based and one-time agent task triggers (`Schedule`, `ScheduleExecution` domain models and SQLAlchemy repositories). (**pip install -r requirements.txt** & **flask db upgrade**)
+- Introduced `ScheduleService` to handle schedule lifecycle management, validation, and automated execution via the agent orchestrator.
+- Integrated APScheduler-based `ScheduleRunner` for background polling and execution of due schedules, along with a dedicated Flask CLI command (`flask scheduler run`).
+- Added REST API endpoints under `/api/v1` for full CRUD management, manual testing (`/run`), and execution history retrieval of agent schedules.
+- Added `croniter` and `APScheduler` to project requirements.
+
+### Changed
+
+- Added agent-scoped PUT route (`/api/v1/agents/<agent_id>/schedules/<schedule_id>`) for updating existing schedules within an agent context.
 
 # [0.3.2] - 2026-10-23
 
@@ -546,7 +562,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.2...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.3...develop
+[0.3.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.3
 [0.3.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.2
 [0.3.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.1
 [0.3.0]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.0

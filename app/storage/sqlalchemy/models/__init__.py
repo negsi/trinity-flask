@@ -13,6 +13,10 @@ from app.storage.sqlalchemy.models.message import (
     MessageAttachmentModel,
     MessageThoughtModel,
 )
+from app.storage.sqlalchemy.models.schedule import (
+    ScheduleModel,
+    ScheduleExecutionModel,
+)
 
 __all__ = [
     "AgentModel",
@@ -25,4 +29,6 @@ __all__ = [
     "MessageModel",
     "MessageAttachmentModel",
     "MessageThoughtModel",
+    "ScheduleModel",
+    "ScheduleExecutionModel",
 ]
