@@ -111,3 +111,26 @@ def list_schedule_executions(
     """Retrieves the execution history for a specific schedule."""
     executions = schedule_service.get_executions(schedule_id=schedule_id)
     return jsonify([e.to_dict() for e in executions]), 200
+
+
+@bp.route("/agents/<agent_id>/schedules/<schedule_id>", methods=["PUT"])
+@validate_json(UpdateScheduleRequest)
+@inject
+def update_agent_schedule(
+    dto: UpdateScheduleRequest,
+    *,
+    agent_id: str,
+    schedule_id: str,
+    schedule_service: ScheduleService = Provide[Container.schedule_service],
+):
+    """Updates an existing schedule for a specific agent."""
+    updated = schedule_service.update_schedule(
+        schedule_id=schedule_id,
+        name=dto.name,
+        prompt=dto.prompt,
+        trigger_type=dto.trigger_type,
+        is_active=dto.is_active,
+        cron_expression=dto.cron_expression,
+        scheduled_at=dto.scheduled_at,
+    )
+    return jsonify(updated.to_dict()), 200

@@ -18,6 +18,8 @@ Hier ist der ausgefüllte Changelog-Abschnitt basierend auf den bereitgestellten
 
 ### Changed
 
+- Added agent-scoped PUT route (`/api/v1/agents/<agent_id>/schedules/<schedule_id>`) for updating existing schedules within an agent context.
+
 # [0.3.2] - 2026-10-23
 
 ### Added
