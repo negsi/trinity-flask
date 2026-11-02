@@ -10,6 +10,8 @@ Hier ist der ausgefüllte Changelog-Abschnitt basierend auf den bereitgestellten
 
 ### Added
 
+- Global error handler for standard HTTP exceptions (e.g., 404, 405) to return standardized JSON error responses.
+
 ### Changed
 
 # [0.3.3] - 2026-10-29
