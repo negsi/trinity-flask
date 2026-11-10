@@ -15,6 +15,7 @@ from app.repositories import (
     SQLAlchemyMessageRepository,
     SQLAlchemyGroupRepository,
     SQLAlchemyScheduleRepository,
+    SQLAlchemyWorkflowRepository,
 )
 
 from app.services.agent.agent_context_builder import AgentContextBuilder
@@ -29,6 +30,7 @@ from app.services.infrastructure.email_service import EmailService
 from app.services.infrastructure.file_storage_service import FileStorageService
 from app.services.infrastructure.llm_service import LLMService
 from app.services.group.group_service import GroupService
+from app.services.workflow.workflow_service import WorkflowService
 
 from app.services.infrastructure.security_context import SecurityContextService
 
@@ -69,6 +71,9 @@ class Container(containers.DeclarativeContainer):
     schedule_repository = providers.Singleton(
         SQLAlchemyScheduleRepository
     )
+    workflow_repository = providers.Singleton(
+        SQLAlchemyWorkflowRepository
+    )
 
     # -------------------------------------------------------------------------
     # Infrastructure & Security Services
@@ -95,6 +100,11 @@ class Container(containers.DeclarativeContainer):
         GroupService,
         group_repo=group_repository,
         agent_repo=agent_repository,
+    )
+
+    workflow_service = providers.Factory(
+        WorkflowService,
+        workflow_repo=workflow_repository,
     )
 
     # -------------------------------------------------------------------------

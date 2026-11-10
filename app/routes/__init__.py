@@ -15,6 +15,7 @@ ROUTE_MODULES = [
     "app.routes.streaming",
     "app.routes.chat",
     "app.routes.schedules",
+    "app.routes.workflows",
 ]
 
 

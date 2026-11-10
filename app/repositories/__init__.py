@@ -7,6 +7,7 @@ from app.repositories.sqlalchemy_group_repository import SQLAlchemyGroupReposito
 from app.repositories.sqlalchemy_llm_execution_repository import SQLAlchemyLLMExecutionRepository
 from app.repositories.sqlalchemy_message_repository import SQLAlchemyMessageRepository
 from app.repositories.sqlalchemy_schedule_repository import SQLAlchemyScheduleRepository
+from app.repositories.sqlalchemy_workflow_repository import SQLAlchemyWorkflowRepository
 
 __all__ = [
     "SQLAlchemyAgentRepository",
@@ -16,4 +17,5 @@ __all__ = [
     "SQLAlchemyLLMExecutionRepository",
     "SQLAlchemyMessageRepository",
     "SQLAlchemyScheduleRepository",
+    "SQLAlchemyWorkflowRepository",
 ]
