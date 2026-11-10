@@ -11,7 +11,7 @@ Hier ist der ausgefüllte Changelog-Abschnitt basierend auf den bereitgestellten
 ### Added
 
 - Global error handler for standard HTTP exceptions (e.g., 404, 405) to return standardized JSON error responses.
-- Workflow management backend architecture including `WorkflowModel`, `WorkflowNodeModel`, `WorkflowEdgeModel`, `SQLAlchemyWorkflowRepository`, and `WorkflowService`.
+- Workflow management backend architecture including `WorkflowModel`, `WorkflowNodeModel`, `WorkflowEdgeModel`, `SQLAlchemyWorkflowRepository`, and `WorkflowService`. (**flask db upgrade**)
 - Pydantic validation schemas (`SaveWorkflowRequest`, `WorkflowNodeSchema`, `WorkflowEdgeSchema`) and route registration (`app.routes.workflows`) for creating and updating workflows.
 
 ### Changed
