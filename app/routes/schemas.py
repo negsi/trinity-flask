@@ -74,3 +74,32 @@ class UpdateScheduleRequest(BaseModel):
     is_active: Optional[bool] = None
     cron_expression: Optional[str] = Field(None, max_length=100)
     scheduled_at: Optional[datetime] = None
+
+class WorkflowNodeSchema(BaseModel):
+    """Schema representing a single node in a workflow payload."""
+
+    id: Optional[str] = None
+    agentId: str = Field(..., min_length=1)
+    agentName: str = Field(..., min_length=1, max_length=150)
+    agentDescription: Optional[str] = Field(default="", max_length=500)
+    x: float = 0.0
+    y: float = 0.0
+    prompt: str = ""
+
+
+class WorkflowEdgeSchema(BaseModel):
+    """Schema representing a directed edge in a workflow payload."""
+
+    id: Optional[str] = None
+    sourceNodeId: str = Field(..., min_length=1)
+    targetNodeId: str = Field(..., min_length=1)
+
+
+class SaveWorkflowRequest(BaseModel):
+    """Request payload schema for creating or updating a workflow."""
+
+    id: Optional[str] = None
+    name: str = Field(..., min_length=1, max_length=150)
+    description: Optional[str] = Field(None, max_length=500)
+    nodes: List[WorkflowNodeSchema] = Field(default_factory=list)
+    edges: List[WorkflowEdgeSchema] = Field(default_factory=list)

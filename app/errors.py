@@ -7,6 +7,7 @@ Registers central error handlers to intercept domain exceptions and return stand
 import logging
 from flask import Flask, jsonify
 from pydantic import ValidationError as PydanticValidationError
+from werkzeug.exceptions import HTTPException
 
 from app.domain.errors import DomainError, NotFoundError, ValidationError
 
@@ -67,6 +68,17 @@ def register_error_handlers(app: Flask) -> None:
             "details": error.details,
         })
         response.status_code = 400
+        return response
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error: HTTPException):
+        """Catches standard HTTP errors (e.g. 404, 405) and returns standard JSON."""
+        response = jsonify({
+            "error": error.name.upper().replace(" ", "_"),
+            "message": error.description,
+            "details": [],
+        })
+        response.status_code = error.code or 500
         return response
 
     @app.errorhandler(Exception)

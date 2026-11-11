@@ -17,6 +17,11 @@ from app.storage.sqlalchemy.models.schedule import (
     ScheduleModel,
     ScheduleExecutionModel,
 )
+from app.storage.sqlalchemy.models.workflow import (
+    WorkflowModel,
+    WorkflowNodeModel,
+    WorkflowEdgeModel,
+)
 
 __all__ = [
     "AgentModel",
@@ -31,4 +36,7 @@ __all__ = [
     "MessageThoughtModel",
     "ScheduleModel",
     "ScheduleExecutionModel",
+    "WorkflowModel",
+    "WorkflowNodeModel",
+    "WorkflowEdgeModel",
 ]
