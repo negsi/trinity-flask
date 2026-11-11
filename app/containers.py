@@ -102,11 +102,6 @@ class Container(containers.DeclarativeContainer):
         agent_repo=agent_repository,
     )
 
-    workflow_service = providers.Factory(
-        WorkflowService,
-        workflow_repo=workflow_repository,
-    )
-
     # -------------------------------------------------------------------------
     # Image Generation Providers
     # -------------------------------------------------------------------------
@@ -204,6 +199,13 @@ class Container(containers.DeclarativeContainer):
         llm_execution_repo=llm_execution_repository,
         react_loop_runner=react_loop_runner,
         agent_repository=agent_repository,
+    )
+
+    workflow_service = providers.Factory(
+        WorkflowService,
+        workflow_repo=workflow_repository,
+        agent_orchestrator=agent_orchestrator,
+        messaging_service=messaging_service,
     )
 
     schedule_service = providers.Factory(

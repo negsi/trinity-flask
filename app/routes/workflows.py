@@ -1,11 +1,16 @@
-"""Workflow CRUD Endpoints."""
+"""Workflow CRUD and Real-Time Execution Endpoints."""
 
-from flask import Blueprint, jsonify
-from dependency_injector.wiring import inject, Provide
+from collections.abc import Generator
+import json
+from typing import Any
+
+from dependency_injector.wiring import Provide, inject
+from flask import Blueprint, Response, jsonify, stream_with_context
 
 from app.containers import Container
 from app.routes.decorators import validate_json
 from app.routes.schemas import SaveWorkflowRequest
+from app.services.infrastructure.security_context import SecurityContextService
 from app.services.workflow.workflow_service import WorkflowService
 
 bp = Blueprint("workflows", __name__, url_prefix="/api/v1/workflows")
@@ -79,3 +84,39 @@ def delete_workflow(
     """Deletes a workflow by ID."""
     workflow_service.delete_workflow(workflow_id)
     return "", 204
+
+
+@bp.route("/<workflow_id>/stream", methods=["POST"])
+@inject
+def stream_workflow_execution(
+    workflow_id: str,
+    workflow_service: WorkflowService = Provide[Container.workflow_service],
+    security_context: SecurityContextService = Provide[
+        Container.security_context_service
+    ],
+):
+    """Streams real-time parallel execution of a workflow via Server-Sent Events (SSE)."""
+    current_actor = security_context.get_current_actor()
+    event_generator = workflow_service.stream_workflow_execution(
+        workflow_id=workflow_id,
+        user_id=current_actor["id"],
+    )
+
+    def sse_formatter(
+        gen: Generator[dict[str, Any], None, None]
+    ) -> Generator[str, None, None]:
+        try:
+            for event in gen:
+                yield f"data: {json.dumps(event)}\n\n"
+            yield "data: [DONE]\n\n"
+        except GeneratorExit:
+            pass
+
+    return Response(
+        stream_with_context(sse_formatter(event_generator)),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )

@@ -4,8 +4,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-Hier ist der ausgefüllte Changelog-Abschnitt basierend auf den bereitgestellten Patches:
-
 # [Unreleased]
 
 ### Added
@@ -13,10 +11,12 @@ Hier ist der ausgefüllte Changelog-Abschnitt basierend auf den bereitgestellten
 - Global error handler for standard HTTP exceptions (e.g., 404, 405) to return standardized JSON error responses.
 - Workflow management backend architecture including `WorkflowModel`, `WorkflowNodeModel`, `WorkflowEdgeModel`, `SQLAlchemyWorkflowRepository`, and `WorkflowService`. (**flask db upgrade**)
 - Pydantic validation schemas (`SaveWorkflowRequest`, `WorkflowNodeSchema`, `WorkflowEdgeSchema`) and route registration (`app.routes.workflows`) for creating and updating workflows.
+- Real-time parallel workflow execution engine in `WorkflowService` with topological layer sorting (Kahn's algorithm), multi-threaded node execution (`ThreadPoolExecutor`), predecessor output context injection, and structured SSE event translation (`node_start`, `node_chunk`, `node_thought`, `node_task_chain`, `node_attachments`, `node_complete`, `node_error`).
+- SSE streaming endpoint `POST /api/v1/workflows/<workflow_id>/stream` for real-time workflow execution.
 
 ### Changed
 
-- Registered `workflow_repository` and `workflow_service` providers in the dependency injection container (`Container`).
+- Registered `workflow_repository` and `workflow_service` providers in the dependency injection container (`Container`), wiring `agent_orchestrator` and `messaging_service` into `WorkflowService`.
 
 # [0.3.3] - 2026-10-29
 
