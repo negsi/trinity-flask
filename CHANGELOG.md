@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+### Changed
+
+# [0.3.4] - 2026-11-11
+
+### Added
+
 - Global error handler for standard HTTP exceptions (e.g., 404, 405) to return standardized JSON error responses.
 - Workflow management backend architecture including `WorkflowModel`, `WorkflowNodeModel`, `WorkflowEdgeModel`, `SQLAlchemyWorkflowRepository`, and `WorkflowService`. (**flask db upgrade**)
 - Pydantic validation schemas (`SaveWorkflowRequest`, `WorkflowNodeSchema`, `WorkflowEdgeSchema`) and route registration (`app.routes.workflows`) for creating and updating workflows.
@@ -568,7 +574,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.3...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.4...develop
+[0.3.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.4
 [0.3.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.3
 [0.3.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.2
 [0.3.1]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.1
