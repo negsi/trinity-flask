@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+### Changed
+
+# [0.3.5] - 2026-11-16
+
+### Added
+
 - Add agent-specific MCP (Model Context Protocol) server factory and SSE session management (`McpAgentServerFactory`, `McpSession`) using MCP SDK v2.
 - Add MCP SSE and JSON-RPC message transport endpoints (`/api/v1/agents/<agent_id>/mcp/sse` and `/api/v1/agents/<agent_id>/mcp/messages`) for integration with MCP clients (e.g., `mcp-remote`, Claude Desktop, Cursor).
 - Add `mcp` (`>=2.0.0,<3.0.0`) and `anyio` (`>=4.9.0`) dependencies to `requirements.txt`.
@@ -581,7 +587,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - error handling and debug utils
 - llm service layer vor gemini
 
-[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.4...develop
+[Unreleased]: https://github.com/negsi/trinity-flask/compare/v0.3.5...develop
+[0.3.5]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.5
 [0.3.4]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.4
 [0.3.3]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.3
 [0.3.2]: https://github.com/negsi/trinity-flask/releases/tag/v0.3.2
