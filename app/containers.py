@@ -40,6 +40,8 @@ from app.services.tools.registry import ToolRegistry
 from app.services.schedule.schedule_runner import ScheduleRunner
 from app.services.schedule.schedule_service import ScheduleService
 
+from app.mcp_agent_server import McpAgentServerFactory
+
 
 class Container(containers.DeclarativeContainer):
     """Declarative dependency injection container managing application service lifecycles."""
@@ -220,4 +222,12 @@ class Container(containers.DeclarativeContainer):
         ScheduleRunner,
         schedule_repo=schedule_repository,
         schedule_service=schedule_service,
+    )
+
+    mcp_agent_server_factory = providers.Singleton(
+        McpAgentServerFactory,
+        agent_service=agent_service,
+        messaging_service=messaging_service,
+        agent_orchestrator=agent_orchestrator,
+        security_context_service=security_context_service,
     )

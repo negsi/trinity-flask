@@ -49,6 +49,9 @@ Customizable Agent Builder & Workflow Engine
   - [Task Execution Workflow](#task-execution-workflow)
 - [Agent Memory](#agent-memory)
   - [Configuration Options](#configuration-options)
+- [Agent Workflows](#agent-workflows)
+  - [Key Capabilities](#key-capabilities)
+  - [Workflow Architecture & Execution](#workflow-architecture--execution)
 - [Agent Examples](#agent-examples)
 
 ---
@@ -282,7 +285,39 @@ For lightweight execution or strict token budgets, set `memory_mode` to `"user_o
   "memory_limit_type": "message_count",
   "memory_message_count": 10
 }
-``` 
+```
+
+## Agent Workflows
+
+While **Task Chains** allow a single agent to dynamically plan and execute tool calls within a single prompt turn, **Trinity Workflows** enable the design, persistence, and execution of structured, multi-step process pipelines across one or multiple specialized agents.
+
+### Key Capabilities
+
+- **Multi-Step Process Pipelines:** Chain multiple tasks and specialized agents into deterministic, repeatable execution sequences where each step builds upon previous outputs.
+- **Conditional Execution & Branching:** Define conditions and transition rules between workflow steps to dynamically control the execution flow based on intermediate results or step statuses.
+- **Cross-Agent Collaboration:** Combine the strengths of different agents within a single pipeline (e.g., *Research Agent* $\rightarrow$ *Data Analyst Agent* $\rightarrow$ *ODF Report Generator* $\rightarrow$ *Email Notification Agent*).
+- **Shared Workspace Context:** Workflow steps can seamlessly exchange artifacts, generated files, and structured data through Trinity's isolated and shared workspaces.
+- **Automated Scheduling:** Connect workflows with the built-in **Schedule Runner** to trigger recurring pipelines automatically at defined intervals without manual intervention.
+- **Visual Workflow Workspace & REST API:** Create, configure, trigger, and monitor workflows in real time via the **Angular Frontend (`Workflow Workspace`)** or manage them programmatically through the `/api/v1/workflows` endpoints.
+
+### Workflow Architecture & Execution
+
+```
+┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
+│       Step 1         │     │       Step 2         │     │       Step 3         │
+│   Research Agent     │────▶│    Analyst Agent     │────▶│   Reporting Agent    │
+│ (Web Search & Fetch) │     │ (Data Evaluation)    │     │ (ODF / Email Export) │
+└──────────────────────┘     └──────────────────────┘     └──────────────────────┘
+           │                            │                            │
+           └────────────────────────────┴────────────────────────────┘
+                                        │
+                         Condition & Status Evaluation
+                       (Managed by Trinity Workflow Engine)
+```
+
+1. **Definition:** A workflow consists of metadata, an ordered sequence of process steps, assigned target agents, step-specific instructions, and evaluation conditions.
+2. **Execution:** When triggered manually via the UI/API or automatically by a schedule, the `WorkflowService` orchestrates the step-by-step execution, passing outputs and context forward.
+3. **Monitoring:** Each step tracks its own execution state, allowing full visibility into running, completed, or failed pipeline stages.
 
 ## Agent Examples
 

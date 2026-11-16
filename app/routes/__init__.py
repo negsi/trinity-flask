@@ -16,6 +16,7 @@ ROUTE_MODULES = [
     "app.routes.chat",
     "app.routes.schedules",
     "app.routes.workflows",
+    "app.routes.mcp",
 ]
 
 

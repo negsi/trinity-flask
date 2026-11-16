@@ -52,3 +52,5 @@ tavily-python>=0.5.0
 odfdo>=3.8.0
 croniter>=2.0.0
 APScheduler>=3.10.4
+mcp>=2.0.0,<3.0.0
+anyio>=4.9.0
