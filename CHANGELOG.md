@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Add agent-specific MCP (Model Context Protocol) server factory and SSE session management (`McpAgentServerFactory`, `McpSession`) using MCP SDK v2.
+- Add MCP SSE and JSON-RPC message transport endpoints (`/api/v1/agents/<agent_id>/mcp/sse` and `/api/v1/agents/<agent_id>/mcp/messages`) for integration with MCP clients (e.g., `mcp-remote`, Claude Desktop, Cursor).
+- Add `mcp` (`>=2.0.0,<3.0.0`) and `anyio` (`>=4.9.0`) dependencies to `requirements.txt`.
+
 ### Changed
+
+- Register `McpAgentServerFactory` singleton provider in the dependency injection container (`app/containers.py`).
+- Register `app.routes.mcp` blueprint in the route module registry (`app/routes/__init__.py`).
 
 # [0.3.4] - 2026-11-11
 
