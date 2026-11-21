@@ -224,3 +224,86 @@ class OpenAIDalleProvider(ImageGeneratorProvider):
         )
         b64_data = response.data[0].b64_json
         return base64.b64decode(b64_data)
+
+
+class MistralProvider(LLMProvider):
+    """Mistral AI Provider using the Chat Completions API for streaming thoughts and text."""
+
+    def __init__(
+        self,
+        model: str | None = None,
+        reasoning_effort: str | None = None,
+    ) -> None:
+        from mistralai.client import Mistral  # type: ignore
+
+        self.client = Mistral(api_key=Config.LLM_API_KEY)
+        self.model = model or Config.LLM_MODEL or "mistral-large-latest"
+
+        config_level = getattr(Config, "LLM_THINKING_LEVEL", "high")
+        self.reasoning_effort = reasoning_effort or config_level
+
+    def _build_message_payload(self, messages: list[LLMMessage]) -> list[dict[str, Any]]:
+        """Converts LLMMessage history into the Mistral chat payload, including image attachments."""
+        payload: list[dict[str, Any]] = []
+        for m in messages:
+            if isinstance(m.content, str):
+                payload.append({"role": m.role, "content": m.content})
+                continue
+
+            content_parts: list[dict[str, Any]] = []
+            for item in m.content:
+                if isinstance(item, str):
+                    content_parts.append({"type": "text", "text": item})
+                elif isinstance(item, dict):
+                    if item.get("file_path") and Path(item["file_path"]).is_file():
+                        with open(item["file_path"], "rb") as image_file:
+                            encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+                        content_parts.append({
+                            "type": "image_url",
+                            "image_url": f"data:{item.get('mime_type', 'image/png')};base64,{encoded_image}",
+                        })
+                    elif item.get("text"):
+                        content_parts.append({"type": "text", "text": item["text"]})
+            if content_parts:
+                payload.append({"role": m.role, "content": content_parts})
+        return payload
+
+    def stream(self, messages: list[LLMMessage]) -> Generator[Any, None, None]:
+        """Streams thoughts and text tokens using client.chat.stream with reasoning_effort enabled."""
+        from mistralai.client.models import TextChunk, ThinkChunk  # type: ignore
+
+        call_kwargs: dict[str, Any] = {
+            "model": self.model,
+            "messages": self._build_message_payload(messages),
+        }
+
+        if self.reasoning_effort:
+            call_kwargs["reasoning_effort"] = self.reasoning_effort
+
+        # Mistral streams delta.content in three shapes: a list with ThinkChunk(s) during the
+        # thinking phase, a mixed list with the closing ThinkChunk and first TextChunk, and a
+        # plain string for the remaining answer tokens.
+        for event in self.client.chat.stream(**call_kwargs):
+            data = getattr(event, "data", event)
+            if not getattr(data, "choices", None):
+                continue
+
+            delta = data.choices[0].delta
+            delta_content = getattr(delta, "content", None)
+            if not delta_content:
+                continue
+
+            if isinstance(delta_content, str):
+                yield delta_content
+                continue
+
+            for chunk in delta_content:
+                if isinstance(chunk, ThinkChunk):
+                    for inner in getattr(chunk, "thinking", None) or []:
+                        inner_text = inner if isinstance(inner, str) else getattr(inner, "text", "")
+                        if inner_text:
+                            yield f"{PROTOCOL_THOUGHT}{json.dumps({'content': inner_text})}"
+                elif isinstance(chunk, TextChunk) and chunk.text:
+                    yield chunk.text
+                elif isinstance(chunk, str) and chunk:
+                    yield chunk

@@ -104,6 +104,7 @@ Depending on the provider, you may need to install a corresponding Python depend
 ```bash
 pip install google-genai # for Gemini
 pip install openai # for OpenAI
+pip install mistralai # for Mistral
 ```
 
 ### 6. Create .env

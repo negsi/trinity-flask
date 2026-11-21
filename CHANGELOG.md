@@ -8,7 +8,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Mistral LLM provider (`MistralProvider`) using the Chat Completions API with live SSE token
+  streaming and native chain-of-thought: `ThinkChunk` reasoning traces are forwarded via the
+  existing thought protocol, so CoT display and SSE handling work identically to Gemini.
+  Enabled via `LLM_PROVIDER=mistral` (see `.env.template` / README Step 5).
+- Optional `mistralai` SDK dependency (`pip install mistralai`; `mistralai>=3.7.0` in
+  `requirements.txt`) following the existing optional per-provider dependency pattern.
+- SDK-side retry with exponential backoff for transient rate limits (HTTP 429) in the
+  Mistral provider client.
+
 ### Changed
+
+- `LLM_THINKING_LEVEL` is now a shared reasoning knob: Gemini maps it to `thinking_level`,
+  Mistral to `reasoning_effort` (values `low` | `medium` | `high`).
+- `ProviderRegistry` now also accepts `LLM_PROVIDER=mistral`.
 
 # [0.3.5] - 2026-11-16
 

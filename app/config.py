@@ -46,6 +46,8 @@ class BaseConfig:
         else 1024
     )
 
+    LLM_THINKING_LEVEL = os.getenv("LLM_THINKING_LEVEL", "medium")
+
     # Image Generator Settings
     IMAGE_GENERATOR_PROVIDER = os.getenv("IMAGE_GENERATOR_PROVIDER", "gemini")
     IMAGE_GENERATOR_MODEL = os.getenv("IMAGE_GENERATOR_MODEL")

@@ -5,7 +5,7 @@ Manages provider class bindings and singleton provider lifecycle caching.
 """
 
 from app.domain.llm import LLMProvider
-from app.services.llm.providers import GeminiProvider, OpenAIProvider
+from app.services.llm.providers import GeminiProvider, OpenAIProvider, MistralProvider
 
 
 class ProviderRegistry:
@@ -15,6 +15,7 @@ class ProviderRegistry:
         self._provider_classes: dict[str, type[LLMProvider]] = {
             "openai": OpenAIProvider,
             "gemini": GeminiProvider,
+            "mistral": MistralProvider,
         }
         self._instances: dict[str, LLMProvider] = {}
         self.model_name = model_name
